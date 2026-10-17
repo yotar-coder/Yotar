@@ -11,7 +11,7 @@
 :root{
   --bg:#050a18; --panel:rgba(13,24,48,.74); --line:rgba(0,229,255,.25);
   --cyan:#00e5ff; --blue:#3d7bff; --pink:#ff3df2; --amber:#ffb84d; --green:#3dffb0; --violet:#a98bff;
-  --text:#e6f1ff; --muted:#8fa6c8; --warn:#ffb84d; --ok:#3dffb0; --bad:#ff5d7a;
+  --text:#e6f1ff; --muted:#8fa6c8; --warn:#ffb84d; --ok:#3dffb0; --bad:#ff5d7a; --orange:#ff7a3d;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Sarabun',system-ui,sans-serif;font-size:16px;line-height:1.5}
@@ -135,6 +135,19 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;fon
 .foot{margin-top:26px;text-align:center;font-size:.82rem;color:var(--muted);opacity:.8}
 .rtable td:first-child{color:var(--muted)}
 .rtable td.num{font-family:'Orbitron',sans-serif;font-size:.85rem}
+/* ---------- Physics ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tab{font:inherit;font-size:.92rem;color:var(--muted);background:rgba(3,10,26,.6);border:1px solid rgba(143,166,200,.3);border-radius:999px;padding:8px 16px;cursor:pointer;transition:.2s}
+.tab:hover{color:var(--text);border-color:var(--orange)}
+.tab.active{color:#fff;border-color:var(--orange);background:rgba(255,122,61,.16);box-shadow:0 0 14px rgba(255,122,61,.4)}
+.ptab{display:none}
+.ptab.active{display:block}
+.steps{margin:0;padding-left:1.3em}
+.steps li{margin-bottom:9px}
+.steps b{color:var(--orange)}
+.ans{border:1px solid var(--orange);border-radius:14px;padding:14px 16px;background:rgba(255,122,61,.08);box-shadow:0 0 22px rgba(255,122,61,.18);margin-bottom:12px}
+.ans b{color:#fff}
+.rtable th.r,.rtable td.r{text-align:right}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -185,6 +198,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;fon
         <span class="no">05</span>
         <svg viewBox="0 0 64 64"><path d="M10 22h40M42 14l8 8-8 8M54 42H14M22 34l-8 8 8 8"/></svg>
         <h3>UNITS</h3><p>แปลงหน่วย</p>
+      </a>
+      <a class="card" href="#/physics" style="--c:var(--orange)">
+        <span class="no">06</span>
+        <svg viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="26" ry="10"/><ellipse cx="32" cy="32" rx="26" ry="10" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="26" ry="10" transform="rotate(120 32 32)"/><circle cx="32" cy="32" r="3"/></svg>
+        <h3>PHYSICS</h3><p>โจทย์ฟิสิกส์</p>
       </a>
     </div>
     <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
@@ -333,6 +351,106 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;fon
   </div>
 </section>
 
+<!-- ================= PHYSICS ================= -->
+<section class="view" id="v-physics">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 06</span></div>
+    <h2 class="title" style="--c:var(--orange)">PHYSICS<small>เครื่องช่วยคิดโจทย์ฟิสิกส์ พร้อมแสดงขั้นตอน</small></h2>
+    <div class="tabs" id="p-tabs">
+      <button class="tab active" type="button" data-tab="lever">คานบนลิ่ม (โมเมนต์)</button>
+      <button class="tab" type="button" data-tab="kin">เคลื่อนที่แนวตรง</button>
+      <button class="tab" type="button" data-tab="proj">โพรเจกไทล์</button>
+      <button class="tab" type="button" data-tab="inc">พื้นเอียง + ความเสียดทาน</button>
+    </div>
+    <div class="panel">
+      <div class="g2">
+        <label class="field" style="margin:0"><span>ความเร่งโน้มถ่วง g (m/s²)</span>
+          <input id="p-g" type="number" step="any" value="9.8" list="p-glist">
+          <datalist id="p-glist"><option value="9.8"></option><option value="9.81"></option><option value="10"></option></datalist></label>
+        <div class="note" style="align-self:center">ใช้กับแท็บที่เกี่ยวกับน้ำหนัก (คานบนลิ่ม, โพรเจกไทล์, พื้นเอียง) · เลือกจากรายการหรือพิมพ์เองได้</div>
+      </div>
+    </div>
+
+    <!-- ---- lever ---- -->
+    <div class="ptab active" id="pt-lever">
+      <div class="cols">
+        <div class="panel">
+          <h4>PROBLEM</h4>
+          <div class="note" style="margin-bottom:12px">ตัวอย่างโจทย์: คานสม่ำเสมอ AB ยาว 6 m วางพาดบนลิ่ม x และ y ห่างจากปลาย A 1 m และ 4 m ตามลำดับ แรงน้อยที่สุดที่ทำให้คานเผยอขึ้นจากลิ่มต้องกระทำอย่างไร</div>
+          <div class="g2">
+            <label class="field"><span>ความยาวคาน L (m)</span><input id="lv-L" type="number" step="any" value="6"></label>
+            <label class="field"><span>จุดศูนย์กลางมวลจาก A (m)</span><input id="lv-c" type="number" step="any" placeholder="L/2 (คานสม่ำเสมอ)"></label>
+            <label class="field"><span>ลิ่ม x ห่างจากปลาย A (m)</span><input id="lv-p1" type="number" step="any" value="1"></label>
+            <label class="field"><span>ลิ่ม y ห่างจากปลาย A (m)</span><input id="lv-p2" type="number" step="any" value="4"></label>
+          </div>
+          <label class="field"><span>มวลคาน m (kg) — ไม่ต้องกรอกก็ได้ ถ้าโจทย์ให้ตอบเป็นสัดส่วนของ W</span><input id="lv-m" type="number" step="any" min="0" value="10"></label>
+        </div>
+        <div class="panel">
+          <h4>ANSWER</h4>
+          <canvas id="lv-sketch" class="sketch"></canvas>
+          <div id="lv-out"></div>
+        </div>
+      </div>
+      <div class="panel"><h4>STEP-BY-STEP</h4><ol class="steps" id="lv-steps"></ol></div>
+    </div>
+
+    <!-- ---- kinematics ---- -->
+    <div class="ptab" id="pt-kin">
+      <div class="cols">
+        <div class="panel">
+          <h4>INPUT</h4>
+          <div class="note" style="margin-bottom:12px">กรอกค่าที่โจทย์ให้ <b>3 ค่า</b> แล้วเว้นว่างอีก 2 ค่าที่ต้องการหา (ความเร่งคงที่) · ตกอิสระ: a = g และให้ทิศลงเป็นบวก</div>
+          <div class="g2">
+            <label class="field"><span>ความเร็วต้น u (m/s)</span><input id="k-u" type="number" step="any" value="0"></label>
+            <label class="field"><span>ความเร็วปลาย v (m/s)</span><input id="k-v" type="number" step="any"></label>
+            <label class="field"><span>ความเร่ง a (m/s²)</span><input id="k-a" type="number" step="any" value="2"></label>
+            <label class="field"><span>เวลา t (s)</span><input id="k-t" type="number" step="any" value="5"></label>
+            <label class="field"><span>การกระจัด s (m)</span><input id="k-s" type="number" step="any"></label>
+          </div>
+          <div class="note">v = u + at · s = ut + ½at² · v² = u² + 2as · s = ½(u + v)t</div>
+        </div>
+        <div class="panel"><h4>RESULT</h4><div id="k-out"></div></div>
+      </div>
+    </div>
+
+    <!-- ---- projectile ---- -->
+    <div class="ptab" id="pt-proj">
+      <div class="cols">
+        <div class="panel">
+          <h4>INPUT</h4>
+          <div class="g2">
+            <label class="field"><span>ความเร็วต้น v₀ (m/s)</span><input id="pr-v" type="number" step="any" value="20"></label>
+            <label class="field"><span>มุมยิง θ (องศา เหนือแนวระดับ)</span><input id="pr-th" type="number" step="any" value="45"></label>
+          </div>
+          <label class="field"><span>ความสูงจุดยิงเหนือพื้น h₀ (m)</span><input id="pr-h" type="number" step="any" min="0" value="0"></label>
+          <div class="note">ไม่คิดแรงต้านอากาศ · ยิงลงใส่มุมติดลบได้ (ต้องมี h₀ &gt; 0)</div>
+        </div>
+        <div class="panel"><h4>RESULT</h4><div id="pr-out"></div></div>
+      </div>
+      <div class="panel"><h4>TRAJECTORY</h4><canvas id="pr-chart" class="chart"></canvas></div>
+    </div>
+
+    <!-- ---- incline ---- -->
+    <div class="ptab" id="pt-inc">
+      <div class="cols">
+        <div class="panel">
+          <h4>INPUT</h4>
+          <div class="g2">
+            <label class="field"><span>มวลวัตถุ m (kg)</span><input id="in-m" type="number" step="any" value="10"></label>
+            <label class="field"><span>มุมเอียง θ (องศา)</span><input id="in-th" type="number" step="any" value="30"></label>
+            <label class="field"><span>สัมประสิทธิ์ความเสียดทานสถิต μs</span><input id="in-us" type="number" step="any" min="0" value="0.5"></label>
+            <label class="field"><span>สัมประสิทธิ์ความเสียดทานจลน์ μk</span><input id="in-uk" type="number" step="any" min="0" value="0.4"></label>
+          </div>
+          <label class="field"><span>ระยะที่ไถลลง d (m) — ใช้หาความเร็วและเวลา</span><input id="in-d" type="number" step="any" min="0" value="2"></label>
+        </div>
+        <div class="panel"><h4>RESULT</h4><div id="in-out"></div></div>
+      </div>
+    </div>
+
+    <div class="foot">ใช้ตรวจคำตอบและทำความเข้าใจโจทย์ ควรเขียนวิธีทำด้วยตัวเองประกอบเสมอ</div>
+  </div>
+</section>
+
 <script>
 const $ = id => document.getElementById(id);
 const fmt = (n, d = 3) => Number.isFinite(n)
@@ -391,7 +509,7 @@ addEventListener('hashchange', route);
 addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('v-home').classList.contains('active')) location.hash = '#/menu';
 });
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if ($('v-beam').classList.contains('active')) calcBeam(); }, 120); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if ($('v-beam').classList.contains('active')) calcBeam(); if ($('v-physics').classList.contains('active')) calcPhysics(); }, 120); });
 
 document.addEventListener('input', e => {
   if (e.target.id === 'b-mat') { if (e.target.value !== 'custom') $('b-E').value = e.target.value; }
@@ -673,6 +791,252 @@ function calcUnits() {
 }
 calcMap.units = calcUnits;
 buildUnitFrom();
+
+/* ============ PHYSICS ============ */
+//<core2
+function fracStr(x) { // x in units of W -> "W/4", "2W/5", or decimal
+  for (let den = 1; den <= 60; den++) {
+    const num = Math.round(x * den);
+    if (num > 0 && Math.abs(x * den - num) < 1e-9) {
+      const top = num === 1 ? 'W' : num + 'W';
+      return den === 1 ? top : top + '/' + den;
+    }
+  }
+  return (Math.round(x * 10000) / 10000) + 'W';
+}
+// force in units of W, vertical force at an end of the beam, to lift the beam off one support
+function leverCandidates(L, p1, p2, c) {
+  const sup = [p1, p2], out = [];
+  for (let i = 0; i < 2; i++) {
+    const pj = sup[1 - i], pi = sup[i], m0 = c - pj, sgn = pi < pj ? 1 : -1;
+    if (sgn * m0 >= 0) continue; // centre of mass outside supports (handled by caller)
+    for (const s of [0, L]) for (const d of [1, -1]) {
+      const a = d * (s - pj);
+      if (a !== 0 && sgn * a < 0) out.push({ lift: i + 1, s, d, F: Math.abs(m0) / Math.abs(a) });
+    }
+  }
+  return out.sort((p, q) => p.F - q.F);
+}
+function solveKin(k) {
+  const nm = ['u', 'v', 'a', 't', 's'], known = nm.filter(n => k[n] !== null);
+  if (known.length !== 3) return { err: 'ต้องกรอกค่าที่ทราบ 3 ค่า และเว้นว่างค่าที่ไม่ทราบอีก 2 ค่า' };
+  if (k.t !== null && k.t < 0) return { err: 'เวลา t ต้องไม่ติดลบ' };
+  const { u, v, a, t, s } = k, key = known.join(''), sols = [], eps = 1e-9;
+  const add = o => sols.push(Object.assign({ u, v, a, t, s }, o));
+  const bad = m => ({ err: m });
+  const inconsistent = 'ค่าที่ให้ไม่สอดคล้องกัน (เวลาติดลบ)';
+  switch (key) {
+    case 'uvt':
+      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
+      add({ a: (v - u) / t, s: (u + v) * t / 2 }); break;
+    case 'uva': {
+      if (a === 0) return bad('a = 0 หาเวลาไม่ได้');
+      const tt = (v - u) / a; if (tt < -eps) return bad(inconsistent);
+      add({ t: Math.max(tt, 0), s: (v * v - u * u) / (2 * a) }); break;
+    }
+    case 'uvs': {
+      if (u + v === 0) return bad('u + v = 0 หาเวลาไม่ได้');
+      const tt = 2 * s / (u + v); if (tt < -eps) return bad(inconsistent);
+      add({ t: Math.max(tt, 0), a: s !== 0 ? (v * v - u * u) / (2 * s) : NaN }); break;
+    }
+    case 'uat':
+      add({ v: u + a * t, s: u * t + 0.5 * a * t * t }); break;
+    case 'uas': {
+      const D = u * u + 2 * a * s; if (D < 0) return bad('ไม่มีคำตอบจริง (v² ติดลบ)');
+      if (a === 0) {
+        if (u === 0) return bad('u = 0 และ a = 0 หาเวลาไม่ได้');
+        const tt = s / u; if (tt < -eps) return bad(inconsistent);
+        add({ v: u, t: Math.max(tt, 0) }); break;
+      }
+      const r = Math.sqrt(D), vs = r === 0 ? [0] : [r, -r];
+      vs.forEach(vv => { const tt = (vv - u) / a; if (tt >= -eps) add({ v: vv, t: Math.max(tt, 0) }); });
+      if (!sols.length) return bad('ไม่มีคำตอบที่เวลาไม่ติดลบ');
+      break;
+    }
+    case 'uts':
+      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
+      { const aa = 2 * (s - u * t) / (t * t); add({ a: aa, v: u + aa * t }); } break;
+    case 'vat':
+      add({ u: v - a * t, s: v * t - 0.5 * a * t * t }); break;
+    case 'vas': {
+      const D = v * v - 2 * a * s; if (D < 0) return bad('ไม่มีคำตอบจริง (u² ติดลบ)');
+      if (a === 0) {
+        if (v === 0) return bad('v = 0 และ a = 0 หาเวลาไม่ได้');
+        const tt = s / v; if (tt < -eps) return bad(inconsistent);
+        add({ u: v, t: Math.max(tt, 0) }); break;
+      }
+      const r = Math.sqrt(D), us = r === 0 ? [0] : [r, -r];
+      us.forEach(uu => { const tt = (v - uu) / a; if (tt >= -eps) add({ u: uu, t: Math.max(tt, 0) }); });
+      if (!sols.length) return bad('ไม่มีคำตอบที่เวลาไม่ติดลบ');
+      break;
+    }
+    case 'vts':
+      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
+      { const aa = 2 * (v * t - s) / (t * t); add({ a: aa, u: v - aa * t }); } break;
+    case 'ats':
+      if (t === 0) return bad('t = 0 หาความเร็วต้นไม่ได้');
+      { const uu = (s - 0.5 * a * t * t) / t; add({ u: uu, v: uu + a * t }); } break;
+  }
+  return { sols, known };
+}
+function projectile(v0, thDeg, h0, g) {
+  const th = thDeg * Math.PI / 180, vx = v0 * Math.cos(th), vy0 = v0 * Math.sin(th);
+  const T = (vy0 + Math.sqrt(vy0 * vy0 + 2 * g * h0)) / g, R = vx * T;
+  const tApex = vy0 > 0 ? vy0 / g : 0, H = h0 + (vy0 > 0 ? vy0 * vy0 / (2 * g) : 0);
+  const vyEnd = vy0 - g * T, vEnd = Math.hypot(vx, vyEnd);
+  const angEnd = Math.atan2(Math.abs(vyEnd), Math.abs(vx)) * 180 / Math.PI;
+  const xs = [], ys = [];
+  if (R > 1e-9 && Math.abs(vx) > 1e-9) {
+    for (let i = 0; i <= 120; i++) {
+      const x = R * i / 120; xs.push(x);
+      ys.push(h0 + x * Math.tan(th) - g * x * x / (2 * vx * vx));
+    }
+  }
+  return { vx, vy0, T, R, tApex, H, vEnd, angEnd, xs, ys };
+}
+function incline(m, thDeg, us, uk, d, g) {
+  const th = thDeg * Math.PI / 180, W = m * g, Wpar = W * Math.sin(th), N = W * Math.cos(th);
+  const fsMax = us * N, fk = uk * N, slides = Wpar > fsMax + 1e-12;
+  const a = slides ? g * (Math.sin(th) - uk * Math.cos(th)) : 0;
+  const Fstart = W * (Math.sin(th) + us * Math.cos(th));
+  const Fhold = Math.max(0, W * (Math.sin(th) - us * Math.cos(th)));
+  const crit = Math.atan(us) * 180 / Math.PI;
+  let v = null, t = null;
+  if (slides && a > 0 && d > 0) { v = Math.sqrt(2 * a * d); t = v / a; }
+  return { W, Wpar, N, fsMax, fk, slides, a, f: slides ? fk : Wpar, Fstart, Fhold, crit, v, t };
+}
+//core2>
+
+const pv = id => parseFloat($(id).value);
+const alertBox = msg => `<div class="alert">${msg}</div>`;
+
+function arrow2(c, x, ya, yb, color) {
+  const dir = Math.sign(yb - ya);
+  c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5;
+  c.beginPath(); c.moveTo(x, ya); c.lineTo(x, yb); c.stroke();
+  c.beginPath(); c.moveTo(x, yb + dir * 2); c.lineTo(x - 6, yb - dir * 9); c.lineTo(x + 6, yb - dir * 9); c.closePath(); c.fill();
+}
+function drawLever(cv, L, p1, p2, cm, best) {
+  const { c, W } = setupCanvas(cv); if (!W) return;
+  const x0 = 40, x1 = W - 40, y = 70, X = x => x0 + x / L * (x1 - x0);
+  c.font = '12px Sarabun, sans-serif';
+  [[p1, 'x'], [p2, 'y']].forEach(([p, n]) => {
+    const px = X(p);
+    c.strokeStyle = '#ffb84d'; c.fillStyle = 'rgba(255,184,77,.22)'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(px, y + 5); c.lineTo(px - 15, y + 32); c.lineTo(px + 15, y + 32); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#ffb84d'; c.textAlign = 'center'; c.fillText(`${n} (${fmt(p, 2)} m)`, px, y + 48);
+  });
+  c.strokeStyle = '#ff7a3d'; c.lineWidth = 8; c.lineCap = 'butt'; c.shadowColor = '#ff7a3d'; c.shadowBlur = 10;
+  c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke(); c.shadowBlur = 0;
+  c.fillStyle = '#e6f1ff'; c.textAlign = 'center'; c.fillText('A', x0 - 14, y + 4); c.fillText('B', x1 + 14, y + 4);
+  arrow2(c, X(cm), y - 52, y - 6, '#3dffb0');
+  c.fillStyle = '#3dffb0'; c.textAlign = 'center'; c.fillText('W', X(cm), y - 58);
+  const fx = X(best.s);
+  c.fillStyle = '#ff3df2'; c.textAlign = 'left';
+  if (best.d > 0) { arrow2(c, fx, y + 44, y + 6, '#ff3df2'); c.fillStyle = '#ff3df2'; c.fillText('F', fx + 10, y + 30); }
+  else { arrow2(c, fx, y - 52, y - 6, '#ff3df2'); c.fillStyle = '#ff3df2'; c.fillText('F', fx + 10, y - 30); }
+}
+
+function calcLever() {
+  const L = pv('lv-L'), p1 = pv('lv-p1'), p2 = pv('lv-p2');
+  const cs = $('lv-c').value.trim(), c = cs === '' ? L / 2 : parseFloat(cs);
+  const m = pv('lv-m'), g = pv('p-g'), out = $('lv-out'), steps = $('lv-steps');
+  const err = [];
+  if (!(L > 0)) err.push('ความยาวคาน L ต้องมากกว่า 0');
+  else if (!(p1 >= 0 && p2 <= L && p1 < p2)) err.push('ลิ่มต้องอยู่บนคาน และลิ่ม x ต้องอยู่ซ้ายของลิ่ม y (0 ≤ x &lt; y ≤ L)');
+  else if (!(c > p1 && c < p2)) err.push('จุดศูนย์กลางมวลต้องอยู่ระหว่างลิ่มทั้งสอง ไม่เช่นนั้นคานจะพลิกเอง (ไม่สมดุล)');
+  if (err.length) { out.innerHTML = alertBox(err.join('<br>')); steps.innerHTML = ''; setupCanvas($('lv-sketch')); return; }
+  const W = (m > 0 && g > 0) ? m * g : null;
+  const names = ['x', 'y'], pos = [p1, p2], cands = leverCandidates(L, p1, p2, c), best = cands[0];
+  const nLift = names[best.lift - 1], nPiv = names[2 - best.lift], pj = pos[2 - best.lift];
+  const end = best.s === 0 ? 'A' : 'B', dirTxt = best.d > 0 ? 'ดึงขึ้น (ทิศขึ้น)' : 'กดลง (ทิศลง)';
+  const inN = f => W ? ` = ${fmt(f * W, 3)} N` : '';
+  const Nx = (p2 - c) / (p2 - p1), Ny = (c - p1) / (p2 - p1);
+  let h = `<div class="ans">แรงที่น้อยที่สุด = <b>${fracStr(best.F)}</b>${W ? ` <b>${inN(best.F).replace(' = ', '= ')}</b>` : ''}<br>ออกแรง<b>${dirTxt}</b>ที่<b>ปลาย ${end}</b> ทำให้คานเผยอขึ้นจากลิ่ม <b>${nLift}</b> (คานหมุนรอบลิ่ม ${nPiv})</div>`;
+  h += '<div class="stats">' +
+    stat('น้ำหนักคาน W', W ? fmt(W, 3) : '—', W ? 'N' : '') +
+    stat('แรงที่ลิ่ม x รับ', fracStr(Nx), W ? inN(Nx).replace(' = ', '= ') : '') +
+    stat('แรงที่ลิ่ม y รับ', fracStr(Ny), W ? inN(Ny).replace(' = ', '= ') : '') + '</div>';
+  h += '<table class="rtable" style="margin-top:14px"><thead><tr><th>ลิ่มที่หลุด</th><th>จุดออกแรง</th><th>ทิศ</th><th class="r">F</th></tr></thead><tbody>';
+  cands.forEach((q, i) => {
+    h += `<tr${i === 0 ? ' style="color:#fff"' : ''}><td>${names[q.lift - 1]}</td><td>ปลาย ${q.s === 0 ? 'A' : 'B'}</td><td>${q.d > 0 ? 'ขึ้น' : 'ลง'}</td><td class="num">${fracStr(q.F)}${W ? ' (' + fmt(q.F * W, 2) + ' N)' : ''}</td></tr>`;
+  });
+  out.innerHTML = h + '</tbody></table><div class="note" style="margin-top:8px">แถวบนสุดคือคำตอบ (แรงน้อยที่สุด) แถวอื่นคือวิธีออกแรงที่ทำได้เช่นกันแต่ใช้แรงมากกว่า</div>';
+  const armW = Math.abs(c - pj), armF = Math.abs(best.s - pj);
+  steps.innerHTML =
+    `<li>น้ำหนักคาน <b>W</b> กระทำที่จุดศูนย์กลางมวล ห่างจาก A เท่ากับ <b>${fmt(c, 3)} m</b>${cs === '' ? ' (คานสม่ำเสมอ ⇒ L/2)' : ''}</li>` +
+    `<li>ให้คานเพิ่งจะเผยอจากลิ่ม <b>${nLift}</b> พอดี ⇒ แรงปฏิกิริยาที่ลิ่ม ${nLift} เป็น 0 คานจึงหมุนรอบลิ่ม <b>${nPiv}</b> (ตำแหน่ง ${fmt(pj, 3)} m จาก A)</li>` +
+    `<li>แขนโมเมนต์ของน้ำหนัก = |${fmt(c, 3)} − ${fmt(pj, 3)}| = <b>${fmt(armW, 3)} m</b><br>แขนโมเมนต์ของแรง F ที่ปลาย ${end} = |${fmt(best.s, 3)} − ${fmt(pj, 3)}| = <b>${fmt(armF, 3)} m</b> (ออกแรงไกลจุดหมุนที่สุดจะใช้แรงน้อยที่สุด จึงเลือกที่ปลายคาน)</li>` +
+    `<li>สมดุลโมเมนต์รอบลิ่ม ${nPiv}: F × ${fmt(armF, 3)} = W × ${fmt(armW, 3)} ⇒ <b>F = ${fracStr(best.F)}</b>${W ? ` (m = ${fmt(m, 3)} kg, g = ${fmt(g, 3)} ⇒ W = ${fmt(W, 3)} N ⇒ F = ${fmt(best.F * W, 3)} N)` : ''}</li>` +
+    `<li>ทิศของแรง: ต้อง<b>${dirTxt}</b>ที่ปลาย ${end} เพื่อให้ด้านลิ่ม ${nLift} ยกขึ้นโดยคานหมุนรอบลิ่ม ${nPiv}</li>`;
+  drawLever($('lv-sketch'), L, p1, p2, c, best);
+}
+
+function calcKin() {
+  const ids = ['u', 'v', 'a', 't', 's'], k = {}; let bad = false;
+  ids.forEach(n => {
+    const raw = $('k-' + n).value.trim();
+    if (raw === '') k[n] = null; else { const x = parseFloat(raw); if (!Number.isFinite(x)) bad = true; k[n] = x; }
+  });
+  const out = $('k-out');
+  if (bad) { out.innerHTML = alertBox('กรอกเป็นตัวเลขเท่านั้น'); return; }
+  const r = solveKin(k);
+  if (r.err) { out.innerHTML = alertBox(r.err); return; }
+  const lab = { u: 'ความเร็วต้น u', v: 'ความเร็วปลาย v', a: 'ความเร่ง a', t: 'เวลา t', s: 'การกระจัด s' };
+  const un = { u: 'm/s', v: 'm/s', a: 'm/s²', t: 's', s: 'm' };
+  out.innerHTML = r.sols.map((sol, i) =>
+    (r.sols.length > 1 ? `<div class="note" style="margin:${i ? 14 : 0}px 0 6px">คำตอบที่ ${i + 1}</div>` : '') +
+    '<div class="stats">' + ids.map(n => stat(`${lab[n]} ${r.known.includes(n) ? '(โจทย์ให้)' : '(คำนวณได้)'}`, fmt(sol[n], 4), un[n])).join('') + '</div>'
+  ).join('') + (r.sols.length > 1 ? '<div class="note" style="margin-top:10px">มีสองคำตอบเพราะ v² = u² + 2as ให้ได้ทั้งค่าบวกและลบ (เช่น ขึ้นแล้วลง) ให้เลือกตามเงื่อนไขโจทย์</div>' : '');
+}
+
+function calcProj() {
+  const v0 = pv('pr-v'), th = pv('pr-th'), h0 = pv('pr-h'), g = pv('p-g'), out = $('pr-out');
+  if (!(v0 >= 0) || !(th >= -90 && th <= 90) || !(h0 >= 0) || !(g > 0)) {
+    out.innerHTML = alertBox('ต้องมี v₀ ≥ 0, มุม −90° ถึง 90°, h₀ ≥ 0 และ g &gt; 0'); setupCanvas($('pr-chart')); return;
+  }
+  if (th < 0 && h0 === 0) { out.innerHTML = alertBox('ยิงลงต้องมีความสูง h₀ &gt; 0'); setupCanvas($('pr-chart')); return; }
+  const r = projectile(v0, th, h0, g);
+  out.innerHTML = '<div class="stats">' +
+    stat('เวลาที่อยู่ในอากาศ T', fmt(r.T, 3), 's') + stat('ระยะทางในแนวระดับ R', fmt(r.R, 3), 'm', true) +
+    stat('ความสูงสูงสุด H', fmt(r.H, 3), 'm') + stat('เวลาถึงจุดสูงสุด', fmt(r.tApex, 3), 's') +
+    stat('ความเร็วแนวระดับ vₓ', fmt(r.vx, 3), 'm/s') + stat('ความเร็วแนวดิ่งตอนยิง', fmt(r.vy0, 3), 'm/s') +
+    stat('อัตราเร็วตอนตกถึงพื้น', fmt(r.vEnd, 3), 'm/s') + stat('มุมตกกระทบ (ต่ำกว่าแนวระดับ)', fmt(r.angEnd, 2), '°') + '</div>';
+  if (r.xs.length) drawProjChart(r); else setupCanvas($('pr-chart'));
+}
+function drawProjChart(r) {
+  drawChart($('pr-chart'), r.xs, r.ys, r.R, { title: 'Trajectory: height y (m) vs distance x', unit: 'm', color: '#ff7a3d', fill: 'rgba(255,122,61,.14)' });
+}
+
+function calcInc() {
+  const m = pv('in-m'), th = pv('in-th'), us = pv('in-us'), uk = pv('in-uk'), d = pv('in-d') || 0, g = pv('p-g'), out = $('in-out');
+  if (!(m > 0) || !(th >= 0 && th < 90) || !(us >= 0) || !(uk >= 0) || !(g > 0)) {
+    out.innerHTML = alertBox('ต้องมี m &gt; 0, มุม 0° ถึงน้อยกว่า 90°, μ ≥ 0 และ g &gt; 0'); return;
+  }
+  const r = incline(m, th, us, uk, d, g);
+  let h = `<div class="ans">${r.slides ? `วัตถุ<b>ไถลลง</b> ด้วยความเร่ง <b>${fmt(r.a, 3)} m/s²</b>` : 'วัตถุ<b>ไม่ไถล</b> (หยุดนิ่ง) แรงเสียดทานสถิตจริง = <b>' + fmt(r.f, 3) + ' N</b>'}</div>`;
+  if (uk > us) h += alertBox('ปกติ μk ไม่ควรมากกว่า μs โปรดตรวจสอบค่าที่กรอก') + '<div style="height:10px"></div>';
+  h += '<div class="stats">' +
+    stat('น้ำหนัก W = mg', fmt(r.W, 3), 'N') + stat('องค์ประกอบขนานพื้นเอียง mg sinθ', fmt(r.Wpar, 3), 'N') +
+    stat('แรงตั้งฉาก N = mg cosθ', fmt(r.N, 3), 'N') + stat('แรงเสียดทานสถิตสูงสุด μsN', fmt(r.fsMax, 3), 'N') +
+    stat('แรงเสียดทานจลน์ μkN', fmt(r.fk, 3), 'N') + stat('มุมวิกฤต (เริ่มไถล) = tan⁻¹μs', fmt(r.crit, 2), '°');
+  if (r.v !== null) h += stat(`ความเร็วเมื่อไถลลง ${fmt(d, 2)} m`, fmt(r.v, 3), 'm/s') + stat('เวลาที่ใช้', fmt(r.t, 3), 's');
+  h += stat('แรงขนานพื้นเอียงดันขึ้น เพื่อเริ่มเคลื่อนที่ขึ้น', fmt(r.Fstart, 3), 'N');
+  h += stat('แรงขนานพื้นเอียงดันขึ้น เพื่อไม่ให้ไถลลง (ขั้นต่ำ)', fmt(r.Fhold, 3), 'N');
+  out.innerHTML = h + '</div>';
+}
+
+function calcPhysics() {
+  const t = document.querySelector('#p-tabs .tab.active').dataset.tab;
+  ({ lever: calcLever, kin: calcKin, proj: calcProj, inc: calcInc })[t]();
+}
+calcMap.physics = calcPhysics;
+document.addEventListener('click', e => {
+  const b = e.target.closest('#p-tabs .tab'); if (!b) return;
+  document.querySelectorAll('#p-tabs .tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('.ptab').forEach(x => x.classList.toggle('active', x.id === 'pt-' + b.dataset.tab));
+  calcPhysics();
+});
 
 route();
 </script>
