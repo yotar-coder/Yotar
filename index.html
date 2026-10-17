@@ -1,1044 +1,887 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Civil Engineering Toolkit</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#050a18; --panel:rgba(13,24,48,.74); --line:rgba(0,229,255,.25);
-  --cyan:#00e5ff; --blue:#3d7bff; --pink:#ff3df2; --amber:#ffb84d; --green:#3dffb0; --violet:#a98bff;
-  --text:#e6f1ff; --muted:#8fa6c8; --warn:#ffb84d; --ok:#3dffb0; --bad:#ff5d7a; --orange:#ff7a3d;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Sarabun',system-ui,sans-serif;font-size:16px;line-height:1.5}
-body::before{ /* blueprint grid */
-  content:"";position:fixed;inset:0;z-index:-2;
-  background:
-    radial-gradient(ellipse at 50% 0%,rgba(61,123,255,.25),transparent 60%),
-    radial-gradient(ellipse at 80% 100%,rgba(255,61,242,.12),transparent 55%),
-    linear-gradient(rgba(0,229,255,.07) 1px,transparent 1px) 0 0/48px 48px,
-    linear-gradient(90deg,rgba(0,229,255,.07) 1px,transparent 1px) 0 0/48px 48px,
-    var(--bg);
-  animation:gridmove 24s linear infinite;
-}
-@keyframes gridmove{to{background-position:0 0,0 0,0 48px,48px 0,0 0}}
-a{color:inherit}
-.view{display:none;min-height:100vh}
-.view.active{display:block;animation:fadein .45s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIVIL SUITE PRO - Civil Engineering Toolkit & Calculators</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#0a0f1d',
+                            card: '#111827',
+                            border: '#1f2937',
+                            primary: '#06b6d4',
+                            secondary: '#3b82f6',
+                            accent: '#8b5cf6',
+                            glow: '#00f0ff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Kanit', 'sans-serif'],
+                        mono: ['Fira Code', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-/* ---------- Landing ---------- */
-#v-home.active{display:flex}
-#v-home{align-items:center;justify-content:center;text-align:center;padding:24px}
-.hero{display:flex;flex-direction:column;align-items:center;gap:18px}
-.tag{font-family:'Orbitron',sans-serif;letter-spacing:.5em;font-size:clamp(.7rem,2.2vw,.95rem);color:var(--cyan);opacity:.85;margin-right:-.5em}
-.neon{
-  font-family:'Orbitron',sans-serif;font-weight:900;margin:0;line-height:1.05;
-  font-size:clamp(2rem,8.2vw,6rem);letter-spacing:.08em;color:#eaffff;
-  text-shadow:0 0 4px #fff,0 0 10px var(--cyan),0 0 24px var(--cyan),0 0 48px var(--cyan),0 0 90px var(--blue);
-  animation:neonpulse 3.4s ease-in-out infinite;
-}
-.neon.second{color:#ffeafe;text-shadow:0 0 4px #fff,0 0 10px var(--pink),0 0 24px var(--pink),0 0 48px var(--pink),0 0 90px #8b2bff;animation-delay:-1.2s}
-@keyframes neonpulse{
-  0%,100%{opacity:1;filter:brightness(1)}
-  46%{opacity:1}
-  48%{opacity:.78;filter:brightness(.8)}
-  50%{opacity:1;filter:brightness(1.15)}
-  52%{opacity:.88}
-  54%{opacity:1}
-  75%{filter:brightness(1.2)}
-}
-.sub{font-family:'Orbitron',sans-serif;font-size:clamp(.8rem,2.6vw,1.15rem);letter-spacing:.3em;color:var(--muted);margin-right:-.3em}
-.enter{
-  margin-top:18px;display:inline-flex;gap:10px;align-items:center;text-decoration:none;
-  font-family:'Orbitron',sans-serif;letter-spacing:.25em;font-size:1rem;font-weight:700;color:var(--cyan);
-  padding:14px 34px;border:1.5px solid var(--cyan);border-radius:999px;
-  box-shadow:0 0 14px rgba(0,229,255,.45),inset 0 0 14px rgba(0,229,255,.18);
-  text-shadow:0 0 8px var(--cyan);transition:.25s;
-}
-.enter:hover{background:var(--cyan);color:#021018;text-shadow:none;box-shadow:0 0 30px var(--cyan)}
-.hint{font-size:.85rem;color:var(--muted);opacity:.7}
+    <style>
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background-color: #070a12;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
 
-/* ---------- Menu ---------- */
-.mhead{text-align:center;margin:14px 0 30px}
-.mhead h2{font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,5vw,2.4rem);letter-spacing:.2em;margin:0;color:#eaffff;
-  text-shadow:0 0 6px var(--cyan),0 0 20px var(--cyan),0 0 40px var(--blue)}
-.mhead p{margin:6px 0 0;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
-.card{
-  --c:var(--cyan);position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;
-  padding:30px 16px 24px;border:1px solid var(--line);border-radius:18px;background:var(--panel);
-  backdrop-filter:blur(6px);text-decoration:none;transition:.25s;
-}
-.card:hover,.card:focus-visible{transform:translateY(-6px);border-color:var(--c);outline:none;
-  box-shadow:0 0 0 1px var(--c),0 0 30px color-mix(in srgb,var(--c) 45%,transparent),inset 0 0 34px color-mix(in srgb,var(--c) 12%,transparent)}
-.card svg{width:78px;height:78px;color:var(--c);fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
-  filter:drop-shadow(0 0 5px var(--c)) drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
-.card .no{position:absolute;top:12px;left:16px;font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--muted);letter-spacing:.15em}
-.card h3{font-family:'Orbitron',sans-serif;letter-spacing:.14em;margin:4px 0 0;font-size:1rem;color:#fff}
-.card p{margin:0;color:var(--muted);font-size:.95rem}
+        /* Neon Glow Text Animations */
+        .neon-text-cyan {
+            color: #fff;
+            text-shadow: 
+                0 0 5px #06b6d4,
+                0 0 10px #06b6d4,
+                0 0 20px #06b6d4,
+                0 0 40px #0891b2,
+                0 0 80px #0891b2;
+        }
 
-/* ---------- Tool pages ---------- */
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
-.btn{font-family:'Orbitron',sans-serif;font-size:.78rem;letter-spacing:.14em;text-decoration:none;color:var(--cyan);
-  padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:rgba(0,229,255,.06);cursor:pointer;transition:.2s}
-.btn:hover{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.4)}
-.crumb{font-family:'Orbitron',sans-serif;font-size:.75rem;color:var(--muted);letter-spacing:.2em}
-.title{font-family:'Orbitron',sans-serif;margin:10px 0 18px;font-size:clamp(1.4rem,5vw,2.2rem);letter-spacing:.14em;color:#eaffff;
-  text-shadow:0 0 6px var(--c,var(--cyan)),0 0 22px var(--c,var(--cyan))}
-.title small{display:block;font-family:'Sarabun',sans-serif;font-size:1rem;letter-spacing:0;color:var(--muted);text-shadow:none;margin-top:2px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-@media(max-width:820px){.cols{grid-template-columns:1fr}}
-.panel{border:1px solid var(--line);border-radius:16px;background:var(--panel);backdrop-filter:blur(6px);padding:18px;margin-bottom:18px}
-.panel h4{margin:0 0 12px;font-family:'Orbitron',sans-serif;font-size:.85rem;letter-spacing:.18em;color:var(--cyan);font-weight:700}
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-.field>span{font-size:.9rem;color:var(--muted)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-input,select{
-  width:100%;font:inherit;color:var(--text);background:rgba(3,10,26,.85);border:1px solid rgba(143,166,200,.3);
-  border-radius:10px;padding:9px 11px;outline:none;transition:.2s;min-width:0
-}
-input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.18)}
-input:disabled{opacity:.35}
-select option{background:#0a1430}
-.note{font-size:.85rem;color:var(--muted)}
-.note a{color:var(--cyan)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.stat{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(0,229,255,.05)}
-.stat span{display:block;font-size:.8rem;color:var(--muted)}
-.stat b{font-family:'Orbitron',sans-serif;font-size:1.05rem;color:#fff;font-weight:700;word-break:break-word}
-.stat b i{font-style:normal;font-family:'Sarabun',sans-serif;font-size:.8rem;color:var(--cyan);font-weight:400;margin-left:4px}
-.stat.big{grid-column:1/-1;border-color:var(--cyan);box-shadow:0 0 18px rgba(0,229,255,.2)}
-.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.82rem;margin-top:10px}
-.badge.ok{color:var(--ok);border:1px solid var(--ok)}
-.badge.warn{color:var(--warn);border:1px solid var(--warn)}
-.alert{color:var(--bad);border:1px solid var(--bad);border-radius:10px;padding:10px 12px;background:rgba(255,93,122,.08)}
-canvas{width:100%;display:block}
-.chart{height:190px;margin-bottom:10px;border:1px solid rgba(143,166,200,.15);border-radius:12px;background:rgba(3,10,26,.55)}
-.sketch{height:130px;margin-bottom:12px}
-table{width:100%;border-collapse:collapse}
-th{font-size:.78rem;color:var(--muted);font-weight:400;text-align:left;padding:2px 6px 6px}
-td{padding:4px 5px;vertical-align:middle}
-td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.92rem}
-.tw{overflow-x:auto}
-.tw table{min-width:560px}
-.x{border:1px solid rgba(255,93,122,.5);background:transparent;color:var(--bad);border-radius:8px;width:32px;height:34px;cursor:pointer;font-size:1.1rem}
-.x:hover{background:rgba(255,93,122,.15)}
-.add{margin-top:8px}
-.tot{margin-top:14px}
-.conv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
-.foot{margin-top:26px;text-align:center;font-size:.82rem;color:var(--muted);opacity:.8}
-.rtable td:first-child{color:var(--muted)}
-.rtable td.num{font-family:'Orbitron',sans-serif;font-size:.85rem}
-/* ---------- Physics ---------- */
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.tab{font:inherit;font-size:.92rem;color:var(--muted);background:rgba(3,10,26,.6);border:1px solid rgba(143,166,200,.3);border-radius:999px;padding:8px 16px;cursor:pointer;transition:.2s}
-.tab:hover{color:var(--text);border-color:var(--orange)}
-.tab.active{color:#fff;border-color:var(--orange);background:rgba(255,122,61,.16);box-shadow:0 0 14px rgba(255,122,61,.4)}
-.ptab{display:none}
-.ptab.active{display:block}
-.steps{margin:0;padding-left:1.3em}
-.steps li{margin-bottom:9px}
-.steps b{color:var(--orange)}
-.ans{border:1px solid var(--orange);border-radius:14px;padding:14px 16px;background:rgba(255,122,61,.08);box-shadow:0 0 22px rgba(255,122,61,.18);margin-bottom:12px}
-.ans b{color:#fff}
-.rtable th.r,.rtable td.r{text-align:right}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+        .neon-text-gold {
+            color: #fff;
+            text-shadow: 
+                0 0 5px #f59e0b,
+                0 0 10px #f59e0b,
+                0 0 20px #d97706,
+                0 0 40px #b45309;
+        }
+
+        .neon-box {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .neon-box:hover {
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+            border-color: rgba(6, 182, 212, 0.8);
+            transform: translateY(-3px);
+        }
+
+        .bg-cyber-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+
+        /* Print Style Adjustments */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-container {
+                background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
 </head>
-<body>
+<body class="bg-cyber-grid min-h-screen flex flex-col">
 
-<!-- ================= HOME ================= -->
-<section class="view active" id="v-home">
-  <div class="hero">
-    <div class="tag">// WELCOME TO //</div>
-    <h1 class="neon">CIVIL</h1>
-    <h1 class="neon second">ENGINEERING</h1>
-    <div class="sub">CALCULATION TOOLKIT</div>
-    <a class="enter" href="#/menu">ENTER <span>&#9656;</span></a>
-    <div class="hint">กดปุ่ม ENTER หรือกดคีย์ Enter เพื่อเข้าสู่เมนู</div>
-  </div>
-</section>
-
-<!-- ================= MENU ================= -->
-<section class="view" id="v-menu">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/home">&#9666; HOME</a><span class="crumb">MAIN MENU</span></div>
-    <div class="mhead">
-      <h2>SELECT TOOL</h2>
-      <p>เลือกเครื่องมือคำนวณที่ต้องการ</p>
+    <!-- DISCLAIMER BANNER -->
+    <div class="bg-amber-900/40 border-b border-amber-500/30 text-amber-200 px-4 py-2 text-xs md:text-sm text-center flex items-center justify-center gap-2 no-print z-50">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+        <span><strong>คำเตือน (Disclaimer):</strong> เครื่องมือนี้ใช้สำหรับการประมาณการและตรวจสอบเบื้องต้นเท่านั้น งานคำนวณและออกแบบจริงต้องได้รับการตรวจสอบและรับรองโดยวิศวกรผู้มีใบอนุญาตประกอบวิชาชีพ</span>
     </div>
-    <div class="cards">
-      <a class="card" href="#/beam" style="--c:var(--cyan)">
-        <span class="no">01</span>
-        <svg viewBox="0 0 64 64"><rect x="6" y="26" width="52" height="8" rx="1"/><path d="M14 34 8 50h12zM50 34l-6 16h12z"/><path d="M20 8v13M16 17l4 4 4-4M32 8v13M28 17l4 4 4-4M44 8v13M40 17l4 4 4-4"/></svg>
-        <h3>BEAM</h3><p>คำนวณคาน</p>
-      </a>
-      <a class="card" href="#/rebar" style="--c:var(--pink)">
-        <span class="no">02</span>
-        <svg viewBox="0 0 64 64"><g transform="rotate(-35 32 32)"><rect x="2" y="26" width="60" height="12" rx="6"/><path d="M14 26l5 12M25 26l5 12M36 26l5 12M47 26l5 12"/></g></svg>
-        <h3>REBAR</h3><p>คำนวณเหล็กเสริม</p>
-      </a>
-      <a class="card" href="#/concrete" style="--c:var(--amber)">
-        <span class="no">03</span>
-        <svg viewBox="0 0 64 64"><path d="M32 6l24 12v26L32 58 8 44V18z"/><path d="M8 18l24 14 24-14M32 32v26"/><circle cx="20" cy="40" r="1.5"/><circle cx="44" cy="40" r="1.5"/></svg>
-        <h3>CONCRETE</h3><p>ปริมาณคอนกรีต</p>
-      </a>
-      <a class="card" href="#/section" style="--c:var(--green)">
-        <span class="no">04</span>
-        <svg viewBox="0 0 64 64"><path d="M12 10h40v10H37v24h15v10H12V44h15V20H12z"/></svg>
-        <h3>SECTION</h3><p>คุณสมบัติหน้าตัด</p>
-      </a>
-      <a class="card" href="#/units" style="--c:var(--violet)">
-        <span class="no">05</span>
-        <svg viewBox="0 0 64 64"><path d="M10 22h40M42 14l8 8-8 8M54 42H14M22 34l-8 8 8 8"/></svg>
-        <h3>UNITS</h3><p>แปลงหน่วย</p>
-      </a>
-      <a class="card" href="#/physics" style="--c:var(--orange)">
-        <span class="no">06</span>
-        <svg viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="26" ry="10"/><ellipse cx="32" cy="32" rx="26" ry="10" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="26" ry="10" transform="rotate(120 32 32)"/><circle cx="32" cy="32" r="3"/></svg>
-        <h3>PHYSICS</h3><p>โจทย์ฟิสิกส์</p>
-      </a>
-    </div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
 
-<!-- ================= BEAM ================= -->
-<section class="view" id="v-beam">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 01</span></div>
-    <h2 class="title" style="--c:var(--cyan)">BEAM<small>คำนวณคาน: แรงปฏิกิริยา แรงเฉือน โมเมนต์ และการโก่งตัว</small></h2>
-    <div class="cols">
-      <div class="panel">
-        <h4>INPUT</h4>
-        <label class="field"><span>ประเภทคาน</span>
-          <select id="b-type"><option value="simple">คานช่วงเดียวรองรับธรรมดา (Simply supported)</option><option value="cant">คานยื่น (Cantilever, ปลายซ้ายยึดแน่น)</option></select></label>
-        <div class="g2">
-          <label class="field"><span>ช่วงคาน L (m)</span><input id="b-L" type="number" step="any" value="6"></label>
-          <label class="field"><span>น้ำหนักแผ่สม่ำเสมอ w (kN/m)</span><input id="b-w" type="number" step="any" value="10"></label>
-          <label class="field"><span>น้ำหนักจุด P (kN)</span><input id="b-P" type="number" step="any" value="20"></label>
-          <label class="field"><span>ตำแหน่ง P จากปลายซ้าย a (m)</span><input id="b-a" type="number" step="any" value="3"></label>
+    <!-- ================= HERO / LANDING PAGE ================= -->
+    <div id="landing-page" class="min-h-screen flex flex-col justify-center items-center px-4 relative overflow-hidden py-12">
+        <!-- Ambient Glowing Orbs -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="text-center max-w-4xl z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-6 uppercase tracking-widest">
+                <i class="fa-solid fa-microchip"></i> Civil Engineering Suite Pro v2.5
+            </div>
+            
+            <h1 class="text-4xl md:text-7xl font-extrabold tracking-tight mb-4 neon-text-cyan font-mono uppercase">
+                CIVIL SUITE PRO
+            </h1>
+            <p class="text-lg md:text-2xl text-slate-300 font-light mb-8 max-w-2xl mx-auto leading-relaxed">
+                ศูนย์รวมเครื่องมือวิเคราะห์ วิศวกรรมโครงสร้าง คอนกรีตเสริมเหล็ก งานดิน ชลศาสตร์ และประมาณราคา BOQ
+            </p>
+
+            <button onclick="switchToDashboard()" class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl shadow-lg hover:shadow-cyan-500/50 hover:scale-105 active:scale-95">
+                <span class="mr-3 text-lg">เข้าสู่ระบบคำนวณ (Dashboard)</span>
+                <i class="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform duration-300"></i>
+            </button>
         </div>
-        <div class="g2">
-          <label class="field"><span>วัสดุ (ตั้งค่า E อัตโนมัติ)</span>
-            <select id="b-mat"><option value="200000">เหล็ก</option><option value="23500">คอนกรีต (f'c ≈ 25 MPa)</option><option value="10000">ไม้</option><option value="custom">กำหนดเอง</option></select></label>
-          <label class="field"><span>โมดูลัสยืดหยุ่น E (MPa)</span><input id="b-E" type="number" step="any" value="200000"></label>
+
+        <!-- Quick Info Highlights -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-5xl w-full z-10">
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
+                <i class="fa-solid fa-calculator text-cyan-400 text-2xl mb-2"></i>
+                <div class="text-white font-semibold text-sm">9 หมวดหมู่หลัก</div>
+                <div class="text-xs text-slate-400">ครบถ้วนทุกสายงานโยธา</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
+                <i class="fa-solid fa-chart-line text-blue-400 text-2xl mb-2"></i>
+                <div class="text-white font-semibold text-sm">SFD & BMD Interactive</div>
+                <div class="text-xs text-slate-400">แสดงแผนภาพโครงสร้างสด</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
+                <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-2xl mb-2"></i>
+                <div class="text-white font-semibold text-sm">BOQ & Material DB</div>
+                <div class="text-xs text-slate-400">ประมาณการราคาสะดวก</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
+                <i class="fa-solid fa-code text-purple-400 text-2xl mb-2"></i>
+                <div class="text-white font-semibold text-sm">แสดงสูตรคำนวณ</div>
+                <div class="text-xs text-slate-400">ตรวจสอบย้อนหลังได้</div>
+            </div>
         </div>
-        <label class="field"><span>โมเมนต์ความเฉื่อย I (cm⁴)</span><input id="b-I" type="number" step="any" value="8000"></label>
-        <div class="note">ไม่ทราบค่า I? ใช้เครื่องมือ <a href="#/section">SECTION</a> คำนวณจากหน้าตัดได้ · ยังไม่รวมน้ำหนักตัวคานเอง ให้บวกเข้าใน w เอง</div>
-      </div>
-      <div class="panel">
-        <h4>RESULT</h4>
-        <canvas id="b-sketch" class="sketch"></canvas>
-        <div id="b-out"></div>
-      </div>
-    </div>
-    <div class="panel">
-      <h4>DIAGRAMS</h4>
-      <canvas id="b-cv" class="chart"></canvas>
-      <canvas id="b-cm" class="chart"></canvas>
-      <canvas id="b-cd" class="chart"></canvas>
-      <div class="note">แรงเฉือน (V) และโมเมนต์ (M) พล็อตค่าบวกขึ้นด้านบน (โมเมนต์บวก = ท้องคานแอ่น) · การโก่งตัวพล็อตค่าบวกลงด้านล่าง</div>
-    </div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
-
-<!-- ================= REBAR ================= -->
-<section class="view" id="v-rebar">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 02</span></div>
-    <h2 class="title" style="--c:var(--pink)">REBAR<small>คำนวณน้ำหนักและจำนวนเหล็กเสริม (RB / DB)</small></h2>
-    <div class="panel">
-      <h4>BAR LIST</h4>
-      <div class="tw">
-        <table>
-          <thead><tr><th>ขนาด</th><th>ความยาว/เส้น (m)</th><th>จำนวน (เส้น)</th><th>kg/m</th><th>น้ำหนัก (kg)</th><th>ต้องซื้อ (เส้น)</th><th></th></tr></thead>
-          <tbody id="r-rows"></tbody>
-        </table>
-      </div>
-      <button class="btn add" type="button" id="r-add">+ ADD ROW</button>
-      <div class="g2 tot">
-        <label class="field"><span>ความยาวเหล็กเส้นที่ซื้อ (m)</span><select id="r-stock"><option value="10">10 m</option><option value="12" selected>12 m</option></select></label>
-        <label class="field"><span>เผื่อเศษ/ทาบ/งอ (%)</span><input id="r-waste" type="number" step="any" min="0" value="5"></label>
-      </div>
-      <div class="note">น้ำหนักต่อเมตร = d² / 162.2 (kg/m, d เป็น mm) · "ต้องซื้อ" คิดจากการตัดต่อเส้นต่อแถว (ไม่ได้ปรับให้เศษเหล็กต่างแถวใช้ร่วมกัน)</div>
-    </div>
-    <div class="panel"><h4>SUMMARY</h4><div id="r-out"></div></div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
-
-<!-- ================= CONCRETE ================= -->
-<section class="view" id="v-concrete">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 03</span></div>
-    <h2 class="title" style="--c:var(--amber)">CONCRETE<small>ปริมาณคอนกรีตและวัสดุผสมโดยประมาณ</small></h2>
-    <div class="panel">
-      <h4>ELEMENT LIST</h4>
-      <div class="tw">
-        <table>
-          <thead><tr><th>รูปแบบ</th><th>จำนวน</th><th>A (m)</th><th>B (m)</th><th>C (m)</th><th>ปริมาตร (m³)</th><th></th></tr></thead>
-          <tbody id="c-rows"></tbody>
-        </table>
-      </div>
-      <button class="btn add" type="button" id="c-add">+ ADD ROW</button>
-      <div class="note" style="margin-top:10px">สี่เหลี่ยม: A = กว้าง, B = ยาว, C = หนา/สูง (พื้น คาน เสา ฐานราก ผนัง) · วงกลม (เสากลม): A = เส้นผ่านศูนย์กลาง Ø, B = ความสูง</div>
-      <div class="g2 tot">
-        <label class="field"><span>เผื่อสูญเสีย (%)</span><input id="c-waste" type="number" step="any" min="0" value="5"></label>
-        <label class="field"><span>อัตราส่วนผสม ปูน : ทราย : หิน</span>
-          <select id="c-mix"><option value="1,1.5,3">1 : 1.5 : 3</option><option value="1,2,4" selected>1 : 2 : 4</option><option value="1,3,6">1 : 3 : 6</option></select></label>
-      </div>
-    </div>
-    <div class="panel"><h4>SUMMARY</h4><div id="c-out"></div></div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
-
-<!-- ================= SECTION ================= -->
-<section class="view" id="v-section">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 04</span></div>
-    <h2 class="title" style="--c:var(--green)">SECTION<small>คุณสมบัติหน้าตัด: พื้นที่ I, S, r</small></h2>
-    <div class="cols">
-      <div class="panel">
-        <h4>INPUT (mm)</h4>
-        <label class="field"><span>รูปหน้าตัด</span>
-          <select id="s-type">
-            <option value="rect">สี่เหลี่ยมตัน (Rectangle)</option>
-            <option value="circ">วงกลมตัน (Circle)</option>
-            <option value="hrect">สี่เหลี่ยมกลวง (Hollow rectangle)</option>
-            <option value="pipe">ท่อกลม (Pipe)</option>
-            <option value="isec">ตัว I / H (I-section)</option>
-          </select></label>
-        <div class="g2" id="s-fields"></div>
-      </div>
-      <div class="panel"><h4>RESULT</h4><div id="s-out"></div></div>
-    </div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
-
-<!-- ================= UNITS ================= -->
-<section class="view" id="v-units">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 05</span></div>
-    <h2 class="title" style="--c:var(--violet)">UNITS<small>แปลงหน่วยที่ใช้บ่อยในงานวิศวกรรมโยธา</small></h2>
-    <div class="panel">
-      <h4>CONVERTER</h4>
-      <div class="g2">
-        <label class="field"><span>ประเภท</span>
-          <select id="u-cat">
-            <option value="force">แรง (Force)</option>
-            <option value="stress">หน่วยแรง / ความดัน (Stress)</option>
-            <option value="moment">โมเมนต์ (Moment)</option>
-            <option value="length">ความยาว (Length)</option>
-            <option value="area">พื้นที่ (Area)</option>
-          </select></label>
-        <label class="field"><span>หน่วยต้นทาง</span><select id="u-from"></select></label>
-      </div>
-      <label class="field"><span>ค่า</span><input id="u-val" type="number" step="any" value="1"></label>
-      <div class="conv" id="u-out"></div>
-      <div class="note" style="margin-top:12px">ใช้ g = 9.80665 m/s² (1 kgf = 9.80665 N, 1 ksc = 1 kgf/cm² = 0.0980665 MPa, 1 tf = 9.80665 kN)</div>
-    </div>
-    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
-  </div>
-</section>
-
-<!-- ================= PHYSICS ================= -->
-<section class="view" id="v-physics">
-  <div class="wrap">
-    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 06</span></div>
-    <h2 class="title" style="--c:var(--orange)">PHYSICS<small>เครื่องช่วยคิดโจทย์ฟิสิกส์ พร้อมแสดงขั้นตอน</small></h2>
-    <div class="tabs" id="p-tabs">
-      <button class="tab active" type="button" data-tab="lever">คานบนลิ่ม (โมเมนต์)</button>
-      <button class="tab" type="button" data-tab="kin">เคลื่อนที่แนวตรง</button>
-      <button class="tab" type="button" data-tab="proj">โพรเจกไทล์</button>
-      <button class="tab" type="button" data-tab="inc">พื้นเอียง + ความเสียดทาน</button>
-    </div>
-    <div class="panel">
-      <div class="g2">
-        <label class="field" style="margin:0"><span>ความเร่งโน้มถ่วง g (m/s²)</span>
-          <input id="p-g" type="number" step="any" value="9.8" list="p-glist">
-          <datalist id="p-glist"><option value="9.8"></option><option value="9.81"></option><option value="10"></option></datalist></label>
-        <div class="note" style="align-self:center">ใช้กับแท็บที่เกี่ยวกับน้ำหนัก (คานบนลิ่ม, โพรเจกไทล์, พื้นเอียง) · เลือกจากรายการหรือพิมพ์เองได้</div>
-      </div>
     </div>
 
-    <!-- ---- lever ---- -->
-    <div class="ptab active" id="pt-lever">
-      <div class="cols">
-        <div class="panel">
-          <h4>PROBLEM</h4>
-          <div class="note" style="margin-bottom:12px">ตัวอย่างโจทย์: คานสม่ำเสมอ AB ยาว 6 m วางพาดบนลิ่ม x และ y ห่างจากปลาย A 1 m และ 4 m ตามลำดับ แรงน้อยที่สุดที่ทำให้คานเผยอขึ้นจากลิ่มต้องกระทำอย่างไร</div>
-          <div class="g2">
-            <label class="field"><span>ความยาวคาน L (m)</span><input id="lv-L" type="number" step="any" value="6"></label>
-            <label class="field"><span>จุดศูนย์กลางมวลจาก A (m)</span><input id="lv-c" type="number" step="any" placeholder="L/2 (คานสม่ำเสมอ)"></label>
-            <label class="field"><span>ลิ่ม x ห่างจากปลาย A (m)</span><input id="lv-p1" type="number" step="any" value="1"></label>
-            <label class="field"><span>ลิ่ม y ห่างจากปลาย A (m)</span><input id="lv-p2" type="number" step="any" value="4"></label>
-          </div>
-          <label class="field"><span>มวลคาน m (kg) — ไม่ต้องกรอกก็ได้ ถ้าโจทย์ให้ตอบเป็นสัดส่วนของ W</span><input id="lv-m" type="number" step="any" min="0" value="10"></label>
-        </div>
-        <div class="panel">
-          <h4>ANSWER</h4>
-          <canvas id="lv-sketch" class="sketch"></canvas>
-          <div id="lv-out"></div>
-        </div>
-      </div>
-      <div class="panel"><h4>STEP-BY-STEP</h4><ol class="steps" id="lv-steps"></ol></div>
+    <!-- ================= MAIN APP DASHBOARD ================= -->
+    <div id="main-app" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+        
+        <!-- SIDEBAR / NAVIGATION -->
+        <aside class="w-full md:w-72 bg-slate-950 border-r border-slate-800 flex flex-col no-print shrink-0">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchToLanding()">
+                    <i class="fa-solid fa-cubes text-cyan-400 text-2xl"></i>
+                    <div>
+                        <div class="font-bold font-mono text-cyan-400 tracking-wider">CIVIL SUITE</div>
+                        <div class="text-[10px] text-slate-400">ENGINEERING TOOLKIT</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+                <button onclick="showModule('mod-unit')" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-arrow-right-arrow-left text-cyan-400 w-5"></i>
+                    <span>1. แปลงหน่วย & คุณสมบัติ</span>
+                </button>
+                <button onclick="showModule('mod-boq')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-calculator text-emerald-400 w-5"></i>
+                    <span>2. ปริมาณงาน & BOQ</span>
+                </button>
+                <button onclick="showModule('mod-struct')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-diagram-project text-blue-400 w-5"></i>
+                    <span>3. วิเคราะห์โครงสร้าง (SFD)</span>
+                </button>
+                <button onclick="showModule('mod-rc')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-cubes-stacked text-amber-400 w-5"></i>
+                    <span>4. ออกแบบ ค.ส.ล. (RC)</span>
+                </button>
+                <button onclick="showModule('mod-steel')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-layer-group text-purple-400 w-5"></i>
+                    <span>5. งานเหล็ก & งานไม้</span>
+                </button>
+                <button onclick="showModule('mod-geotech')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-mountain text-orange-400 w-5"></i>
+                    <span>6. ธรณีเทคนิค & ฐานราก</span>
+                </button>
+                <button onclick="showModule('mod-hydro')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-water text-teal-400 w-5"></i>
+                    <span>7. ชลศาสตร์ & ระบายน้ำ</span>
+                </button>
+                <button onclick="showModule('mod-highway')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-road text-rose-400 w-5"></i>
+                    <span>8. งานทาง & สำรวจ</span>
+                </button>
+                <button onclick="showModule('mod-qc')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
+                    <i class="fa-solid fa-vial text-indigo-400 w-5"></i>
+                    <span>9. วัสดุ & ควบคุมคุณภาพ</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
+                <button onclick="switchToLanding()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded border border-slate-700 transition">
+                    <i class="fa-solid fa-house mr-2"></i> หน้าแรก
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT WORKSPACE -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            
+            <!-- TOOLBAR -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800 no-print">
+                <div>
+                    <h2 id="active-module-title" class="text-2xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-calculator text-cyan-400"></i> แปลงหน่วย & คุณสมบัติหน้าตัด
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">เครื่องมือคำนวณมาตรฐานทางวิศวกรรมโยธา</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded border border-slate-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> พิมพ์ / สรุป PDF
+                    </button>
+                    <button onclick="clearSavedData()" class="px-3 py-1.5 bg-rose-950/50 hover:bg-rose-900 text-rose-300 text-xs rounded border border-rose-800/50 transition flex items-center gap-2">
+                        <i class="fa-solid fa-trash"></i> ล้างข้อมูล
+                    </button>
+                </div>
+            </div>
+
+            <!-- MODULE CONTENT PANELS -->
+            <div id="module-container">
+
+                <!-- MODULE 1: UNIT CONVERTER & SECTIONS -->
+                <div id="mod-unit" class="module-panel space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Unit Converter -->
+                        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                            <h3 class="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-right-left"></i> ระบบแปลงหน่วยวิศวกรรม (Unit Converter)
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">หมวดหมู่หน่วย</label>
+                                    <select id="unit-cat" onchange="updateUnitOptions()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
+                                        <option value="force">แรง (Force)</option>
+                                        <option value="stress">หน่วยแรง / ความดัน (Stress / Pressure)</option>
+                                        <option value="length">ความยาว (Length)</option>
+                                        <option value="area">พื้นที่ (Area)</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-400 mb-1">ค่าเริ่มต้น</label>
+                                        <input type="number" id="unit-input-val" value="100" oninput="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-400 mb-1">จากหน่วย</label>
+                                        <select id="unit-from" onchange="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none"></select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">แปลงเป็นหน่วย</label>
+                                    <select id="unit-to" onchange="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none"></select>
+                                </div>
+                                <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 text-center">
+                                    <div class="text-xs text-slate-400">ผลลัพธ์การแปลง</div>
+                                    <div id="unit-result" class="text-2xl font-mono font-bold text-cyan-400 mt-1">0.00</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Properties -->
+                        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                            <h3 class="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-shapes"></i> คุณสมบัติหน้าตัด (Section Properties)
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">รูปแบบหน้าตัด</label>
+                                    <select id="sec-type" onchange="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
+                                        <option value="rect">สี่เหลี่ยม (Rectangle)</option>
+                                        <option value="circle">วงกลม (Circle)</option>
+                                    </select>
+                                </div>
+                                <div id="sec-rect-inputs" class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-slate-400">ความกว้าง b (cm)</label>
+                                        <input type="number" id="sec-b" value="20" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400">ความสูง h (cm)</label>
+                                        <input type="number" id="sec-h" value="40" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                                    </div>
+                                </div>
+                                <div id="sec-circle-inputs" class="hidden">
+                                    <label class="block text-xs text-slate-400">เส้นผ่านศูนย์กลาง d (cm)</label>
+                                    <input type="number" id="sec-d" value="30" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                                </div>
+                                <div class="bg-slate-950 p-3 rounded border border-slate-800 text-xs font-mono space-y-1 text-slate-300">
+                                    <div class="flex justify-between"><span>พื้นที่ (A):</span> <span id="sec-res-a" class="text-cyan-400">0 cm²</span></div>
+                                    <div class="flex justify-between"><span>Inertia (Ix):</span> <span id="sec-res-ix" class="text-cyan-400">0 cm⁴</span></div>
+                                    <div class="flex justify-between"><span>Modulus (Sx):</span> <span id="sec-res-sx" class="text-cyan-400">0 cm³</span></div>
+                                    <div class="flex justify-between"><span>Radius (rx):</span> <span id="sec-res-rx" class="text-cyan-400">0 cm</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 2: BOQ & MATERIAL ESTIMATION -->
+                <div id="mod-boq" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-calculator"></i> ตารางประมาณการราคาและปริมาณงาน (BOQ Calculator)
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-xs text-slate-400 bg-slate-950">
+                                        <th class="p-2">รายการ</th>
+                                        <th class="p-2 w-24">จำนวน</th>
+                                        <th class="p-2 w-24">หน่วย</th>
+                                        <th class="p-2 w-32">ราคา/หน่วย (บาท)</th>
+                                        <th class="p-2 w-36 text-right">รวมเงิน (บาท)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="boq-tbody" class="text-sm divide-y divide-slate-800/50">
+                                    <!-- Rows populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center bg-slate-950 p-4 rounded-lg border border-slate-800">
+                            <span class="font-semibold text-slate-300">ราคารวมสุทธิทั้งหมด (Total Estimated Cost):</span>
+                            <span id="boq-total" class="text-2xl font-mono font-bold text-emerald-400">0.00 บาท</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 3: STRUCTURAL ANALYSIS (SFD/BMD) -->
+                <div id="mod-struct" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line"></i> วิเคราะห์คานช่วงเดียว (Simply Supported Beam SFD & BMD)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความยาวคาน L (m)</label>
+                                <input type="number" id="beam-length" value="6" step="0.5" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">น้ำหนักบรรทุกแผ่ w (kg/m)</label>
+                                <input type="number" id="beam-w" value="1200" step="100" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">น้ำหนักกดเป็นจุด P (kg) ตรงกลาง</label>
+                                <input type="number" id="beam-p" value="500" step="100" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <!-- Canvas Diagram -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
+                            <canvas id="beamCanvas" width="700" height="320" class="w-full max-w-full h-auto"></canvas>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs font-mono">
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-slate-400">Ra = Rb (แรงปฏิกิริยา)</div>
+                                <div id="res-ra" class="text-base text-blue-400 font-bold">0 kg</div>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-slate-400">V max (แรงเฉือนสูงสุด)</div>
+                                <div id="res-vmax" class="text-base text-blue-400 font-bold">0 kg</div>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-slate-400">M max (โมเมนต์สูงสุด)</div>
+                                <div id="res-mmax" class="text-base text-emerald-400 font-bold">0 kg-m</div>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-slate-400">สูตรโมเมนต์แผ่กว้าง</div>
+                                <div class="text-slate-300">wL² / 8</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 4: RC DESIGN -->
+                <div id="mod-rc" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-cubes-stacked"></i> ออกแบบคานคอนกรีตเสริมเหล็ก (RC Beam Design - WSD)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">กำลังอัดคอนกรีต fc' (ksc - ทรงกระบอก)</label>
+                                <input type="number" id="rc-fc" value="240" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">กำลังรับแรงดึงเหล็ก fy (ksc)</label>
+                                <input type="number" id="rc-fy" value="4000" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">โมเมนต์ดัดออกแบบ M (kg-m)</label>
+                                <input type="number" id="rc-m" value="8500" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความกว้างคาน b (cm)</label>
+                                <input type="number" id="rc-b" value="20" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความลึกประสิทธิผล d (cm)</label>
+                                <input type="number" id="rc-d" value="45" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <!-- RC Results & Calculation Steps -->
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 font-mono text-sm">
+                            <div class="text-xs text-amber-400 font-bold border-b border-slate-800 pb-2">ขั้นตอนคำนวณและผลลัพธ์ (Calculation Breakdown):</div>
+                            <div class="flex justify-between"><span>fc (0.45 fc'):</span> <span id="rc-res-fc" class="text-slate-200">0 ksc</span></div>
+                            <div class="flex justify-between"><span>fs (0.50 fy):</span> <span id="rc-res-fs" class="text-slate-200">0 ksc</span></div>
+                            <div class="flex justify-between"><span>ค่า K (Resist. Coeff.):</span> <span id="rc-res-k" class="text-slate-200">0 ksc</span></div>
+                            <div class="flex justify-between font-bold"><span>พื้นที่เหล็กเสริมดึง As Required:</span> <span id="rc-res-as" class="text-amber-400 text-lg">0 cm²</span></div>
+                            <div class="flex justify-between text-xs text-slate-400"><span>คำแนะนำเหล็กเสริม:</span> <span id="rc-res-rebar" class="text-cyan-400">DB20 x - เส้น</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 5: STEEL & TIMBER DESIGN -->
+                <div id="mod-steel" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group"></i> ตรวจสอบความชะลูดเสาเหล็ก (Steel Column Slenderness Check)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความยาวเสา L (m)</label>
+                                <input type="number" id="steel-l" value="3.5" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">รัศมีรอบวงกว้าง r (cm)</label>
+                                <input type="number" id="steel-r" value="4.5" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">สัมประสิทธิ์ความยาว K</label>
+                                <input type="number" id="steel-k" value="1.0" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
+                            <div class="flex justify-between"><span>อัตราส่วนความชะลูด (KL/r):</span> <span id="steel-res-klr" class="font-bold text-purple-400">0</span></div>
+                            <div class="flex justify-between"><span>เกณฑ์มาตรฐาน (KL/r &le; 200):</span> <span id="steel-res-status" class="font-bold">ตรวจสอบแล้ว</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 6: GEOTECHNICAL & FOUNDATIONS -->
+                <div id="mod-geotech" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-orange-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-mountain"></i> กำลังรับน้ำหนักประลัยของดิน (Terzaghi Bearing Capacity)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">แรงยึดเหนี่ยว c (t/m²)</label>
+                                <input type="number" id="geo-c" value="2.0" step="0.5" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">หน่วยน้ำหนักดิน &gamma; (t/m³)</label>
+                                <input type="number" id="geo-gamma" value="1.8" step="0.1" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความกว้างฐานราก B (m)</label>
+                                <input type="number" id="geo-b" value="1.5" step="0.1" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
+                            <div class="flex justify-between"><span>กำลังรับน้ำหนักประลัย (Ultimate qu):</span> <span id="geo-res-qu" class="font-bold text-orange-400">0 t/m²</span></div>
+                            <div class="flex justify-between"><span>กำลังรับน้ำหนักปลอดภัย (Allowable qa, FS=3):</span> <span id="geo-res-qa" class="font-bold text-emerald-400">0 t/m²</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 7: HYDRAULICS -->
+                <div id="mod-hydro" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-teal-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-water"></i> ปริมาณน้ำท่า (Rational Method: Q = CiA)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">สัมประสิทธิ์การไหลนอง (C)</label>
+                                <input type="number" id="hydro-c" value="0.6" step="0.05" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความเข้มฝน I (mm/hr)</label>
+                                <input type="number" id="hydro-i" value="120" step="5" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">พื้นที่รับน้ำ A (ไร่)</label>
+                                <input type="number" id="hydro-a" value="10" step="1" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
+                            <div class="flex justify-between"><span>อัตราการไหลสูงสุด Q:</span> <span id="hydro-res-q" class="font-bold text-teal-400">0 m³/s</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 8: HIGHWAY & SURVEYING -->
+                <div id="mod-highway" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-rose-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-road"></i> ระยะหยุดรถปลอดภัย (Stopping Sight Distance - SSD)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ความเร็วออกแบบ V (km/h)</label>
+                                <input type="number" id="hway-v" value="90" step="5" oninput="calcHighway()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">เวลาตอบสนอง t (sec)</label>
+                                <input type="number" id="hway-t" value="2.5" step="0.1" oninput="calcHighway()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
+                            <div class="flex justify-between"><span>ระยะหยุดรถปลอดภัย (SSD):</span> <span id="hway-res-ssd" class="font-bold text-rose-400">0 เมตร</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE 9: QUALITY & CONCRETE MIX -->
+                <div id="mod-qc" class="module-panel hidden space-y-6">
+                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-vial"></i> แปลงกำลังอัดคอนกรีต (Cylinder vs Cube Strength)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ค่ากำลังอัดลูกบาศก์ Cube 15x15 cm (ksc)</label>
+                                <input type="number" id="qc-cube" value="280" oninput="calcQC()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
+                            <div class="flex justify-between"><span>กำลังอัดทรงกระบอก Cylinder 15x30 cm (~0.833):</span> <span id="qc-res-cyl" class="font-bold text-indigo-400">0 ksc</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
     </div>
 
-    <!-- ---- kinematics ---- -->
-    <div class="ptab" id="pt-kin">
-      <div class="cols">
-        <div class="panel">
-          <h4>INPUT</h4>
-          <div class="note" style="margin-bottom:12px">กรอกค่าที่โจทย์ให้ <b>3 ค่า</b> แล้วเว้นว่างอีก 2 ค่าที่ต้องการหา (ความเร่งคงที่) · ตกอิสระ: a = g และให้ทิศลงเป็นบวก</div>
-          <div class="g2">
-            <label class="field"><span>ความเร็วต้น u (m/s)</span><input id="k-u" type="number" step="any" value="0"></label>
-            <label class="field"><span>ความเร็วปลาย v (m/s)</span><input id="k-v" type="number" step="any"></label>
-            <label class="field"><span>ความเร่ง a (m/s²)</span><input id="k-a" type="number" step="any" value="2"></label>
-            <label class="field"><span>เวลา t (s)</span><input id="k-t" type="number" step="any" value="5"></label>
-            <label class="field"><span>การกระจัด s (m)</span><input id="k-s" type="number" step="any"></label>
-          </div>
-          <div class="note">v = u + at · s = ut + ½at² · v² = u² + 2as · s = ½(u + v)t</div>
-        </div>
-        <div class="panel"><h4>RESULT</h4><div id="k-out"></div></div>
-      </div>
-    </div>
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Page Navigation
+        function switchToDashboard() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            // Trigger initial calculations
+            initAllModules();
+        }
 
-    <!-- ---- projectile ---- -->
-    <div class="ptab" id="pt-proj">
-      <div class="cols">
-        <div class="panel">
-          <h4>INPUT</h4>
-          <div class="g2">
-            <label class="field"><span>ความเร็วต้น v₀ (m/s)</span><input id="pr-v" type="number" step="any" value="20"></label>
-            <label class="field"><span>มุมยิง θ (องศา เหนือแนวระดับ)</span><input id="pr-th" type="number" step="any" value="45"></label>
-          </div>
-          <label class="field"><span>ความสูงจุดยิงเหนือพื้น h₀ (m)</span><input id="pr-h" type="number" step="any" min="0" value="0"></label>
-          <div class="note">ไม่คิดแรงต้านอากาศ · ยิงลงใส่มุมติดลบได้ (ต้องมี h₀ &gt; 0)</div>
-        </div>
-        <div class="panel"><h4>RESULT</h4><div id="pr-out"></div></div>
-      </div>
-      <div class="panel"><h4>TRAJECTORY</h4><canvas id="pr-chart" class="chart"></canvas></div>
-    </div>
+        function switchToLanding() {
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('landing-page').classList.remove('hidden');
+        }
 
-    <!-- ---- incline ---- -->
-    <div class="ptab" id="pt-inc">
-      <div class="cols">
-        <div class="panel">
-          <h4>INPUT</h4>
-          <div class="g2">
-            <label class="field"><span>มวลวัตถุ m (kg)</span><input id="in-m" type="number" step="any" value="10"></label>
-            <label class="field"><span>มุมเอียง θ (องศา)</span><input id="in-th" type="number" step="any" value="30"></label>
-            <label class="field"><span>สัมประสิทธิ์ความเสียดทานสถิต μs</span><input id="in-us" type="number" step="any" min="0" value="0.5"></label>
-            <label class="field"><span>สัมประสิทธิ์ความเสียดทานจลน์ μk</span><input id="in-uk" type="number" step="any" min="0" value="0.4"></label>
-          </div>
-          <label class="field"><span>ระยะที่ไถลลง d (m) — ใช้หาความเร็วและเวลา</span><input id="in-d" type="number" step="any" min="0" value="2"></label>
-        </div>
-        <div class="panel"><h4>RESULT</h4><div id="in-out"></div></div>
-      </div>
-    </div>
+        function showModule(modId) {
+            document.querySelectorAll('.module-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(modId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-slate-900', 'text-cyan-400'));
+            event.currentTarget.classList.add('bg-slate-900', 'text-cyan-400');
 
-    <div class="foot">ใช้ตรวจคำตอบและทำความเข้าใจโจทย์ ควรเขียนวิธีทำด้วยตัวเองประกอบเสมอ</div>
-  </div>
-</section>
+            // Update title
+            const titleMap = {
+                'mod-unit': '1. แปลงหน่วย & คุณสมบัติหน้าตัด',
+                'mod-boq': '2. ปริมาณงาน & ประมาณราคา (BOQ)',
+                'mod-struct': '3. วิเคราะห์โครงสร้าง (SFD & BMD)',
+                'mod-rc': '4. ออกแบบ ค.ส.ล. (RC Design)',
+                'mod-steel': '5. งานเหล็ก & งานไม้',
+                'mod-geotech': '6. ธรณีเทคนิค & ฐานราก',
+                'mod-hydro': '7. ชลศาสตร์ & ระบายน้ำ',
+                'mod-highway': '8. งานทาง & สำรวจ',
+                'mod-qc': '9. ควบคุมคุณภาพคอนกรีต'
+            };
+            document.getElementById('active-module-title').innerText = titleMap[modId];
 
-<script>
-const $ = id => document.getElementById(id);
-const fmt = (n, d = 3) => Number.isFinite(n)
-  ? (Math.abs(n) < 5 * Math.pow(10, -(d + 1)) ? 0 : n).toLocaleString('en-US', { maximumFractionDigits: d })
-  : '—';
-const stat = (label, val, unit, big) =>
-  `<div class="stat${big ? ' big' : ''}"><span>${label}</span><b>${val}${unit ? `<i>${unit}</i>` : ''}</b></div>`;
+            if (modId === 'mod-struct') {
+                setTimeout(analyzeBeam, 100);
+            }
+        }
 
-/* ============ CORE (pure functions) ============ */
-//<core
-function solveBeam(p) {
-  const { type, L, w, P, a, E, I } = p;
-  const Lm = L * 1000, am = a * 1000, PN = P * 1000, EI = E * I * 1e4; // N, mm, N*mm^2
-  const N = 400, pts = [];
-  for (let i = 0; i <= N; i++) pts.push({ x: L * i / N, after: true });
-  if (P !== 0 && a > 0 && a < L) { pts.push({ x: a, after: false }); pts.push({ x: a, after: true }); }
-  pts.sort((p1, p2) => p1.x - p2.x || (p1.after - p2.after));
-  const RA = type === 'simple' ? w * L / 2 + P * (L - a) / L : w * L + P;
-  const RB = type === 'simple' ? w * L / 2 + P * a / L : 0;
-  const MF = type === 'simple' ? 0 : w * L * L / 2 + P * a;
-  const xs = [], V = [], M = [], D = [];
-  for (const pt of pts) {
-    const x = pt.x, xm = x * 1000; let v, m, d;
-    if (type === 'simple') {
-      const past = x > a || (x === a && pt.after);
-      v = RA - w * x - (past ? P : 0);
-      m = RA * x - w * x * x / 2 - (x > a ? P * (x - a) : 0);
-      d = w * xm * (Math.pow(Lm, 3) - 2 * Lm * xm * xm + Math.pow(xm, 3)) / (24 * EI);
-      if (xm <= am) d += PN * (Lm - am) * xm * (Lm * Lm - Math.pow(Lm - am, 2) - xm * xm) / (6 * EI * Lm);
-      else d += PN * am * (Lm - xm) * (Lm * Lm - am * am - Math.pow(Lm - xm, 2)) / (6 * EI * Lm);
-    } else {
-      const before = x < a || (x === a && !pt.after);
-      v = w * (L - x) + (before ? P : 0);
-      m = -(w * Math.pow(L - x, 2) / 2 + (x < a ? P * (a - x) : 0));
-      d = w * xm * xm * (6 * Lm * Lm - 4 * Lm * xm + xm * xm) / (24 * EI);
-      d += xm <= am ? PN * xm * xm * (3 * am - xm) / (6 * EI) : PN * am * am * (3 * xm - am) / (6 * EI);
-    }
-    xs.push(x); V.push(v); M.push(m); D.push(d);
-  }
-  return { xs, V, M, D, RA, RB, MF };
-}
-function extreme(arr) { let k = 0; arr.forEach((v, i) => { if (Math.abs(v) > Math.abs(arr[k])) k = i; }); return k; }
-//core>
+        // ================= MODULE 1: UNIT CONVERTER =================
+        const unitData = {
+            force: { 'N': 1, 'kN': 1000, 'kgf': 9.80665, 'ton': 9806.65 },
+            stress: { 'MPa': 1000, 'ksc (kg/cm²)': 98.0665, 'psi': 6.89476, 'kPa': 1 },
+            length: { 'm': 1, 'cm': 0.01, 'mm': 0.001, 'ft': 0.3048 },
+            area: { 'm²': 1, 'cm²': 0.0001, 'ไร่': 1600, 'sq.ft': 0.092903 }
+        };
 
-/* ============ ROUTER ============ */
-const calcMap = {};
-function route() {
-  let h = location.hash.replace(/^#\/?/, '') || 'home';
-  let v = $('v-' + h);
-  if (!v) { v = $('v-home'); h = 'home'; }
-  document.querySelectorAll('.view').forEach(x => x.classList.toggle('active', x === v));
-  window.scrollTo(0, 0);
-  if (calcMap[h]) calcMap[h]();
-}
-addEventListener('hashchange', route);
-addEventListener('keydown', e => {
-  if (e.key === 'Enter' && $('v-home').classList.contains('active')) location.hash = '#/menu';
-});
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if ($('v-beam').classList.contains('active')) calcBeam(); if ($('v-physics').classList.contains('active')) calcPhysics(); }, 120); });
+        function updateUnitOptions() {
+            const cat = document.getElementById('unit-cat').value;
+            const fromSelect = document.getElementById('unit-from');
+            const toSelect = document.getElementById('unit-to');
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
 
-document.addEventListener('input', e => {
-  if (e.target.id === 'b-mat') { if (e.target.value !== 'custom') $('b-E').value = e.target.value; }
-  if (e.target.id === 'b-E') $('b-mat').value = 'custom';
-  const v = e.target.closest('.view');
-  if (v && calcMap[v.id.slice(2)]) calcMap[v.id.slice(2)]();
-});
-document.addEventListener('change', e => {
-  if (e.target.classList.contains('c-type')) updateConcreteRow(e.target.closest('tr'));
-  if (e.target.id === 's-type') buildSectionFields();
-  if (e.target.id === 'u-cat') buildUnitFrom();
-  const v = e.target.closest('.view');
-  if (v && calcMap[v.id.slice(2)]) calcMap[v.id.slice(2)]();
-});
-document.addEventListener('click', e => {
-  if (e.target.matches('[data-del]')) {
-    const tb = e.target.closest('tbody');
-    if (tb.rows.length > 1) e.target.closest('tr').remove();
-    const v = e.target.closest('.view'); calcMap[v.id.slice(2)]();
-  }
-});
+            Object.keys(unitData[cat]).forEach(u => {
+                fromSelect.innerHTML += `<option value="${u}">${u}</option>`;
+                toSelect.innerHTML += `<option value="${u}">${u}</option>`;
+            });
+            convertUnits();
+        }
 
-/* ============ BEAM UI ============ */
-function arrow(c, x, y1, y2, color) {
-  c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y2); c.stroke();
-  c.beginPath(); c.moveTo(x, y2 + 2); c.lineTo(x - 5, y2 - 8); c.lineTo(x + 5, y2 - 8); c.closePath(); c.fill();
-}
-function setupCanvas(cv) {
-  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-  return { c, W, H };
-}
-function drawSketch(cv, type, L, w, P, a) {
-  const { c, W } = setupCanvas(cv); if (!W) return;
-  const x0 = 40, x1 = W - 40, y = 82, X = x => x0 + x / L * (x1 - x0);
-  c.font = '12px Sarabun, sans-serif';
-  // supports
-  c.strokeStyle = '#8fa6c8'; c.fillStyle = 'rgba(143,166,200,.25)'; c.lineWidth = 1.5;
-  if (type === 'simple') {
-    c.beginPath(); c.moveTo(x0, y + 4); c.lineTo(x0 - 12, y + 22); c.lineTo(x0 + 12, y + 22); c.closePath(); c.fill(); c.stroke();
-    c.beginPath(); c.moveTo(x1, y + 4); c.lineTo(x1 - 12, y + 20); c.lineTo(x1 + 12, y + 20); c.closePath(); c.fill(); c.stroke();
-    c.beginPath(); c.arc(x1, y + 24, 4, 0, 7); c.stroke();
-  } else {
-    c.beginPath(); c.moveTo(x0, y - 28); c.lineTo(x0, y + 28); c.stroke();
-    for (let t = -28; t < 28; t += 8) { c.beginPath(); c.moveTo(x0, y + t + 8); c.lineTo(x0 - 9, y + t); c.stroke(); }
-  }
-  // beam
-  c.strokeStyle = '#00e5ff'; c.lineWidth = 6; c.lineCap = 'round'; c.shadowColor = '#00e5ff'; c.shadowBlur = 10;
-  c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke(); c.shadowBlur = 0;
-  // loads
-  if (w > 0) {
-    c.strokeStyle = '#ffb84d'; c.lineWidth = 2; c.beginPath(); c.moveTo(x0, y - 30); c.lineTo(x1, y - 30); c.stroke();
-    const n = Math.max(3, Math.floor((x1 - x0) / 28));
-    for (let i = 0; i <= n; i++) arrow(c, x0 + (x1 - x0) * i / n, y - 30, y - 8, '#ffb84d');
-    c.fillStyle = '#ffb84d'; c.textAlign = 'center'; c.fillText('w', (x0 + x1) / 2, y - 36);
-  }
-  if (P !== 0) {
-    arrow(c, X(a), y - 66, y - 8, '#ff3df2');
-    c.fillStyle = '#ff3df2'; c.textAlign = 'center'; c.fillText('P', X(a), y - 70);
-  }
-  // dimension
-  c.strokeStyle = '#8fa6c8'; c.lineWidth = 1;
-  c.beginPath(); c.moveTo(x0, y + 40); c.lineTo(x1, y + 40); c.moveTo(x0, y + 35); c.lineTo(x0, y + 45); c.moveTo(x1, y + 35); c.lineTo(x1, y + 45); c.stroke();
-  c.fillStyle = '#8fa6c8'; c.textAlign = 'center'; c.fillText('L = ' + fmt(L, 2) + ' m', (x0 + x1) / 2, y + 56);
-}
-function drawChart(cv, xs, ys, L, o) {
-  const { c, W, H } = setupCanvas(cv); if (!W) return;
-  const pl = 14, pr = 14, pt = 30, pb = 22, iw = W - pl - pr, ih = H - pt - pb;
-  let mn = Math.min(0, ...ys), mx = Math.max(0, ...ys);
-  if (mx - mn < 1e-12) { mn = -1; mx = 1; }
-  const pad = (mx - mn) * .12; mn -= pad; mx += pad;
-  const X = x => pl + x / L * iw;
-  const Y = v => o.flip ? pt + (v - mn) / (mx - mn) * ih : pt + (mx - v) / (mx - mn) * ih;
-  c.strokeStyle = 'rgba(120,160,220,.12)'; c.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) { const gx = pl + iw * i / 4; c.beginPath(); c.moveTo(gx, pt); c.lineTo(gx, pt + ih); c.stroke(); }
-  const y0 = Y(0);
-  c.strokeStyle = 'rgba(200,225,255,.45)'; c.beginPath(); c.moveTo(pl, y0); c.lineTo(pl + iw, y0); c.stroke();
-  c.beginPath(); c.moveTo(X(xs[0]), y0); xs.forEach((x, i) => c.lineTo(X(x), Y(ys[i]))); c.lineTo(X(xs[xs.length - 1]), y0); c.closePath();
-  c.fillStyle = o.fill; c.fill();
-  c.beginPath(); xs.forEach((x, i) => i ? c.lineTo(X(x), Y(ys[i])) : c.moveTo(X(x), Y(ys[i])));
-  c.strokeStyle = o.color; c.lineWidth = 2; c.shadowColor = o.color; c.shadowBlur = 10; c.stroke(); c.shadowBlur = 0;
-  const k = extreme(ys);
-  c.font = '12px Sarabun, sans-serif';
-  c.fillStyle = o.color; c.textAlign = 'left'; c.fillText(o.title, pl, 18);
-  if (Math.abs(ys[k]) > 1e-9) {
-    c.beginPath(); c.arc(X(xs[k]), Y(ys[k]), 4, 0, 7); c.fill();
-    c.fillStyle = '#e6f1ff'; c.textAlign = 'right';
-    c.fillText(`${fmt(ys[k])} ${o.unit}  @ x = ${fmt(xs[k], 2)} m`, W - pr, 18);
-  }
-  c.fillStyle = '#8fa6c8'; c.textAlign = 'left'; c.fillText('0', pl, H - 6);
-  c.textAlign = 'right'; c.fillText(fmt(L, 2) + ' m', pl + iw, H - 6);
-}
-function calcBeam() {
-  const g = id => parseFloat($(id).value);
-  const p = { type: $('b-type').value, L: g('b-L'), w: g('b-w') || 0, P: g('b-P') || 0, a: g('b-a') || 0, E: g('b-E'), I: g('b-I') };
-  const err = [];
-  if (!(p.L > 0)) err.push('ช่วงคาน L ต้องมากกว่า 0');
-  if (p.P !== 0 && !(p.a >= 0 && p.a <= p.L)) err.push('ตำแหน่ง a ต้องอยู่ระหว่าง 0 ถึง L');
-  if (!(p.E > 0) || !(p.I > 0)) err.push('E และ I ต้องมากกว่า 0');
-  const out = $('b-out');
-  if (err.length) {
-    out.innerHTML = `<div class="alert">${err.join('<br>')}</div>`;
-    ['b-sketch', 'b-cv', 'b-cm', 'b-cd'].forEach(id => setupCanvas($(id)));
-    return;
-  }
-  const r = solveBeam(p);
-  const kv = extreme(r.V), km = extreme(r.M), kd = extreme(r.D);
-  const dmax = r.D[kd], ratio = dmax > 1e-9 ? p.L * 1000 / dmax : Infinity;
-  const ok = ratio >= 360;
-  let h = '<div class="stats">';
-  if (p.type === 'simple') {
-    h += stat('แรงปฏิกิริยา R<sub>A</sub> (ซ้าย)', fmt(r.RA), 'kN') + stat('แรงปฏิกิริยา R<sub>B</sub> (ขวา)', fmt(r.RB), 'kN');
-  } else {
-    h += stat('แรงปฏิกิริยาที่จุดยึด R', fmt(r.RA), 'kN') + stat('โมเมนต์ที่จุดยึด M<sub>f</sub>', fmt(r.MF), 'kN·m');
-  }
-  h += stat('แรงเฉือนสูงสุด |V|max', fmt(Math.abs(r.V[kv])), 'kN');
-  h += stat('โมเมนต์สูงสุด |M|max', fmt(Math.abs(r.M[km])), 'kN·m');
-  h += stat('ตำแหน่ง |M|max', fmt(r.xs[km], 2), 'm จากซ้าย');
-  h += stat('การโก่งตัวสูงสุด δmax', fmt(dmax, 2), 'mm @ ' + fmt(r.xs[kd], 2) + ' m');
-  h += stat('อัตราส่วน L/δ', Number.isFinite(ratio) ? fmt(ratio, 0) : '∞', '', true);
-  h += '</div>';
-  h += `<span class="badge ${ok ? 'ok' : 'warn'}">${ok ? '✔ L/δ ≥ 360' : '⚠ L/δ < 360'} (เกณฑ์อ้างอิง ปรับตามมาตรฐานที่ใช้)</span>`;
-  out.innerHTML = h;
-  drawSketch($('b-sketch'), p.type, p.L, p.w, p.P, p.a);
-  drawChart($('b-cv'), r.xs, r.V, p.L, { title: 'Shear Force V (kN)', unit: 'kN', color: '#00e5ff', fill: 'rgba(0,229,255,.14)' });
-  drawChart($('b-cm'), r.xs, r.M, p.L, { title: 'Bending Moment M (kN·m)', unit: 'kN·m', color: '#ff3df2', fill: 'rgba(255,61,242,.14)' });
-  drawChart($('b-cd'), r.xs, r.D, p.L, { title: 'Deflection δ (mm)', unit: 'mm', color: '#3dffb0', fill: 'rgba(61,255,176,.14)', flip: true });
-}
-calcMap.beam = calcBeam;
+        function convertUnits() {
+            const cat = document.getElementById('unit-cat').value;
+            const val = parseFloat(document.getElementById('unit-input-val').value) || 0;
+            const from = document.getElementById('unit-from').value;
+            const to = document.getElementById('unit-to').value;
 
-/* ============ REBAR UI ============ */
-const REB = { RB6: 6, RB9: 9, RB12: 12, RB15: 15, DB10: 10, DB12: 12, DB16: 16, DB20: 20, DB25: 25, DB28: 28, DB32: 32, DB36: 36, DB40: 40 };
-function addRebarRow(sz = 'DB12', len = 6, cnt = 10) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td><select class="r-size">${Object.keys(REB).map(n => `<option value="${n}"${n === sz ? ' selected' : ''}>${n}</option>`).join('')}</select></td>
-    <td><input class="r-len" type="number" min="0" step="any" value="${len}"></td>
-    <td><input class="r-cnt" type="number" min="0" step="1" value="${cnt}"></td>
-    <td class="num r-uw"></td><td class="num r-w"></td><td class="num r-st"></td>
-    <td><button class="x" type="button" data-del title="ลบแถว">×</button></td>`;
-  $('r-rows').appendChild(tr);
-}
-function calcRebar() {
-  const stock = parseFloat($('r-stock').value), waste = parseFloat($('r-waste').value) || 0;
-  let tl = 0, tw = 0, ts = 0; const bySize = {};
-  document.querySelectorAll('#r-rows tr').forEach(tr => {
-    const name = tr.querySelector('.r-size').value, d = REB[name];
-    const len = parseFloat(tr.querySelector('.r-len').value) || 0, cnt = parseFloat(tr.querySelector('.r-cnt').value) || 0;
-    const uw = d * d / 162.2, w = uw * len * cnt;
-    let st = 0;
-    if (len > 0 && cnt > 0) st = len <= stock ? Math.ceil(cnt / Math.floor(stock / len)) : Math.ceil(len * cnt / stock);
-    tr.querySelector('.r-uw').textContent = fmt(uw, 3);
-    tr.querySelector('.r-w').textContent = fmt(w, 2);
-    tr.querySelector('.r-st').textContent = fmt(st, 0);
-    tl += len * cnt; tw += w; ts += st;
-    bySize[name] = bySize[name] || { w: 0, st: 0 }; bySize[name].w += w; bySize[name].st += st;
-  });
-  const f = 1 + waste / 100;
-  let h = '<div class="stats">' +
-    stat('ความยาวรวม', fmt(tl, 2), 'm') + stat('น้ำหนักรวม (ก่อนเผื่อ)', fmt(tw, 2), 'kg') +
-    stat(`น้ำหนักรวมเผื่อ ${fmt(waste, 1)}%`, fmt(tw * f, 2), 'kg', true) +
-    stat('น้ำหนักรวมเผื่อ (ตัน)', fmt(tw * f / 1000, 3), 'ton') + stat(`เหล็กเส้นที่ต้องซื้อ (${stock} m)`, fmt(ts, 0), 'เส้น') + '</div>';
-  h += '<table class="rtable" style="margin-top:14px"><thead><tr><th>ขนาด</th><th style="text-align:right">น้ำหนัก (kg)</th><th style="text-align:right">เผื่อแล้ว (kg)</th><th style="text-align:right">ซื้อ (เส้น)</th></tr></thead><tbody>';
-  Object.keys(bySize).forEach(n => { h += `<tr><td>${n}</td><td class="num">${fmt(bySize[n].w, 2)}</td><td class="num">${fmt(bySize[n].w * f, 2)}</td><td class="num">${fmt(bySize[n].st, 0)}</td></tr>`; });
-  $('r-out').innerHTML = h + '</tbody></table>';
-}
-calcMap.rebar = calcRebar;
-$('r-add').onclick = () => { addRebarRow(); calcRebar(); };
-addRebarRow('DB16', 6, 8); addRebarRow('DB12', 6, 12); addRebarRow('RB9', 1.2, 60);
+            if (!unitData[cat][from] || !unitData[cat][to]) return;
+            const baseVal = val * unitData[cat][from];
+            const finalVal = baseVal / unitData[cat][to];
 
-/* ============ CONCRETE UI ============ */
-function addConcreteRow(type = 'rect', cnt = 1, A = 3, B = 4, C = 0.15) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td><select class="c-type"><option value="rect"${type === 'rect' ? ' selected' : ''}>สี่เหลี่ยม</option><option value="circ"${type === 'circ' ? ' selected' : ''}>วงกลม (เสา)</option></select></td>
-    <td><input class="c-n" type="number" min="0" step="1" value="${cnt}"></td>
-    <td><input class="c-a" type="number" min="0" step="any" value="${A}"></td>
-    <td><input class="c-b" type="number" min="0" step="any" value="${B}"></td>
-    <td><input class="c-c" type="number" min="0" step="any" value="${C}"></td>
-    <td class="num c-v"></td>
-    <td><button class="x" type="button" data-del title="ลบแถว">×</button></td>`;
-  $('c-rows').appendChild(tr); updateConcreteRow(tr);
-}
-function updateConcreteRow(tr) { tr.querySelector('.c-c').disabled = tr.querySelector('.c-type').value === 'circ'; }
-function calcConcrete() {
-  let total = 0;
-  document.querySelectorAll('#c-rows tr').forEach(tr => {
-    const t = tr.querySelector('.c-type').value, n = parseFloat(tr.querySelector('.c-n').value) || 0;
-    const a = parseFloat(tr.querySelector('.c-a').value) || 0, b = parseFloat(tr.querySelector('.c-b').value) || 0, c = parseFloat(tr.querySelector('.c-c').value) || 0;
-    const v = n * (t === 'rect' ? a * b * c : Math.PI * a * a / 4 * b);
-    tr.querySelector('.c-v').textContent = fmt(v, 3); total += v;
-  });
-  const waste = parseFloat($('c-waste').value) || 0, order = total * (1 + waste / 100);
-  const [pc, ps, pg] = $('c-mix').value.split(',').map(Number), sum = pc + ps + pg, dry = 1.54;
-  const cementKg = dry * pc / sum * 1440, bags = cementKg / 50, sand = dry * ps / sum, stone = dry * pg / sum;
-  $('c-out').innerHTML = '<div class="stats">' +
-    stat('ปริมาตรคอนกรีตรวม', fmt(total, 3), 'm³') +
-    stat(`ปริมาตรสั่งซื้อ (เผื่อ ${fmt(waste, 1)}%)`, fmt(order, 3), 'm³', true) +
-    stat('ปูนซีเมนต์ (ถุง 50 kg)', fmt(bags * order, 1), 'ถุง') +
-    stat('ปูนซีเมนต์', fmt(cementKg * order, 0), 'kg') +
-    stat('ทราย', fmt(sand * order, 2), 'm³') +
-    stat('หิน', fmt(stone * order, 2), 'm³') + '</div>' +
-    `<div class="note" style="margin-top:10px">ปริมาณวัสดุผสมเป็นค่าประมาณจากปริมาตรแห้ง = 1.54 × ปริมาตรคอนกรีต และปูน 1,440 kg/m³ ค่าจริงขึ้นกับวัสดุและการออกแบบส่วนผสม (mix design)</div>`;
-}
-calcMap.concrete = calcConcrete;
-$('c-add').onclick = () => { addConcreteRow(); calcConcrete(); };
-addConcreteRow('rect', 1, 4, 5, 0.12); addConcreteRow('rect', 4, 0.2, 0.4, 5); addConcreteRow('circ', 4, 0.3, 3);
+            document.getElementById('unit-result').innerText = `${finalVal.toLocaleString('th-TH', {maximumFractionDigits: 4})} ${to}`;
+        }
 
-/* ============ SECTION UI ============ */
-const SEC = {
-  rect: [['b', 'กว้าง b', 200], ['h', 'สูง h', 400]],
-  circ: [['D', 'เส้นผ่านศูนย์กลาง D', 300]],
-  hrect: [['B', 'กว้างนอก B', 150], ['H', 'สูงนอก H', 150], ['t', 'ความหนา t', 6]],
-  pipe: [['D', 'เส้นผ่านศูนย์กลางนอก D', 114.3], ['t', 'ความหนา t', 4.5]],
-  isec: [['bf', 'กว้างปีก bf', 100], ['tf', 'หนาปีก tf', 8], ['H', 'สูงรวม H', 200], ['tw', 'หนาเอว tw', 5.5]]
-};
-function buildSectionFields() {
-  $('s-fields').innerHTML = SEC[$('s-type').value].map(([k, l, v]) => `<label class="field"><span>${l} (mm)</span><input data-k="${k}" type="number" step="any" min="0" value="${v}"></label>`).join('');
-  calcSection();
-}
-function calcSection() {
-  const t = $('s-type').value, v = {};
-  document.querySelectorAll('#s-fields input').forEach(i => v[i.dataset.k] = parseFloat(i.value));
-  let A, Ix, Iy, bx, hy, err = '';
-  const pos = Object.keys(v).every(k => v[k] > 0);
-  if (!pos) err = 'ทุกค่าต้องมากกว่า 0';
-  else if (t === 'rect') { A = v.b * v.h; Ix = v.b * v.h ** 3 / 12; Iy = v.h * v.b ** 3 / 12; bx = v.b; hy = v.h; }
-  else if (t === 'circ') { A = Math.PI * v.D ** 2 / 4; Ix = Iy = Math.PI * v.D ** 4 / 64; bx = hy = v.D; }
-  else if (t === 'hrect') {
-    const b = v.B - 2 * v.t, h = v.H - 2 * v.t;
-    if (b <= 0 || h <= 0) err = 'ความหนา t ใหญ่เกินไป (ขนาดภายในต้องมากกว่า 0)';
-    else { A = v.B * v.H - b * h; Ix = (v.B * v.H ** 3 - b * h ** 3) / 12; Iy = (v.H * v.B ** 3 - h * b ** 3) / 12; bx = v.B; hy = v.H; }
-  } else if (t === 'pipe') {
-    const d = v.D - 2 * v.t;
-    if (d <= 0) err = 'ความหนา t ใหญ่เกินไป (เส้นผ่านศูนย์กลางภายในต้องมากกว่า 0)';
-    else { A = Math.PI * (v.D ** 2 - d ** 2) / 4; Ix = Iy = Math.PI * (v.D ** 4 - d ** 4) / 64; bx = hy = v.D; }
-  } else if (t === 'isec') {
-    const hw = v.H - 2 * v.tf;
-    if (hw <= 0 || v.tw > v.bf) err = 'ขนาดไม่สมเหตุสมผล (ตรวจสอบ tf, H, tw, bf)';
-    else { A = 2 * v.bf * v.tf + hw * v.tw; Ix = (v.bf * v.H ** 3 - (v.bf - v.tw) * hw ** 3) / 12; Iy = (2 * v.tf * v.bf ** 3 + hw * v.tw ** 3) / 12; bx = v.bf; hy = v.H; }
-  }
-  if (err) { $('s-out').innerHTML = `<div class="alert">${err}</div>`; return; }
-  const Sx = Ix / (hy / 2), Sy = Iy / (bx / 2), rx = Math.sqrt(Ix / A), ry = Math.sqrt(Iy / A);
-  $('s-out').innerHTML = '<div class="stats">' +
-    stat('พื้นที่ A', fmt(A / 100, 2), 'cm²') +
-    stat('น้ำหนักต่อเมตร (ถ้าเป็นเหล็ก)', fmt(A * 1e-6 * 7850, 2), 'kg/m') +
-    stat('I<sub>x</sub> (แกนแข็ง)', fmt(Ix / 1e4, 2), 'cm⁴', true) +
-    stat('S<sub>x</sub>', fmt(Sx / 1e3, 2), 'cm³') + stat('r<sub>x</sub>', fmt(rx / 10, 2), 'cm') +
-    stat('I<sub>y</sub> (แกนอ่อน)', fmt(Iy / 1e4, 2), 'cm⁴') +
-    stat('S<sub>y</sub>', fmt(Sy / 1e3, 2), 'cm³') + stat('r<sub>y</sub>', fmt(ry / 10, 2), 'cm') + '</div>' +
-    '<div class="note" style="margin-top:10px">แกน x = แกนที่ดัดตามความสูงหน้าตัด (ใช้ค่า I<sub>x</sub> ไปกรอกในเครื่องมือ BEAM ได้เลย)</div>';
-}
-calcMap.section = calcSection;
-buildSectionFields();
+        function calcSectionProps() {
+            const type = document.getElementById('sec-type').value;
+            let a = 0, ix = 0, sx = 0, rx = 0;
 
-/* ============ UNITS UI ============ */
-const UNITS = {
-  force: { N: 1, kN: 1000, kgf: 9.80665, 'tf (ตัน-แรง)': 9806.65, lbf: 4.4482216 },
-  stress: { Pa: 1, kPa: 1e3, MPa: 1e6, 'ksc (kgf/cm²)': 98066.5, psi: 6894.757, 'tf/m²': 9806.65, 'kgf/m²': 9.80665 },
-  moment: { 'N·mm': 0.001, 'N·m': 1, 'kN·m': 1000, 'kgf·m': 9.80665, 'tf·m': 9806.65 },
-  length: { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 },
-  area: { 'mm²': 1e-6, 'cm²': 1e-4, 'm²': 1, 'in²': 6.4516e-4, 'ft²': 0.09290304 }
-};
-function fmtSig(n) {
-  if (n === 0) return '0';
-  const a = Math.abs(n);
-  if (a >= 1e9 || a < 1e-6) return n.toExponential(4);
-  return parseFloat(n.toPrecision(7)).toLocaleString('en-US', { maximumFractionDigits: 10 });
-}
-function buildUnitFrom() {
-  $('u-from').innerHTML = Object.keys(UNITS[$('u-cat').value]).map(u => `<option>${u}</option>`).join('');
-  calcUnits();
-}
-function calcUnits() {
-  const cat = UNITS[$('u-cat').value], val = parseFloat($('u-val').value), from = $('u-from').value;
-  if (!Number.isFinite(val)) { $('u-out').innerHTML = '<div class="alert">กรอกตัวเลข</div>'; return; }
-  const base = val * cat[from];
-  $('u-out').innerHTML = Object.keys(cat).map(u => stat(u, fmtSig(base / cat[u]), '')).join('');
-}
-calcMap.units = calcUnits;
-buildUnitFrom();
+            if (type === 'rect') {
+                document.getElementById('sec-rect-inputs').classList.remove('hidden');
+                document.getElementById('sec-circle-inputs').classList.add('hidden');
+                const b = parseFloat(document.getElementById('sec-b').value) || 0;
+                const h = parseFloat(document.getElementById('sec-h').value) || 0;
+                a = b * h;
+                ix = (b * Math.pow(h, 3)) / 12;
+                sx = (b * Math.pow(h, 2)) / 6;
+                rx = Math.sqrt(ix / a);
+            } else {
+                document.getElementById('sec-rect-inputs').classList.add('hidden');
+                document.getElementById('sec-circle-inputs').classList.remove('hidden');
+                const d = parseFloat(document.getElementById('sec-d').value) || 0;
+                a = (Math.PI * Math.pow(d, 2)) / 4;
+                ix = (Math.PI * Math.pow(d, 4)) / 64;
+                sx = (Math.PI * Math.pow(d, 3)) / 32;
+                rx = d / 4;
+            }
 
-/* ============ PHYSICS ============ */
-//<core2
-function fracStr(x) { // x in units of W -> "W/4", "2W/5", or decimal
-  for (let den = 1; den <= 60; den++) {
-    const num = Math.round(x * den);
-    if (num > 0 && Math.abs(x * den - num) < 1e-9) {
-      const top = num === 1 ? 'W' : num + 'W';
-      return den === 1 ? top : top + '/' + den;
-    }
-  }
-  return (Math.round(x * 10000) / 10000) + 'W';
-}
-// force in units of W, vertical force at an end of the beam, to lift the beam off one support
-function leverCandidates(L, p1, p2, c) {
-  const sup = [p1, p2], out = [];
-  for (let i = 0; i < 2; i++) {
-    const pj = sup[1 - i], pi = sup[i], m0 = c - pj, sgn = pi < pj ? 1 : -1;
-    if (sgn * m0 >= 0) continue; // centre of mass outside supports (handled by caller)
-    for (const s of [0, L]) for (const d of [1, -1]) {
-      const a = d * (s - pj);
-      if (a !== 0 && sgn * a < 0) out.push({ lift: i + 1, s, d, F: Math.abs(m0) / Math.abs(a) });
-    }
-  }
-  return out.sort((p, q) => p.F - q.F);
-}
-function solveKin(k) {
-  const nm = ['u', 'v', 'a', 't', 's'], known = nm.filter(n => k[n] !== null);
-  if (known.length !== 3) return { err: 'ต้องกรอกค่าที่ทราบ 3 ค่า และเว้นว่างค่าที่ไม่ทราบอีก 2 ค่า' };
-  if (k.t !== null && k.t < 0) return { err: 'เวลา t ต้องไม่ติดลบ' };
-  const { u, v, a, t, s } = k, key = known.join(''), sols = [], eps = 1e-9;
-  const add = o => sols.push(Object.assign({ u, v, a, t, s }, o));
-  const bad = m => ({ err: m });
-  const inconsistent = 'ค่าที่ให้ไม่สอดคล้องกัน (เวลาติดลบ)';
-  switch (key) {
-    case 'uvt':
-      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
-      add({ a: (v - u) / t, s: (u + v) * t / 2 }); break;
-    case 'uva': {
-      if (a === 0) return bad('a = 0 หาเวลาไม่ได้');
-      const tt = (v - u) / a; if (tt < -eps) return bad(inconsistent);
-      add({ t: Math.max(tt, 0), s: (v * v - u * u) / (2 * a) }); break;
-    }
-    case 'uvs': {
-      if (u + v === 0) return bad('u + v = 0 หาเวลาไม่ได้');
-      const tt = 2 * s / (u + v); if (tt < -eps) return bad(inconsistent);
-      add({ t: Math.max(tt, 0), a: s !== 0 ? (v * v - u * u) / (2 * s) : NaN }); break;
-    }
-    case 'uat':
-      add({ v: u + a * t, s: u * t + 0.5 * a * t * t }); break;
-    case 'uas': {
-      const D = u * u + 2 * a * s; if (D < 0) return bad('ไม่มีคำตอบจริง (v² ติดลบ)');
-      if (a === 0) {
-        if (u === 0) return bad('u = 0 และ a = 0 หาเวลาไม่ได้');
-        const tt = s / u; if (tt < -eps) return bad(inconsistent);
-        add({ v: u, t: Math.max(tt, 0) }); break;
-      }
-      const r = Math.sqrt(D), vs = r === 0 ? [0] : [r, -r];
-      vs.forEach(vv => { const tt = (vv - u) / a; if (tt >= -eps) add({ v: vv, t: Math.max(tt, 0) }); });
-      if (!sols.length) return bad('ไม่มีคำตอบที่เวลาไม่ติดลบ');
-      break;
-    }
-    case 'uts':
-      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
-      { const aa = 2 * (s - u * t) / (t * t); add({ a: aa, v: u + aa * t }); } break;
-    case 'vat':
-      add({ u: v - a * t, s: v * t - 0.5 * a * t * t }); break;
-    case 'vas': {
-      const D = v * v - 2 * a * s; if (D < 0) return bad('ไม่มีคำตอบจริง (u² ติดลบ)');
-      if (a === 0) {
-        if (v === 0) return bad('v = 0 และ a = 0 หาเวลาไม่ได้');
-        const tt = s / v; if (tt < -eps) return bad(inconsistent);
-        add({ u: v, t: Math.max(tt, 0) }); break;
-      }
-      const r = Math.sqrt(D), us = r === 0 ? [0] : [r, -r];
-      us.forEach(uu => { const tt = (v - uu) / a; if (tt >= -eps) add({ u: uu, t: Math.max(tt, 0) }); });
-      if (!sols.length) return bad('ไม่มีคำตอบที่เวลาไม่ติดลบ');
-      break;
-    }
-    case 'vts':
-      if (t === 0) return bad('t = 0 หาความเร่งไม่ได้');
-      { const aa = 2 * (v * t - s) / (t * t); add({ a: aa, u: v - aa * t }); } break;
-    case 'ats':
-      if (t === 0) return bad('t = 0 หาความเร็วต้นไม่ได้');
-      { const uu = (s - 0.5 * a * t * t) / t; add({ u: uu, v: uu + a * t }); } break;
-  }
-  return { sols, known };
-}
-function projectile(v0, thDeg, h0, g) {
-  const th = thDeg * Math.PI / 180, vx = v0 * Math.cos(th), vy0 = v0 * Math.sin(th);
-  const T = (vy0 + Math.sqrt(vy0 * vy0 + 2 * g * h0)) / g, R = vx * T;
-  const tApex = vy0 > 0 ? vy0 / g : 0, H = h0 + (vy0 > 0 ? vy0 * vy0 / (2 * g) : 0);
-  const vyEnd = vy0 - g * T, vEnd = Math.hypot(vx, vyEnd);
-  const angEnd = Math.atan2(Math.abs(vyEnd), Math.abs(vx)) * 180 / Math.PI;
-  const xs = [], ys = [];
-  if (R > 1e-9 && Math.abs(vx) > 1e-9) {
-    for (let i = 0; i <= 120; i++) {
-      const x = R * i / 120; xs.push(x);
-      ys.push(h0 + x * Math.tan(th) - g * x * x / (2 * vx * vx));
-    }
-  }
-  return { vx, vy0, T, R, tApex, H, vEnd, angEnd, xs, ys };
-}
-function incline(m, thDeg, us, uk, d, g) {
-  const th = thDeg * Math.PI / 180, W = m * g, Wpar = W * Math.sin(th), N = W * Math.cos(th);
-  const fsMax = us * N, fk = uk * N, slides = Wpar > fsMax + 1e-12;
-  const a = slides ? g * (Math.sin(th) - uk * Math.cos(th)) : 0;
-  const Fstart = W * (Math.sin(th) + us * Math.cos(th));
-  const Fhold = Math.max(0, W * (Math.sin(th) - us * Math.cos(th)));
-  const crit = Math.atan(us) * 180 / Math.PI;
-  let v = null, t = null;
-  if (slides && a > 0 && d > 0) { v = Math.sqrt(2 * a * d); t = v / a; }
-  return { W, Wpar, N, fsMax, fk, slides, a, f: slides ? fk : Wpar, Fstart, Fhold, crit, v, t };
-}
-//core2>
+            document.getElementById('sec-res-a').innerText = `${a.toFixed(2)} cm²`;
+            document.getElementById('sec-res-ix').innerText = `${ix.toFixed(2)} cm⁴`;
+            document.getElementById('sec-res-sx').innerText = `${sx.toFixed(2)} cm³`;
+            document.getElementById('sec-res-rx').innerText = `${rx.toFixed(2)} cm`;
+        }
 
-const pv = id => parseFloat($(id).value);
-const alertBox = msg => `<div class="alert">${msg}</div>`;
+        // ================= MODULE 2: BOQ CALCULATOR =================
+        const defaultBOQ = [
+            { name: 'งานคอนกรีตโครงสร้าง (240 ksc)', qty: 15, unit: 'ลบ.ม.', price: 2400 },
+            { name: 'เหล็กเสริม DB16 (SD40)', qty: 1200, unit: 'กก.', price: 32 },
+            { name: 'ไม้แบบงานคอนกรีต', qty: 120, unit: 'ตร.ม.', price: 350 },
+            { name: 'งานขุดดินฐานราก', qty: 45, unit: 'ลบ.ม.', price: 120 }
+        ];
 
-function arrow2(c, x, ya, yb, color) {
-  const dir = Math.sign(yb - ya);
-  c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5;
-  c.beginPath(); c.moveTo(x, ya); c.lineTo(x, yb); c.stroke();
-  c.beginPath(); c.moveTo(x, yb + dir * 2); c.lineTo(x - 6, yb - dir * 9); c.lineTo(x + 6, yb - dir * 9); c.closePath(); c.fill();
-}
-function drawLever(cv, L, p1, p2, cm, best) {
-  const { c, W } = setupCanvas(cv); if (!W) return;
-  const x0 = 40, x1 = W - 40, y = 70, X = x => x0 + x / L * (x1 - x0);
-  c.font = '12px Sarabun, sans-serif';
-  [[p1, 'x'], [p2, 'y']].forEach(([p, n]) => {
-    const px = X(p);
-    c.strokeStyle = '#ffb84d'; c.fillStyle = 'rgba(255,184,77,.22)'; c.lineWidth = 1.5;
-    c.beginPath(); c.moveTo(px, y + 5); c.lineTo(px - 15, y + 32); c.lineTo(px + 15, y + 32); c.closePath(); c.fill(); c.stroke();
-    c.fillStyle = '#ffb84d'; c.textAlign = 'center'; c.fillText(`${n} (${fmt(p, 2)} m)`, px, y + 48);
-  });
-  c.strokeStyle = '#ff7a3d'; c.lineWidth = 8; c.lineCap = 'butt'; c.shadowColor = '#ff7a3d'; c.shadowBlur = 10;
-  c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke(); c.shadowBlur = 0;
-  c.fillStyle = '#e6f1ff'; c.textAlign = 'center'; c.fillText('A', x0 - 14, y + 4); c.fillText('B', x1 + 14, y + 4);
-  arrow2(c, X(cm), y - 52, y - 6, '#3dffb0');
-  c.fillStyle = '#3dffb0'; c.textAlign = 'center'; c.fillText('W', X(cm), y - 58);
-  const fx = X(best.s);
-  c.fillStyle = '#ff3df2'; c.textAlign = 'left';
-  if (best.d > 0) { arrow2(c, fx, y + 44, y + 6, '#ff3df2'); c.fillStyle = '#ff3df2'; c.fillText('F', fx + 10, y + 30); }
-  else { arrow2(c, fx, y - 52, y - 6, '#ff3df2'); c.fillStyle = '#ff3df2'; c.fillText('F', fx + 10, y - 30); }
-}
+        function renderBOQ() {
+            const tbody = document.getElementById('boq-tbody');
+            tbody.innerHTML = '';
+            let total = 0;
 
-function calcLever() {
-  const L = pv('lv-L'), p1 = pv('lv-p1'), p2 = pv('lv-p2');
-  const cs = $('lv-c').value.trim(), c = cs === '' ? L / 2 : parseFloat(cs);
-  const m = pv('lv-m'), g = pv('p-g'), out = $('lv-out'), steps = $('lv-steps');
-  const err = [];
-  if (!(L > 0)) err.push('ความยาวคาน L ต้องมากกว่า 0');
-  else if (!(p1 >= 0 && p2 <= L && p1 < p2)) err.push('ลิ่มต้องอยู่บนคาน และลิ่ม x ต้องอยู่ซ้ายของลิ่ม y (0 ≤ x &lt; y ≤ L)');
-  else if (!(c > p1 && c < p2)) err.push('จุดศูนย์กลางมวลต้องอยู่ระหว่างลิ่มทั้งสอง ไม่เช่นนั้นคานจะพลิกเอง (ไม่สมดุล)');
-  if (err.length) { out.innerHTML = alertBox(err.join('<br>')); steps.innerHTML = ''; setupCanvas($('lv-sketch')); return; }
-  const W = (m > 0 && g > 0) ? m * g : null;
-  const names = ['x', 'y'], pos = [p1, p2], cands = leverCandidates(L, p1, p2, c), best = cands[0];
-  const nLift = names[best.lift - 1], nPiv = names[2 - best.lift], pj = pos[2 - best.lift];
-  const end = best.s === 0 ? 'A' : 'B', dirTxt = best.d > 0 ? 'ดึงขึ้น (ทิศขึ้น)' : 'กดลง (ทิศลง)';
-  const inN = f => W ? ` = ${fmt(f * W, 3)} N` : '';
-  const Nx = (p2 - c) / (p2 - p1), Ny = (c - p1) / (p2 - p1);
-  let h = `<div class="ans">แรงที่น้อยที่สุด = <b>${fracStr(best.F)}</b>${W ? ` <b>${inN(best.F).replace(' = ', '= ')}</b>` : ''}<br>ออกแรง<b>${dirTxt}</b>ที่<b>ปลาย ${end}</b> ทำให้คานเผยอขึ้นจากลิ่ม <b>${nLift}</b> (คานหมุนรอบลิ่ม ${nPiv})</div>`;
-  h += '<div class="stats">' +
-    stat('น้ำหนักคาน W', W ? fmt(W, 3) : '—', W ? 'N' : '') +
-    stat('แรงที่ลิ่ม x รับ', fracStr(Nx), W ? inN(Nx).replace(' = ', '= ') : '') +
-    stat('แรงที่ลิ่ม y รับ', fracStr(Ny), W ? inN(Ny).replace(' = ', '= ') : '') + '</div>';
-  h += '<table class="rtable" style="margin-top:14px"><thead><tr><th>ลิ่มที่หลุด</th><th>จุดออกแรง</th><th>ทิศ</th><th class="r">F</th></tr></thead><tbody>';
-  cands.forEach((q, i) => {
-    h += `<tr${i === 0 ? ' style="color:#fff"' : ''}><td>${names[q.lift - 1]}</td><td>ปลาย ${q.s === 0 ? 'A' : 'B'}</td><td>${q.d > 0 ? 'ขึ้น' : 'ลง'}</td><td class="num">${fracStr(q.F)}${W ? ' (' + fmt(q.F * W, 2) + ' N)' : ''}</td></tr>`;
-  });
-  out.innerHTML = h + '</tbody></table><div class="note" style="margin-top:8px">แถวบนสุดคือคำตอบ (แรงน้อยที่สุด) แถวอื่นคือวิธีออกแรงที่ทำได้เช่นกันแต่ใช้แรงมากกว่า</div>';
-  const armW = Math.abs(c - pj), armF = Math.abs(best.s - pj);
-  steps.innerHTML =
-    `<li>น้ำหนักคาน <b>W</b> กระทำที่จุดศูนย์กลางมวล ห่างจาก A เท่ากับ <b>${fmt(c, 3)} m</b>${cs === '' ? ' (คานสม่ำเสมอ ⇒ L/2)' : ''}</li>` +
-    `<li>ให้คานเพิ่งจะเผยอจากลิ่ม <b>${nLift}</b> พอดี ⇒ แรงปฏิกิริยาที่ลิ่ม ${nLift} เป็น 0 คานจึงหมุนรอบลิ่ม <b>${nPiv}</b> (ตำแหน่ง ${fmt(pj, 3)} m จาก A)</li>` +
-    `<li>แขนโมเมนต์ของน้ำหนัก = |${fmt(c, 3)} − ${fmt(pj, 3)}| = <b>${fmt(armW, 3)} m</b><br>แขนโมเมนต์ของแรง F ที่ปลาย ${end} = |${fmt(best.s, 3)} − ${fmt(pj, 3)}| = <b>${fmt(armF, 3)} m</b> (ออกแรงไกลจุดหมุนที่สุดจะใช้แรงน้อยที่สุด จึงเลือกที่ปลายคาน)</li>` +
-    `<li>สมดุลโมเมนต์รอบลิ่ม ${nPiv}: F × ${fmt(armF, 3)} = W × ${fmt(armW, 3)} ⇒ <b>F = ${fracStr(best.F)}</b>${W ? ` (m = ${fmt(m, 3)} kg, g = ${fmt(g, 3)} ⇒ W = ${fmt(W, 3)} N ⇒ F = ${fmt(best.F * W, 3)} N)` : ''}</li>` +
-    `<li>ทิศของแรง: ต้อง<b>${dirTxt}</b>ที่ปลาย ${end} เพื่อให้ด้านลิ่ม ${nLift} ยกขึ้นโดยคานหมุนรอบลิ่ม ${nPiv}</li>`;
-  drawLever($('lv-sketch'), L, p1, p2, c, best);
-}
+            defaultBOQ.forEach((item, index) => {
+                const lineTotal = item.qty * item.price;
+                total += lineTotal;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2 text-slate-200">${item.name}</td>
+                        <td class="p-2"><input type="number" value="${item.qty}" onchange="updateBOQ(${index}, 'qty', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded p-1 text-center"></td>
+                        <td class="p-2 text-slate-400 text-xs">${item.unit}</td>
+                        <td class="p-2"><input type="number" value="${item.price}" onchange="updateBOQ(${index}, 'price', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded p-1 text-right"></td>
+                        <td class="p-2 text-right font-mono text-emerald-400">${lineTotal.toLocaleString('th-TH')}</td>
+                    </tr>
+                `;
+            });
 
-function calcKin() {
-  const ids = ['u', 'v', 'a', 't', 's'], k = {}; let bad = false;
-  ids.forEach(n => {
-    const raw = $('k-' + n).value.trim();
-    if (raw === '') k[n] = null; else { const x = parseFloat(raw); if (!Number.isFinite(x)) bad = true; k[n] = x; }
-  });
-  const out = $('k-out');
-  if (bad) { out.innerHTML = alertBox('กรอกเป็นตัวเลขเท่านั้น'); return; }
-  const r = solveKin(k);
-  if (r.err) { out.innerHTML = alertBox(r.err); return; }
-  const lab = { u: 'ความเร็วต้น u', v: 'ความเร็วปลาย v', a: 'ความเร่ง a', t: 'เวลา t', s: 'การกระจัด s' };
-  const un = { u: 'm/s', v: 'm/s', a: 'm/s²', t: 's', s: 'm' };
-  out.innerHTML = r.sols.map((sol, i) =>
-    (r.sols.length > 1 ? `<div class="note" style="margin:${i ? 14 : 0}px 0 6px">คำตอบที่ ${i + 1}</div>` : '') +
-    '<div class="stats">' + ids.map(n => stat(`${lab[n]} ${r.known.includes(n) ? '(โจทย์ให้)' : '(คำนวณได้)'}`, fmt(sol[n], 4), un[n])).join('') + '</div>'
-  ).join('') + (r.sols.length > 1 ? '<div class="note" style="margin-top:10px">มีสองคำตอบเพราะ v² = u² + 2as ให้ได้ทั้งค่าบวกและลบ (เช่น ขึ้นแล้วลง) ให้เลือกตามเงื่อนไขโจทย์</div>' : '');
-}
+            document.getElementById('boq-total').innerText = `${total.toLocaleString('th-TH')} บาท`;
+        }
 
-function calcProj() {
-  const v0 = pv('pr-v'), th = pv('pr-th'), h0 = pv('pr-h'), g = pv('p-g'), out = $('pr-out');
-  if (!(v0 >= 0) || !(th >= -90 && th <= 90) || !(h0 >= 0) || !(g > 0)) {
-    out.innerHTML = alertBox('ต้องมี v₀ ≥ 0, มุม −90° ถึง 90°, h₀ ≥ 0 และ g &gt; 0'); setupCanvas($('pr-chart')); return;
-  }
-  if (th < 0 && h0 === 0) { out.innerHTML = alertBox('ยิงลงต้องมีความสูง h₀ &gt; 0'); setupCanvas($('pr-chart')); return; }
-  const r = projectile(v0, th, h0, g);
-  out.innerHTML = '<div class="stats">' +
-    stat('เวลาที่อยู่ในอากาศ T', fmt(r.T, 3), 's') + stat('ระยะทางในแนวระดับ R', fmt(r.R, 3), 'm', true) +
-    stat('ความสูงสูงสุด H', fmt(r.H, 3), 'm') + stat('เวลาถึงจุดสูงสุด', fmt(r.tApex, 3), 's') +
-    stat('ความเร็วแนวระดับ vₓ', fmt(r.vx, 3), 'm/s') + stat('ความเร็วแนวดิ่งตอนยิง', fmt(r.vy0, 3), 'm/s') +
-    stat('อัตราเร็วตอนตกถึงพื้น', fmt(r.vEnd, 3), 'm/s') + stat('มุมตกกระทบ (ต่ำกว่าแนวระดับ)', fmt(r.angEnd, 2), '°') + '</div>';
-  if (r.xs.length) drawProjChart(r); else setupCanvas($('pr-chart'));
-}
-function drawProjChart(r) {
-  drawChart($('pr-chart'), r.xs, r.ys, r.R, { title: 'Trajectory: height y (m) vs distance x', unit: 'm', color: '#ff7a3d', fill: 'rgba(255,122,61,.14)' });
-}
+        function updateBOQ(index, field, val) {
+            defaultBOQ[index][field] = parseFloat(val) || 0;
+            renderBOQ();
+        }
 
-function calcInc() {
-  const m = pv('in-m'), th = pv('in-th'), us = pv('in-us'), uk = pv('in-uk'), d = pv('in-d') || 0, g = pv('p-g'), out = $('in-out');
-  if (!(m > 0) || !(th >= 0 && th < 90) || !(us >= 0) || !(uk >= 0) || !(g > 0)) {
-    out.innerHTML = alertBox('ต้องมี m &gt; 0, มุม 0° ถึงน้อยกว่า 90°, μ ≥ 0 และ g &gt; 0'); return;
-  }
-  const r = incline(m, th, us, uk, d, g);
-  let h = `<div class="ans">${r.slides ? `วัตถุ<b>ไถลลง</b> ด้วยความเร่ง <b>${fmt(r.a, 3)} m/s²</b>` : 'วัตถุ<b>ไม่ไถล</b> (หยุดนิ่ง) แรงเสียดทานสถิตจริง = <b>' + fmt(r.f, 3) + ' N</b>'}</div>`;
-  if (uk > us) h += alertBox('ปกติ μk ไม่ควรมากกว่า μs โปรดตรวจสอบค่าที่กรอก') + '<div style="height:10px"></div>';
-  h += '<div class="stats">' +
-    stat('น้ำหนัก W = mg', fmt(r.W, 3), 'N') + stat('องค์ประกอบขนานพื้นเอียง mg sinθ', fmt(r.Wpar, 3), 'N') +
-    stat('แรงตั้งฉาก N = mg cosθ', fmt(r.N, 3), 'N') + stat('แรงเสียดทานสถิตสูงสุด μsN', fmt(r.fsMax, 3), 'N') +
-    stat('แรงเสียดทานจลน์ μkN', fmt(r.fk, 3), 'N') + stat('มุมวิกฤต (เริ่มไถล) = tan⁻¹μs', fmt(r.crit, 2), '°');
-  if (r.v !== null) h += stat(`ความเร็วเมื่อไถลลง ${fmt(d, 2)} m`, fmt(r.v, 3), 'm/s') + stat('เวลาที่ใช้', fmt(r.t, 3), 's');
-  h += stat('แรงขนานพื้นเอียงดันขึ้น เพื่อเริ่มเคลื่อนที่ขึ้น', fmt(r.Fstart, 3), 'N');
-  h += stat('แรงขนานพื้นเอียงดันขึ้น เพื่อไม่ให้ไถลลง (ขั้นต่ำ)', fmt(r.Fhold, 3), 'N');
-  out.innerHTML = h + '</div>';
-}
+        // ================= MODULE 3: BEAM ANALYSIS (SFD/BMD) =================
+        function analyzeBeam() {
+            const L = parseFloat(document.getElementById('beam-length').value) || 1;
+            const w = parseFloat(document.getElementById('beam-w').value) || 0;
+            const P = parseFloat(document.getElementById('beam-p').value) || 0;
 
-function calcPhysics() {
-  const t = document.querySelector('#p-tabs .tab.active').dataset.tab;
-  ({ lever: calcLever, kin: calcKin, proj: calcProj, inc: calcInc })[t]();
-}
-calcMap.physics = calcPhysics;
-document.addEventListener('click', e => {
-  const b = e.target.closest('#p-tabs .tab'); if (!b) return;
-  document.querySelectorAll('#p-tabs .tab').forEach(x => x.classList.toggle('active', x === b));
-  document.querySelectorAll('.ptab').forEach(x => x.classList.toggle('active', x.id === 'pt-' + b.dataset.tab));
-  calcPhysics();
-});
+            const Ra = (w * L) / 2 + P / 2;
+            const Rb = Ra;
+            const Mmax = (w * Math.pow(L, 2)) / 8 + (P * L) / 4;
 
-route();
-</script>
+            document.getElementById('res-ra').innerText = `${Ra.toFixed(1)} kg`;
+            document.getElementById('res-vmax').innerText = `${Ra.toFixed(1)} kg`;
+            document.getElementById('res-mmax').innerText = `${Mmax.toFixed(1)} kg-m`;
+
+            drawSFDBMD(L, w, P, Ra, Mmax);
+        }
+
+        function drawSFDBMD(L, w, P, Ra, Mmax) {
+            const canvas = document.getElementById('beamCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Beam Axis
+            const startX = 60, endX = canvas.width - 60;
+            const beamY = 60;
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(startX, beamY);
+            ctx.lineTo(endX, beamY);
+            ctx.stroke();
+
+            // SFD
+            const sfdY = 160;
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX, sfdY - 30);
+            ctx.lineTo(canvas.width / 2, sfdY);
+            ctx.lineTo(endX, sfdY + 30);
+            ctx.stroke();
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Fira Code';
+            ctx.fillText('SFD (Shear Force Diagram)', startX, sfdY - 45);
+
+            // BMD
+            const bmdY = 260;
+            ctx.strokeStyle = '#10b981';
+            ctx.beginPath();
+            ctx.moveTo(startX, bmdY);
+            ctx.quadraticCurveTo(canvas.width / 2, bmdY + 40, endX, bmdY);
+            ctx.stroke();
+
+            ctx.fillText('BMD (Bending Moment Diagram)', startX, bmdY - 15);
+        }
+
+        // ================= MODULE 4: RC BEAM DESIGN =================
+        function calcRCBeam() {
+            const fc = parseFloat(document.getElementById('rc-fc').value) || 0;
+            const fy = parseFloat(document.getElementById('rc-fy').value) || 0;
+            const M = parseFloat(document.getElementById('rc-m').value) || 0;
+            const b = parseFloat(document.getElementById('rc-b').value) || 1;
+            const d = parseFloat(document.getElementById('rc-d').value) || 1;
+
+            const fc_allow = 0.45 * fc;
+            const fs_allow = 0.50 * fy;
+            const n = 10; // Approx Modular ratio
+            const k = (n * fc_allow) / (n * fc_allow + fs_allow);
+            const j = 1 - (k / 3);
+            const K = 0.5 * fc_allow * k * j;
+
+            const As = (M * 100) / (fs_allow * j * d);
+
+            document.getElementById('rc-res-fc').innerText = `${fc_allow.toFixed(1)} ksc`;
+            document.getElementById('rc-res-fs').innerText = `${fs_allow.toFixed(1)} ksc`;
+            document.getElementById('rc-res-k').innerText = `${K.toFixed(2)} ksc`;
+            document.getElementById('rc-res-as').innerText = `${As.toFixed(2)} cm²`;
+
+            const rebarDb20 = 3.14; // Area DB20
+            const numRebars = Math.ceil(As / rebarDb20);
+            document.getElementById('rc-res-rebar').innerText = `ใช้เหล็ก DB20 จำนวนประมาณ ${numRebars} เส้น`;
+        }
+
+        // ================= OTHER MODULE CALCULATIONS =================
+        function calcSteelColumn() {
+            const L = (parseFloat(document.getElementById('steel-l').value) || 0) * 100;
+            const r = parseFloat(document.getElementById('steel-r').value) || 1;
+            const K = parseFloat(document.getElementById('steel-k').value) || 1;
+
+            const klr = (K * L) / r;
+            document.getElementById('steel-res-klr').innerText = klr.toFixed(1);
+
+            const status = document.getElementById('steel-res-status');
+            if (klr <= 200) {
+                status.innerText = "ผ่านเกณฑ์มาตรฐาน (KL/r ≤ 200)";
+                status.className = "font-bold text-emerald-400";
+            } else {
+                status.innerText = "เกินเกณฑ์มาตรฐาน! (ควรเพิ่มขนาดหน้าตัด)";
+                status.className = "font-bold text-rose-400";
+            }
+        }
+
+        function calcGeotech() {
+            const c = parseFloat(document.getElementById('geo-c').value) || 0;
+            const gamma = parseFloat(document.getElementById('geo-gamma').value) || 0;
+            const B = parseFloat(document.getElementById('geo-b').value) || 0;
+
+            const qu = 1.3 * c * 5.7 + gamma * B * 0.4;
+            const qa = qu / 3;
+
+            document.getElementById('geo-res-qu').innerText = `${qu.toFixed(2)} t/m²`;
+            document.getElementById('geo-res-qa').innerText = `${qa.toFixed(2)} t/m²`;
+        }
+
+        function calcHydro() {
+            const C = parseFloat(document.getElementById('hydro-c').value) || 0;
+            const I = parseFloat(document.getElementById('hydro-i').value) || 0;
+            const A_rai = parseFloat(document.getElementById('hydro-a').value) || 0;
+
+            const A_m2 = A_rai * 1600;
+            const Q = (C * (I / 3600000) * A_m2);
+
+            document.getElementById('hydro-res-q').innerText = `${Q.toFixed(3)} m³/s`;
+        }
+
+        function calcHighway() {
+            const V = parseFloat(document.getElementById('hway-v').value) || 0;
+            const t = parseFloat(document.getElementById('hway-t').value) || 0;
+
+            const v_ms = V / 3.6;
+            const d_react = v_ms * t;
+            const d_brake = Math.pow(v_ms, 2) / (2 * 9.81 * 0.35);
+            const ssd = d_react + d_brake;
+
+            document.getElementById('hway-res-ssd').innerText = `${ssd.toFixed(2)} เมตร`;
+        }
+
+        function calcQC() {
+            const cube = parseFloat(document.getElementById('qc-cube').value) || 0;
+            const cyl = cube * 0.833;
+            document.getElementById('qc-res-cyl').innerText = `${cyl.toFixed(1)} ksc`;
+        }
+
+        function clearSavedData() {
+            if (confirm("คุณต้องการล้างข้อมูลบันทึกทั้งหมดหรือไม่?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function initAllModules() {
+            updateUnitOptions();
+            calcSectionProps();
+            renderBOQ();
+            calcRCBeam();
+            calcSteelColumn();
+            calcGeotech();
+            calcHydro();
+            calcHighway();
+            calcQC();
+        }
+    </script>
 </body>
 </html>
