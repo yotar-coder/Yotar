@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC / ICT Smart Money Trading Terminal</title>
+    <title>SMC / ICT Smart Money Pro Terminal (TradingView Real-Time)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- TradingView Widget Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#0e131f',
-                        cardBg: '#171e2e',
-                        borderBg: '#2a3447',
-                        accentGreen: '#00c853',
-                        accentRed: '#ff3d00',
+                        darkBg: '#080b11',
+                        cardBg: '#111622',
+                        borderBg: '#1f293d',
+                        accentGold: '#ffd700',
+                        accentGreen: '#00e676',
+                        accentRed: '#ff1744',
                         accentBlue: '#29b6f6',
-                        accentPurple: '#ab47bc',
-                        accentYellow: '#ffd600'
+                        accentPurple: '#b388ff'
                     }
                 }
             }
@@ -32,7 +34,7 @@
         
         body {
             font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0e131f;
+            background-color: #080b11;
             color: #e2e8f0;
             overflow-x: hidden;
         }
@@ -43,421 +45,368 @@
 
         /* Custom Scrollbars */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #0e131f;
+            background: #080b11;
         }
         ::-webkit-scrollbar-thumb {
-            background: #2a3447;
+            background: #1f293d;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #3b4861;
+            background: #2d3e5e;
         }
 
         .tab-active {
-            border-bottom: 2px solid #29b6f6;
-            color: #29b6f6;
+            border-bottom: 2px solid #ffd700;
+            color: #ffd700;
             font-weight: 600;
+            background: rgba(255, 215, 0, 0.05);
         }
 
-        /* Tooltip */
-        .tooltip {
-            visibility: hidden;
-            position: absolute;
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.2s;
+        .pulse-active {
+            animation: pulse-glow 2s infinite;
         }
-        .has-tooltip:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
         }
     </style>
 </head>
-<body class="h-screen flex flex-col bg-darkBg text-slate-200 antialiased selection:bg-accentBlue selection:text-white">
+<body class="h-screen flex flex-col bg-darkBg text-slate-200 antialiased selection:bg-amber-500 selection:text-black">
 
     <!-- TOP NAVBAR -->
-    <header class="h-14 bg-cardBg border-b border-borderBg flex items-center justify-between px-4 shrink-0 z-20">
+    <header class="h-14 bg-cardBg border-b border-borderBg flex items-center justify-between px-3 md:px-5 shrink-0 z-30">
         <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 rounded-lg text-white font-bold tracking-wide shadow-md">
-                <i data-lucide="candlestick-chart" class="w-5 h-5"></i>
-                <span class="text-sm">ICT / SMC Pro Terminal</span>
+            <div class="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-amber-700 px-3 py-1 rounded-lg text-black font-extrabold tracking-wide shadow-lg">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+                <span class="text-sm uppercase tracking-wider">ICT / SMC PRO TERMINAL</span>
             </div>
-            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono border border-borderBg">Michael J. Huddleston Methodology</span>
+            <span class="hidden lg:inline-block text-[11px] bg-slate-800/80 text-amber-400 px-2.5 py-1 rounded font-mono border border-amber-500/20">
+                <i class="fa-solid fa-microchip mr-1"></i>Michael J. Huddleston Methodology
+            </span>
         </div>
 
-        <!-- Symbol & Timeframe Selection -->
-        <div class="flex items-center space-x-2 font-mono text-sm">
+        <!-- Quick Symbol Picker -->
+        <div class="flex items-center space-x-2 font-mono text-xs overflow-x-auto py-1">
             <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
-                <button onclick="setPair('EUR/USD')" id="pair-EURUSD" class="px-2.5 py-1 rounded bg-slate-700 text-white font-semibold text-xs transition">EUR/USD</button>
-                <button onclick="setPair('GBP/USD')" id="pair-GBPUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">GBP/USD</button>
-                <button onclick="setPair('XAU/USD')" id="pair-XAUUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">XAU/USD (Gold)</button>
+                <button onclick="changeSymbol('FX:EURUSD')" id="sym-EURUSD" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-xs transition">EUR/USD</button>
+                <button onclick="changeSymbol('FX:GBPUSD')" id="sym-GBPUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">GBP/USD</button>
+                <button onclick="changeSymbol('TVC:GOLD')" id="sym-GOLD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">XAU/USD</button>
+                <button onclick="changeSymbol('BINANCE:BTCUSDT')" id="sym-BTCUSDT" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">BTC/USDT</button>
+                <button onclick="changeSymbol('CAPITALCOM:US30')" id="sym-US30" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">US30</button>
+                <button onclick="changeSymbol('CAPITALCOM:NAS100')" id="sym-NAS100" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">NAS100</button>
             </div>
 
-            <div class="h-4 w-[1px] bg-borderBg"></div>
+            <div class="hidden sm:block h-4 w-[1px] bg-borderBg"></div>
 
-            <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
-                <button onclick="setTimeframe('1M')" id="tf-1M" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1M</button>
-                <button onclick="setTimeframe('5M')" id="tf-5M" class="px-2 py-1 rounded text-xs bg-accentBlue text-white font-bold transition">5M</button>
-                <button onclick="setTimeframe('15M')" id="tf-15M" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">15M</button>
-                <button onclick="setTimeframe('1H')" id="tf-1H" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1H</button>
-                <button onclick="setTimeframe('4H')" id="tf-4H" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">4H</button>
+            <!-- Timeframe Selector -->
+            <div class="hidden sm:flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
+                <button onclick="changeTimeframe('1')" id="tf-1" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1m</button>
+                <button onclick="changeTimeframe('5')" id="tf-5" class="px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition">5m</button>
+                <button onclick="changeTimeframe('15')" id="tf-15" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">15m</button>
+                <button onclick="changeTimeframe('60')" id="tf-60" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1h</button>
+                <button onclick="changeTimeframe('240')" id="tf-240" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">4h</button>
+                <button onclick="changeTimeframe('D')" id="tf-D" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1D</button>
             </div>
         </div>
 
-        <!-- Action Control Buttons -->
-        <div class="flex items-center space-x-2">
-            <button onclick="generateNewMarketData()" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-borderBg transition text-slate-200">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                <span>สุ่มกราฟใหม่</span>
-            </button>
-            
-            <div class="relative inline-block text-left">
-                <button id="scenarioBtn" onclick="toggleScenarioDropdown()" class="flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                    <span>จำลองท่าเทรด ICT</span>
-                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                </button>
-                <div id="scenarioDropdown" class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-cardBg ring-1 ring-black ring-opacity-5 border border-borderBg z-50">
-                    <div class="py-1" role="menu">
-                        <button onclick="loadScenario('silver_bullet')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col">
-                            <span class="font-bold text-accentGreen">ICT Silver Bullet (Bullish)</span>
-                            <span class="text-[10px] text-slate-400">Sweep SSL + FVG Retrace + Expansion</span>
-                        </button>
-                        <button onclick="loadScenario('judas_swing')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col border-t border-borderBg">
-                            <span class="font-bold text-accentRed">London Judas Swing (Bearish)</span>
-                            <span class="text-[10px] text-slate-400">Fake breakout High + MSS + Order Block</span>
-                        </button>
-                        <button onclick="loadScenario('turtle_soup')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col border-t border-borderBg">
-                            <span class="font-bold text-accentPurple">Turtle Soup Liquidity Raid</span>
-                            <span class="text-[10px] text-slate-400">Sweep BSL Target Internal FVG</span>
-                        </button>
-                    </div>
-                </div>
+        <!-- Live Clock Header -->
+        <div class="hidden md:flex items-center space-x-4 font-mono text-xs">
+            <div class="text-right">
+                <div class="text-[10px] text-slate-400 uppercase tracking-widest">New York (EST)</div>
+                <div id="ny-clock" class="text-amber-400 font-bold">00:00:00 EST</div>
+            </div>
+            <div class="h-6 w-[1px] bg-borderBg"></div>
+            <div class="text-right">
+                <div class="text-[10px] text-slate-400 uppercase tracking-widest">Thailand (BKK)</div>
+                <div id="bkk-clock" class="text-emerald-400 font-bold">00:00:00 ICT</div>
             </div>
         </div>
     </header>
 
-    <!-- MAIN APP LAYOUT -->
-    <div class="flex flex-1 overflow-hidden">
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="flex flex-1 overflow-hidden flex-col lg:flex-row">
         
-        <!-- LEFT SIDEBAR: SMC TOOLBAR & OVERLAY CONTROLS -->
-        <aside class="w-64 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-4 overflow-y-auto">
+        <!-- LEFT SIDEBAR: RISK CALCULATOR & KILLZONE MONITOR -->
+        <aside class="w-full lg:w-80 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[40vh] lg:max-h-full">
             
-            <!-- Indicator Toggles -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
-                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-                    <span>SMC Indicators Overlay</span>
-                    <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-                </h3>
-                <div class="space-y-2 text-xs">
-                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
-                        <span class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                            <span>Order Blocks (OB)</span>
-                        </span>
-                        <input type="checkbox" id="toggle-ob" checked onchange="renderChart()" class="rounded accent-accentGreen">
-                    </label>
+            <!-- Live Kill Zones Status -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2">
+                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>ICT Sessions & Killzones</span>
+                    </h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+                        Live Tracking
+                    </span>
+                </div>
 
-                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
-                        <span class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
-                            <span>Fair Value Gap (FVG)</span>
-                        </span>
-                        <input type="checkbox" id="toggle-fvg" checked onchange="renderChart()" class="rounded accent-accentBlue">
-                    </label>
+                <div class="space-y-1.5 text-xs font-mono">
+                    <!-- Asian Range -->
+                    <div id="kz-asian" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
+                        <div>
+                            <div class="font-bold text-slate-300">Asian Range (Accumulation)</div>
+                            <div class="text-[10px] text-slate-500">20:00 - 00:00 EST | 07:00 - 11:00 BKK</div>
+                        </div>
+                        <span id="badge-asian" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
+                    </div>
 
-                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
-                        <span class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
-                            <span>BOS / MSS (CHoCH)</span>
-                        </span>
-                        <input type="checkbox" id="toggle-structure" checked onchange="renderChart()" class="rounded accent-accentPurple">
-                    </label>
+                    <!-- London Open -->
+                    <div id="kz-london" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
+                        <div>
+                            <div class="font-bold text-slate-300">London KZ (Judas Swing)</div>
+                            <div class="text-[10px] text-slate-500">02:00 - 05:00 EST | 13:00 - 16:00 BKK</div>
+                        </div>
+                        <span id="badge-london" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
+                    </div>
 
-                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
-                        <span class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                            <span>Liquidity Sweeps (BSL/SSL)</span>
-                        </span>
-                        <input type="checkbox" id="toggle-liquidity" checked onchange="renderChart()" class="rounded accent-accentYellow">
-                    </label>
+                    <!-- NY AM & Silver Bullet -->
+                    <div id="kz-nyam" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
+                        <div>
+                            <div class="font-bold text-slate-300">NY AM / Silver Bullet (10-11)</div>
+                            <div class="text-[10px] text-slate-500">08:30 - 11:00 EST | 19:30 - 22:00 BKK</div>
+                        </div>
+                        <span id="badge-nyam" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
+                    </div>
 
-                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
-                        <span class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
-                            <span>Kill Zones (Time Sessions)</span>
-                        </span>
-                        <input type="checkbox" id="toggle-killzones" checked onchange="renderChart()" class="rounded accent-pink-500">
-                    </label>
+                    <!-- NY PM Killzone -->
+                    <div id="kz-nypm" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
+                        <div>
+                            <div class="font-bold text-slate-300">NY PM Killzone</div>
+                            <div class="text-[10px] text-slate-500">13:30 - 16:00 EST | 00:30 - 03:00 BKK</div>
+                        </div>
+                        <span id="badge-nypm" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- HTF Bias Indicator -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
-                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">HTF Institutional Bias</h3>
-                <div id="bias-card" class="p-2.5 rounded-lg border bg-emerald-950/40 border-emerald-500/30 flex items-center justify-between">
-                    <div>
-                        <div id="bias-text" class="text-sm font-bold text-emerald-400">BULLISH EXPANSION</div>
-                        <div class="text-[10px] text-slate-400">Daily Order Flow: Seeking BSL</div>
-                    </div>
-                    <i data-lucide="trending-up" id="bias-icon" class="w-5 h-5 text-emerald-400"></i>
+            <!-- Position Size & Risk Calculator -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2.5">
+                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>ICT Position Risk Calc</span>
+                    </h3>
+                    <i class="fa-solid fa-shield-halved text-slate-500 text-xs"></i>
                 </div>
-            </div>
 
-            <!-- Risk & Position Sizing Calculator -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-3">
-                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>คำนวณความเสี่ยง (Risk Calc)</span>
-                    <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
-                </h3>
-                
                 <div class="space-y-2 text-xs">
-                    <div>
-                        <label class="text-slate-400 block mb-1">Account Balance ($)</label>
-                        <input type="number" id="calc-balance" value="10000" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
-                    </div>
-                    
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="text-slate-400 block mb-1">Risk (%)</label>
-                            <input type="number" id="calc-risk" value="1" step="0.5" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
+                            <label class="text-slate-400 block mb-1">Asset Type</label>
+                            <select id="calc-asset" onchange="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
+                                <option value="forex">Forex (Standard Lot)</option>
+                                <option value="gold">Gold (XAU/USD)</option>
+                                <option value="crypto">Crypto / BTC</option>
+                                <option value="indices">Indices (US30/NAS)</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="text-slate-400 block mb-1">SL (Pips/Pts)</label>
-                            <input type="number" id="calc-sl" value="12" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
+                            <label class="text-slate-400 block mb-1">Balance ($)</label>
+                            <input type="number" id="calc-balance" value="10000" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
                         </div>
                     </div>
 
-                    <div class="p-2 bg-cardBg/60 rounded border border-borderBg/50 space-y-1 font-mono text-[11px]">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-slate-400 block mb-1">Risk Pct (%)</label>
+                            <input type="number" id="calc-risk" value="1.0" step="0.25" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block mb-1">Entry Price</label>
+                            <input type="number" id="calc-entry" value="1.08500" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-slate-400 block mb-1">Stop Loss Price</label>
+                            <input type="number" id="calc-sl" value="1.08380" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block mb-1">Take Profit Price</label>
+                            <input type="number" id="calc-tp" value="1.08860" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <!-- Calculated Output -->
+                    <div class="p-2.5 bg-cardBg/80 rounded-lg border border-borderBg/70 space-y-1.5 font-mono text-[11px] mt-2">
                         <div class="flex justify-between">
                             <span class="text-slate-400">Risk Amount:</span>
-                            <span id="res-risk-amt" class="text-amber-400 font-semibold">$100.00</span>
+                            <span id="res-risk-amt" class="text-amber-400 font-bold">$100.00</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Lot Size (Forex):</span>
-                            <span id="res-lot-size" class="text-accentBlue font-bold">0.83 Lots</span>
+                            <span class="text-slate-400">Position Size:</span>
+                            <span id="res-lot-size" class="text-sky-400 font-bold">0.83 Lots</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Target 1:3 R:R Profit:</span>
-                            <span id="res-tp-profit" class="text-accentGreen font-semibold">$300.00</span>
+                            <span class="text-slate-400">Risk-to-Reward (R:R):</span>
+                            <span id="res-rr-ratio" class="text-emerald-400 font-bold">1 : 3.0</span>
+                        </div>
+                        <div class="flex justify-between border-t border-borderBg pt-1">
+                            <span class="text-slate-400">Potential Profit:</span>
+                            <span id="res-tp-profit" class="text-emerald-400 font-bold">$300.00</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Active Setup Metrics -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg text-xs space-y-2">
-                <h3 class="font-semibold text-slate-400 uppercase tracking-wider">สถิติสภาวะตลาดปัจจุบัน</h3>
-                <div class="flex justify-between py-1 border-b border-slate-800">
-                    <span class="text-slate-400">IPDA Phase:</span>
-                    <span class="text-amber-300 font-mono">Manipulation / Seek</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-slate-800">
-                    <span class="text-slate-400">Active Killzone:</span>
-                    <span id="active-kz-text" class="text-pink-400 font-mono font-semibold">NY Open (08:00 EST)</span>
-                </div>
-                <div class="flex justify-between py-1">
-                    <span class="text-slate-400">Discount / Premium:</span>
-                    <span id="pd-array-text" class="text-emerald-400 font-mono">Deep Discount</span>
+            <!-- TradingView Technical Gauge Widget Embed -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
+                <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Market Sentiment Gauge</span>
+                </h3>
+                <div class="tradingview-widget-container" id="tv-gauge-container">
+                    <div class="tradingview-widget-container__widget"></div>
                 </div>
             </div>
 
         </aside>
 
-        <!-- CENTER AREA: INTERACTIVE CANVAS CHART & DETAILS -->
-        <main class="flex-1 flex flex-col min-w-0 bg-darkBg relative">
+        <!-- CENTER & RIGHT: REAL-TIME CHART & ICT ANALYZER -->
+        <main class="flex-1 flex flex-col min-w-0 bg-darkBg relative overflow-hidden">
             
-            <!-- Chart HUD Bar -->
-            <div class="h-9 bg-cardBg/80 border-b border-borderBg/80 flex items-center justify-between px-4 text-xs font-mono text-slate-300 shrink-0">
-                <div class="flex items-center space-x-4">
-                    <span class="text-slate-400">O: <span id="hud-open" class="text-white">1.08500</span></span>
-                    <span class="text-slate-400">H: <span id="hud-high" class="text-emerald-400">1.08720</span></span>
-                    <span class="text-slate-400">L: <span id="hud-low" class="text-rose-400">1.08410</span></span>
-                    <span class="text-slate-400">C: <span id="hud-close" class="text-white">1.08680</span></span>
-                </div>
-                <div class="flex items-center space-x-3 text-[11px]">
-                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>Bull OB</span>
-                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block mr-1"></span>FVG Zone</span>
-                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-purple-400 inline-block mr-1"></span>MSS / CHoCH</span>
-                </div>
+            <!-- REALTIME TRADINGVIEW CHART CONTAINER -->
+            <div class="flex-1 w-full h-full relative" id="tradingview-chart-box">
+                <div id="tradingview_advanced_chart" class="w-full h-full"></div>
             </div>
 
-            <!-- Canvas Container -->
-            <div class="flex-1 relative overflow-hidden cursor-crosshair" id="chart-container">
-                <canvas id="smcCanvas" class="w-full h-full block"></canvas>
-                
-                <!-- Crosshair HUD Tooltip -->
-                <div id="chartTooltip" class="hidden absolute pointer-events-none bg-slate-900/90 border border-borderBg p-2 rounded text-[11px] font-mono text-slate-200 z-30 shadow-xl"></div>
-            </div>
-
-            <!-- BOTTOM TABS: CHECKLIST & CHEATSHEET -->
+            <!-- BOTTOM DASHBOARD: SETUP EVALUATOR & CHEATSHEET -->
             <div class="h-64 bg-cardBg border-t border-borderBg flex flex-col shrink-0">
-                <!-- Tab Headers -->
-                <div class="flex border-b border-borderBg bg-darkBg/50 text-xs font-medium px-4">
-                    <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-2.5 px-4 tab-active flex items-center space-x-1.5 transition">
-                        <i data-lucide="check-square" class="w-4 h-4"></i>
-                        <span>ICT Setup Checklist & Evaluator</span>
+                <!-- Tab Controls -->
+                <div class="flex border-b border-borderBg bg-darkBg/60 text-xs font-medium px-4 overflow-x-auto">
+                    <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-2.5 px-4 tab-active flex items-center space-x-2 transition whitespace-nowrap">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>ICT Trade Model Checklist</span>
                     </button>
-                    <button onclick="switchTab('cheatsheet')" id="tab-btn-cheatsheet" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition">
-                        <i data-lucide="book-open" class="w-4 h-4"></i>
-                        <span>SMC / ICT Knowledge Hub & Cheatsheet</span>
-                    </button>
-                    <button onclick="switchTab('killzone-info')" id="tab-btn-killzone-info" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition">
-                        <i data-lucide="clock" class="w-4 h-4"></i>
-                        <span>Kill Zones & Session Timings</span>
+                    <button onclick="switchTab('cheatsheet')" id="tab-btn-cheatsheet" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>ICT Concept Reference Hub</span>
                     </button>
                 </div>
 
-                <!-- Tab Content Containers -->
-                <div class="flex-1 p-4 overflow-y-auto">
+                <!-- Tab Body Content -->
+                <div class="flex-1 p-3.5 overflow-y-auto">
                     
                     <!-- TAB 1: ICT CHECKLIST -->
                     <div id="tab-checklist" class="space-y-3">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                             
                             <!-- Step 1 -->
-                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-accentBlue">STEP 1: HTF Bias</span>
-                                    <input type="checkbox" id="chk-1" checked onchange="evaluateTradeSignal()" class="accent-accentBlue rounded">
+                                    <span class="text-[11px] font-bold text-sky-400">1. HTF BIAS / DRAW</span>
+                                    <input type="checkbox" id="chk-1" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs text-slate-300 font-semibold">1. Higher Timeframe Liquidity Target</p>
-                                <p class="text-[11px] text-slate-400">กราฟกำลังวิ่งเข้าหา BSL/SSL บน HTF (4H/1D) หรือไม่?</p>
+                                <p class="text-xs font-semibold text-slate-200">Higher Timeframe Liquidity</p>
+                                <p class="text-[11px] text-slate-400">ราคากำลังมุ่งหน้าเข้าหา BSL / SSL หรือ FVG บน Daily/H4 ใช่หรือไม่?</p>
                             </div>
 
                             <!-- Step 2 -->
-                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-accentYellow">STEP 2: Liquidity Sweep</span>
-                                    <input type="checkbox" id="chk-2" checked onchange="evaluateTradeSignal()" class="accent-accentYellow rounded">
+                                    <span class="text-[11px] font-bold text-amber-400">2. LIQUIDITY SWEEP</span>
+                                    <input type="checkbox" id="chk-2" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs text-slate-300 font-semibold">2. Sweep Low/High (Judas Swing)</p>
-                                <p class="text-[11px] text-slate-400">มีการกวาดสภาพคล่อง (Sweep SSL/BSL) ก่อนเปลี่ยนทิศทางหรือไม่?</p>
+                                <p class="text-xs font-semibold text-slate-200">Liquidity Raid (Judas)</p>
+                                <p class="text-[11px] text-slate-400">มีการกวาดสภาพคล่อง High/Low เก่า ในช่วง Killzone หรือไม่?</p>
                             </div>
 
                             <!-- Step 3 -->
-                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-accentPurple">STEP 3: Displacement & MSS</span>
-                                    <input type="checkbox" id="chk-3" checked onchange="evaluateTradeSignal()" class="accent-accentPurple rounded">
+                                    <span class="text-[11px] font-bold text-purple-400">3. DISPLACEMENT / MSS</span>
+                                    <input type="checkbox" id="chk-3" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs text-slate-300 font-semibold">3. Market Structure Shift (CHoCH)</p>
-                                <p class="text-[11px] text-slate-400">เกิดแท่งรุนแรง (Displacement) ทำลายโครงสร้างหรือไม่?</p>
+                                <p class="text-xs font-semibold text-slate-200">Market Structure Shift</p>
+                                <p class="text-[11px] text-slate-400">เกิดแท่งรุนแรงดันเปลี่ยนทิศทาง (CHoCH / MSS) ชัดเจนหรือไม่?</p>
                             </div>
 
                             <!-- Step 4 -->
-                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-accentGreen">STEP 4: Entry Array</span>
-                                    <input type="checkbox" id="chk-4" checked onchange="evaluateTradeSignal()" class="accent-accentGreen rounded">
+                                    <span class="text-[11px] font-bold text-emerald-400">4. ENTRY ARRAY (OTE/FVG)</span>
+                                    <input type="checkbox" id="chk-4" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs text-slate-300 font-semibold">4. Retrace to FVG / Order Block</p>
-                                <p class="text-[11px] text-slate-400">ราคาถอยกลับเข้าทดสอบ FVG หรือ Bullish OB ใน Discount Zone</p>
+                                <p class="text-xs font-semibold text-slate-200">Retrace to FVG / Order Block</p>
+                                <p class="text-[11px] text-slate-400">ราคาย้อนกลับเข้าทดสอบ FVG / OTE Zone (0.62-0.79 Fibo) ใน Discount?</p>
                             </div>
 
                         </div>
 
-                        <!-- Trade Evaluation Banner -->
-                        <div id="signal-eval-box" class="p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between">
+                        <!-- Signal Status Banner -->
+                        <div id="signal-eval-box" class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400">
-                                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
+                                    <i class="fa-solid fa-circle-check text-xl"></i>
                                 </div>
                                 <div>
                                     <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
-                                    <p class="text-xs text-slate-300">เข้าเงื่อนไข ICT Silver Bullet / Model A ครบถ้วน! พิจารณาเข้าออเดอร์ Buy Limit ที่ FVG Zone</p>
+                                    <p class="text-xs text-slate-300">องค์ประกอบครบตาม ICT Model A / Silver Bullet! พิจารณาตั้ง Pending Order ใน FVG Zone</p>
                                 </div>
                             </div>
-                            <div class="text-right font-mono">
-                                <span class="text-xs text-slate-400 block">Confluence Score</span>
-                                <span class="text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                            <div class="text-right font-mono shrink-0 ml-2">
+                                <span class="text-[10px] text-slate-400 block">Confluence Score</span>
+                                <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (4/4)</span>
                             </div>
                         </div>
 
                     </div>
 
                     <!-- TAB 2: SMC CHEATSHEET -->
-                    <div id="tab-cheatsheet" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div id="tab-cheatsheet" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                         
-                        <!-- Card 1 -->
-                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center space-x-2 text-accentBlue font-bold text-sm">
-                                <i data-lucide="layers" class="w-4 h-4"></i>
-                                <span>Order Block (OB) & Imbalance</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed">
-                                **Order Block (OB)** คือ แท่งเทียนสุดท้ายก่อนที่จะเกิดการพุ่งตัวอย่างรุนแรง (Displacement) เป็นจุดที่สถาบันทางการเงิน (Smart Money) วางคำสั่งซื้อขายปริมาณมาก
-                            </p>
-                            <ul class="list-disc pl-4 text-slate-400 space-y-1">
-                                stroke: **Bullish OB**: แท่งทิ้งตัวลงแท่งสุดท้าย ก่อนบินขึ้นทำ Break of Structure.</li>
-                                <li>**Bearish OB**: แท่งดันขึ้นแท่งสุดท้าย ก่อนทิ้งตัวลงอย่างรุนแรง.</li>
-                            </ul>
-                        </div>
-
-                        <!-- Card 2 -->
-                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center space-x-2 text-accentGreen font-bold text-sm">
-                                <i data-lucide="box" class="w-4 h-4"></i>
+                        <!-- FVG Card -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                            <div class="flex items-center space-x-2 text-sky-400 font-bold">
+                                <i class="fa-solid fa-layer-group"></i>
                                 <span>Fair Value Gap (FVG)</span>
                             </div>
-                            <p class="text-slate-300 leading-relaxed">
-                                **Fair Value Gap (FVG)** คือ ช่องว่างของราคาที่เกิดจากความไม่สมดุลของแรงซื้อขาย (Inefficiency / Imbalance) พิจารณาจากช่องว่างระหว่าง High ของแท่งที่ 1 และ Low ของแท่งที่ 3
-                            </p>
-                            <p class="text-slate-400">
-                                อัลกอริทึม **IPDA** มักจะดึงราคากลับมาเติมเต็ม (Rebalance) ในโซน FVG นี้เสมอ
+                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                ช่องว่างราคาไม่สมดุล (Imbalance) จากแรงซื้อขายข้างเดียว พิจารณาจาก **High ของแท่งที่ 1** และ **Low ของแท่งที่ 3** IPDA มักจะย้อนกลับมา Rebalance
                             </p>
                         </div>
 
-                        <!-- Card 3 -->
-                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center space-x-2 text-accentYellow font-bold text-sm">
-                                <i data-lucide="zap" class="w-4 h-4"></i>
-                                <span>Liquidity & Power of 3 (AMD)</span>
+                        <!-- Order Block Card -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                            <div class="flex items-center space-x-2 text-amber-400 font-bold">
+                                <i class="fa-solid fa-cube"></i>
+                                <span>Order Block (OB)</span>
                             </div>
-                            <p class="text-slate-300 leading-relaxed">
-                                **Power of 3 (PO3)** ประกอบด้วย 3 ระยะ:
+                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                แท่งเทียนสุดท้ายก่อนเกิดการพุ่งตัวรุนแรง (Displacement) **Bullish OB** = แท่งแดงสุดท้ายก่อนบินข้าม Break Structure
                             </p>
-                            <ol class="list-decimal pl-4 text-slate-400 space-y-1">
-                                <li><strong class="text-slate-200">Accumulation:</strong> สะสมราคาในกรอบ (Asian Range)</li>
-                                <li><strong class="text-slate-200">Manipulation:</strong> ลากราคาไปกวาด Liquidity (Judas Swing)</li>
-                                <li><strong class="text-slate-200">Distribution:</strong> วิ่งไปยังเป้าหมายที่แท้จริง</li>
-                            </ol>
                         </div>
 
-                    </div>
-
-                    <!-- TAB 3: KILL ZONES -->
-                    <div id="tab-killzone-info" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        
-                        <!-- Asian Session -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-amber-400 text-sm">Asian Range</span>
-                                <span class="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded font-mono">20:00 - 00:00 EST</span>
+                        <!-- Power of 3 (AMD) -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                            <div class="flex items-center space-x-2 text-purple-400 font-bold">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Power of 3 (AMD)</span>
                             </div>
-                            <p class="text-slate-300">ช่วงสะสมราคา (Accumulation) สร้าง High และ Low ของกรอบเอเชีย ซึ่งมักถูก Sweep ใน London หรือ NY Session</p>
+                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                **Accumulation**: สะสมกรอบราคา (Asian)<br>
+                                **Manipulation**: ลากกวาด Liquidity (Judas Swing)<br>
+                                **Distribution**: วิ่งไปหาราคาจริง (Expansion)
+                            </p>
                         </div>
 
-                        <!-- London Open -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-sky-400 text-sm">London Open Killzone</span>
-                                <span class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded font-mono">02:00 - 05:00 EST</span>
+                        <!-- OTE Fibonacci -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                            <div class="flex items-center space-x-2 text-emerald-400 font-bold">
+                                <i class="fa-solid fa-chart-pie"></i>
+                                <span>Optimal Trade Entry (OTE)</span>
                             </div>
-                            <p class="text-slate-300">ช่วงเวลากวาด Liquidity (Judas Swing) มักสร้าง High หรือ Low ของวัน (Low/High of the Day)</p>
-                        </div>
-
-                        <!-- NY Open -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-pink-400 text-sm">New York Open / Silver Bullet</span>
-                                <span class="text-[10px] bg-pink-950 text-pink-300 px-2 py-0.5 rounded font-mono">07:00 - 10:00 EST</span>
-                            </div>
-                            <p class="text-slate-300">ช่วงเวลาลุยตามเทรนด์หลัก (Expansion) **ICT Silver Bullet Window: 10:00 - 11:00 AM EST**</p>
+                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                ระดับย่อตัวสมบูรณ์แบบในการเข้าออเดอร์ Fibo Retracement: **0.62, 0.705 (Sweet Spot), และ 0.79** ใน Discount/Premium Zone
+                            </p>
                         </div>
 
                     </div>
@@ -468,477 +417,229 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT LOGIC FOR SMC ENGINE & CANVAS rendering -->
+    <!-- JAVASCRIPT APP LOGIC -->
     <script>
-        // --- GLOBAL STATE & VARIABLES ---
-        let candles = [];
-        let currentPair = 'EUR/USD';
-        let currentTimeframe = '5M';
-        let basePrice = 1.0850;
-        
-        // Canvas Configs
-        const canvas = document.getElementById('smcCanvas');
-        const ctx = canvas.getContext('2d');
-        let zoomLevel = 1.0;
-        let candleWidth = 10;
-        let candleGap = 4;
-
-        // Interactive Tooltip Position
-        let mouseX = -1;
-        let mouseY = -1;
+        // --- GLOBAL STATE ---
+        let currentSymbol = 'FX:EURUSD';
+        let currentTimeframe = '5';
+        let tvWidget = null;
 
         // --- INITIALIZATION ---
-        window.addEventListener('load', () => {
-            lucide.createIcons();
-            resizeCanvas();
-            generateNewMarketData();
-            calculateRisk();
-            
-            // Handle Window Resize
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                renderChart();
-            });
-
-            // Canvas Mouse Interactivity
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mouseleave', () => {
-                mouseX = -1;
-                mouseY = -1;
-                document.getElementById('chartTooltip').classList.add('hidden');
-                renderChart();
-            });
+        window.addEventListener('DOMContentLoaded', () => {
+            initTradingViewChart();
+            initTechnicalGaugeWidget();
+            startClocksAndKillzones();
+            calculatePosition();
+            evaluateTradeSignal();
         });
 
-        function resizeCanvas() {
-            const container = document.getElementById('chart-container');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-        }
+        // --- TRADINGVIEW ADVANCED CHART EMBED ---
+        function initTradingViewChart() {
+            document.getElementById('tradingview_advanced_chart').innerHTML = '';
 
-        // --- SIMULATED SMC MARKET DATA GENERATOR ---
-        function generateNewMarketData(scenario = 'silver_bullet') {
-            candles = [];
-            let price = basePrice;
-            const count = 75;
-            
-            // Build base synthetic ICT pattern structure
-            for (let i = 0; i < count; i++) {
-                let open = price;
-                let delta = (Math.random() - 0.48) * 0.0008;
-                
-                // Controlled ICT scenarios injection
-                if (scenario === 'silver_bullet') {
-                    if (i > 15 && i < 25) delta -= 0.0006; // Asian / Early drop (Sweep SSL)
-                    if (i >= 25 && i < 28) delta += 0.0018; // Strong Displacement Bullish MSS
-                    if (i >= 28 && i < 33) delta -= 0.0003; // Retrace back to FVG / OB
-                    if (i >= 33) delta += 0.0007; // ICT Expansion to targets
-                } else if (scenario === 'judas_swing') {
-                    if (i > 15 && i < 25) delta += 0.0007; // Fake Breakout High (Judas)
-                    if (i >= 25 && i < 29) delta -= 0.0020; // Massive Bearish Displacement (MSS)
-                    if (i >= 29 && i < 34) delta += 0.0004; // Retrace to Bearish FVG
-                    if (i >= 34) delta -= 0.0008; // Bearish Expansion
-                } else {
-                    // Default random walk with high volatility
-                    delta = (Math.random() - 0.49) * 0.0010;
+            tvWidget = new TradingView.widget({
+                "autosize": true,
+                "symbol": currentSymbol,
+                "interval": currentTimeframe,
+                "timezone": "Asia/Bangkok",
+                "theme": "dark",
+                "style": "1", // Candlesticks
+                "locale": "th_TH",
+                "toolbar_bg": "#111622",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_advanced_chart",
+                "studies": [
+                    "STD;Fair_Value_Gap" // Automatic TradingView FVG indicator if available
+                ],
+                "overrides": {
+                    "paneProperties.background": "#080b11",
+                    "paneProperties.vertGridProperties.color": "#141c2b",
+                    "paneProperties.horzGridProperties.color": "#141c2b",
+                    "symbolWatermarkProperties.transparency": 90,
+                    "scalesProperties.textColor": "#94a3b8"
                 }
-
-                let close = open + delta;
-                let high = Math.max(open, close) + Math.random() * 0.0004;
-                let low = Math.min(open, close) - Math.random() * 0.0004;
-                
-                candles.push({
-                    time: i,
-                    open: parseFloat(open.toFixed(5)),
-                    high: parseFloat(high.toFixed(5)),
-                    low: parseFloat(low.toFixed(5)),
-                    close: parseFloat(close.toFixed(5))
-                });
-
-                price = close;
-            }
-
-            // Update HUD Header
-            const last = candles[candles.length - 1];
-            document.getElementById('hud-open').textContent = last.open.toFixed(5);
-            document.getElementById('hud-high').textContent = last.high.toFixed(5);
-            document.getElementById('hud-low').textContent = last.low.toFixed(5);
-            document.getElementById('hud-close').textContent = last.close.toFixed(5);
-
-            renderChart();
-        }
-
-        // --- CALCULATION OF SMC / ICT OVERLAYS ---
-        
-        // 1. Detect Fair Value Gaps (FVG)
-        function detectFVG() {
-            let fvgs = [];
-            for (let i = 2; i < candles.length; i++) {
-                const c1 = candles[i - 2];
-                const c2 = candles[i - 1];
-                const c3 = candles[i];
-
-                // Bullish FVG: Low of candle 3 is higher than High of candle 1
-                if (c3.low > c1.high) {
-                    fvgs.push({
-                        type: 'bullish',
-                        top: c3.low,
-                        bottom: c1.high,
-                        startIndex: i - 2,
-                        endIndex: Math.min(i + 25, candles.length - 1)
-                    });
-                }
-                // Bearish FVG: High of candle 3 is lower than Low of candle 1
-                else if (c3.high < c1.low) {
-                    fvgs.push({
-                        type: 'bearish',
-                        top: c1.low,
-                        bottom: c3.high,
-                        startIndex: i - 2,
-                        endIndex: Math.min(i + 25, candles.length - 1)
-                    });
-                }
-            }
-            return fvgs;
-        }
-
-        // 2. Detect Order Blocks (OB)
-        function detectOrderBlocks() {
-            let obs = [];
-            for (let i = 3; i < candles.length - 2; i++) {
-                // Bullish OB: Last down candle before strong up move breaking structure
-                if (candles[i].close < candles[i].open) {
-                    let moveUp = candles[i + 2].close - candles[i].close;
-                    if (moveUp > 0.0012) {
-                        obs.push({
-                            type: 'bullish',
-                            high: candles[i].high,
-                            low: candles[i].low,
-                            index: i
-                        });
-                    }
-                }
-                // Bearish OB: Last up candle before strong down move
-                else if (candles[i].close > candles[i].open) {
-                    let moveDown = candles[i].close - candles[i + 2].close;
-                    if (moveDown > 0.0012) {
-                        obs.push({
-                            type: 'bearish',
-                            high: candles[i].high,
-                            low: candles[i].low,
-                            index: i
-                        });
-                    }
-                }
-            }
-            return obs;
-        }
-
-        // 3. Detect Market Structure (BOS / MSS)
-        function detectStructure() {
-            let structures = [];
-            let lastHigh = candles[0].high;
-            let lastLow = candles[0].low;
-
-            for (let i = 5; i < candles.length; i++) {
-                // Break of Structure (BOS) / MSS
-                if (candles[i].close > lastHigh) {
-                    structures.push({
-                        type: 'MSS / CHoCH (Bullish)',
-                        price: lastHigh,
-                        index: i,
-                        isBullish: true
-                    });
-                    lastHigh = candles[i].high;
-                } else if (candles[i].close < lastLow) {
-                    structures.push({
-                        type: 'BOS (Bearish)',
-                        price: lastLow,
-                        index: i,
-                        isBullish: false
-                    });
-                    lastLow = candles[i].low;
-                }
-            }
-            return structures;
-        }
-
-        // --- RENDERING ENGINE (CANVAS) ---
-        function renderChart() {
-            if (!ctx || candles.length === 0) return;
-
-            const width = canvas.width;
-            const height = canvas.height;
-            const padding = 50;
-
-            // Clear Background
-            ctx.fillStyle = '#0e131f';
-            ctx.fillRect(0, 0, width, height);
-
-            // Price Min/Max Range Calculation
-            let minPrice = Math.min(...candles.map(c => c.low));
-            let maxPrice = Math.max(...candles.map(c => c.high));
-            let priceRange = (maxPrice - minPrice) || 1;
-            
-            // Padding on top & bottom price bounds
-            minPrice -= priceRange * 0.05;
-            maxPrice += priceRange * 0.05;
-            priceRange = maxPrice - minPrice;
-
-            // Helper Y coordinate converter
-            function getY(price) {
-                return height - padding - ((price - minPrice) / priceRange) * (height - padding * 2);
-            }
-
-            // Draw Grid Lines & Price Scale
-            ctx.strokeStyle = '#1e293b';
-            ctx.lineWidth = 1;
-            ctx.fillStyle = '#64748b';
-            ctx.font = '10px "JetBrains Mono", monospace';
-
-            const gridSteps = 6;
-            for (let i = 0; i <= gridSteps; i++) {
-                let p = minPrice + (priceRange / gridSteps) * i;
-                let y = getY(p);
-                
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width - padding, y);
-                ctx.stroke();
-
-                // Y-Axis Labels
-                ctx.fillText(p.toFixed(5), width - padding + 5, y + 3);
-            }
-
-            const stepX = (width - padding - 40) / candles.length;
-
-            // --- DRAW KILL ZONES BACKGROUND ---
-            if (document.getElementById('toggle-killzones').checked) {
-                // Asian Session (0 - 20)
-                let xStart = 10;
-                let xEnd = 10 + stepX * 22;
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.05)';
-                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fillText('Asian Range', xStart + 5, padding + 15);
-
-                // London Open (22 - 40)
-                xStart = 10 + stepX * 22;
-                xEnd = 10 + stepX * 42;
-                ctx.fillStyle = 'rgba(56, 189, 248, 0.06)';
-                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
-                ctx.fillStyle = '#38bdf8';
-                ctx.fillText('London KZ', xStart + 5, padding + 15);
-
-                // NY Open (42 - end)
-                xStart = 10 + stepX * 42;
-                xEnd = width - padding;
-                ctx.fillStyle = 'rgba(236, 72, 153, 0.06)';
-                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
-                ctx.fillStyle = '#ec4899';
-                ctx.fillText('NY Silver Bullet', xStart + 5, padding + 15);
-            }
-
-            // --- DRAW FAIR VALUE GAPS (FVG) ---
-            if (document.getElementById('toggle-fvg').checked) {
-                const fvgs = detectFVG();
-                fvgs.forEach(fvg => {
-                    const x1 = 10 + fvg.startIndex * stepX;
-                    const x2 = 10 + fvg.endIndex * stepX;
-                    const yTop = getY(fvg.top);
-                    const yBottom = getY(fvg.bottom);
-
-                    if (fvg.type === 'bullish') {
-                        ctx.fillStyle = 'rgba(56, 189, 248, 0.20)';
-                        ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
-                    } else {
-                        ctx.fillStyle = 'rgba(244, 63, 94, 0.20)';
-                        ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
-                    }
-
-                    ctx.fillRect(x1, yTop, x2 - x1, yBottom - yTop);
-                    ctx.strokeRect(x1, yTop, x2 - x1, yBottom - yTop);
-
-                    // FVG Label
-                    ctx.fillStyle = fvg.type === 'bullish' ? '#38bdf8' : '#f43f5e';
-                    ctx.fillText('FVG', x1 + 4, yTop + 12);
-                });
-            }
-
-            // --- DRAW ORDER BLOCKS (OB) ---
-            if (document.getElementById('toggle-ob').checked) {
-                const obs = detectOrderBlocks();
-                obs.forEach(ob => {
-                    const x1 = 10 + ob.index * stepX;
-                    const x2 = width - padding;
-                    const yHigh = getY(ob.high);
-                    const yLow = getY(ob.low);
-
-                    if (ob.type === 'bullish') {
-                        ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
-                        ctx.strokeStyle = '#10b981';
-                    } else {
-                        ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
-                        ctx.strokeStyle = '#ef4444';
-                    }
-
-                    ctx.fillRect(x1, yHigh, x2 - x1, yLow - yHigh);
-                    ctx.setLineDash([3, 3]);
-                    ctx.strokeRect(x1, yHigh, x2 - x1, yLow - yHigh);
-                    ctx.setLineDash([]);
-
-                    ctx.fillStyle = ob.type === 'bullish' ? '#10b981' : '#ef4444';
-                    ctx.fillText(ob.type === 'bullish' ? 'Bullish OB' : 'Bearish OB', x1 + 5, yHigh - 4);
-                });
-            }
-
-            // --- DRAW MARKET STRUCTURE SHIFTS (BOS / MSS) ---
-            if (document.getElementById('toggle-structure').checked) {
-                const structures = detectStructure();
-                structures.forEach(st => {
-                    const x = 10 + st.index * stepX;
-                    const y = getY(st.price);
-
-                    ctx.strokeStyle = st.isBullish ? '#c084fc' : '#f472b6';
-                    ctx.lineWidth = 1.5;
-                    ctx.setLineDash([4, 2]);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(x - 30, y);
-                    ctx.lineTo(x + 20, y);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-
-                    ctx.fillStyle = st.isBullish ? '#c084fc' : '#f472b6';
-                    ctx.fillText(st.type, x - 25, y - 5);
-                });
-            }
-
-            // --- DRAW CANDLESTICKS ---
-            candles.forEach((c, i) => {
-                const x = 10 + i * stepX;
-                const openY = getY(c.open);
-                const closeY = getY(c.close);
-                const highY = getY(c.high);
-                const lowY = getY(c.low);
-
-                const isBullish = c.close >= c.open;
-                const candleColor = isBullish ? '#00c853' : '#ff3d00';
-
-                // Wick Line
-                ctx.strokeStyle = candleColor;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.moveTo(x, highY);
-                ctx.lineTo(x, lowY);
-                ctx.stroke();
-
-                // Candle Body
-                ctx.fillStyle = candleColor;
-                const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
-                ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, bodyHeight);
             });
-
-            // --- DRAW CROSSHAIR CURSOR ---
-            if (mouseX > 0 && mouseX < width - padding) {
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.setLineDash([2, 2]);
-
-                // Vertical Crosshair Line
-                ctx.beginPath();
-                ctx.moveTo(mouseX, 0);
-                ctx.lineTo(mouseX, height - padding);
-                ctx.stroke();
-
-                // Horizontal Crosshair Line
-                ctx.beginPath();
-                ctx.moveTo(0, mouseY);
-                ctx.lineTo(width - padding, mouseY);
-                ctx.stroke();
-
-                ctx.setLineDash([]);
-            }
         }
 
-        // Mouse Move Listener for Crosshair
-        function handleMouseMove(e) {
-            const rect = canvas.getBoundingClientRect();
-            mouseX = e.clientX - rect.left;
-            mouseY = e.clientY - rect.top;
-
-            renderChart();
+        // --- TRADINGVIEW TECHNICAL ANALYSIS GAUGE WIDGET ---
+        function initTechnicalGaugeWidget() {
+            const container = document.getElementById('tv-gauge-container');
+            container.innerHTML = '';
+            
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+            script.async = true;
+            script.innerHTML = JSON.stringify({
+                "interval": currentTimeframe === 'D' ? '1D' : currentTimeframe + 'm',
+                "width": "100%",
+                "isTransparent": true,
+                "height": 210,
+                "symbol": currentSymbol,
+                "showIntervalTabs": false,
+                "displayMode": "single",
+                "locale": "th",
+                "colorTheme": "dark"
+            });
+            container.appendChild(script);
         }
 
-        // --- ACTION CONTROLS & SCENARIO LOADERS ---
-        function setPair(pair) {
-            currentPair = pair;
-            ['EURUSD', 'GBPUSD', 'XAUUSD'].forEach(p => {
-                const el = document.getElementById(`pair-${p}`);
-                if (p === pair.replace('/', '')) {
-                    el.className = "px-2.5 py-1 rounded bg-slate-700 text-white font-semibold text-xs transition";
+        // --- ASSET & TIMEFRAME SWITCHERS ---
+        function changeSymbol(symbol) {
+            currentSymbol = symbol;
+            
+            // Highlight button
+            const symKeys = ['EURUSD', 'GBPUSD', 'GOLD', 'BTCUSDT', 'US30', 'NAS100'];
+            symKeys.forEach(k => {
+                const btn = document.getElementById(`sym-${k}`);
+                if (symbol.includes(k) || (k==='GOLD' && symbol.includes('GOLD'))) {
+                    btn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-xs transition";
                 } else {
-                    el.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition";
+                    btn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition";
                 }
             });
 
-            basePrice = pair.includes('XAU') ? 2350.00 : 1.0850;
-            generateNewMarketData();
+            // Adjust Risk Calc default prices based on Asset
+            const entryInput = document.getElementById('calc-entry');
+            const slInput = document.getElementById('calc-sl');
+            const tpInput = document.getElementById('calc-tp');
+            const assetSelect = document.getElementById('calc-asset');
+
+            if (symbol.includes('GOLD')) {
+                assetSelect.value = 'gold';
+                entryInput.value = '2350.00';
+                slInput.value = '2342.00';
+                tpInput.value = '2374.00';
+            } else if (symbol.includes('BTC')) {
+                assetSelect.value = 'crypto';
+                entryInput.value = '65000';
+                slInput.value = '64200';
+                tpInput.value = '67400';
+            } else if (symbol.includes('US30') || symbol.includes('NAS')) {
+                assetSelect.value = 'indices';
+                entryInput.value = '39000';
+                slInput.value = '38850';
+                tpInput.value = '39450';
+            } else {
+                assetSelect.value = 'forex';
+                entryInput.value = '1.08500';
+                slInput.value = '1.08380';
+                tpInput.value = '1.08860';
+            }
+
+            initTradingViewChart();
+            initTechnicalGaugeWidget();
+            calculatePosition();
         }
 
-        function setTimeframe(tf) {
+        function changeTimeframe(tf) {
             currentTimeframe = tf;
-            ['1M', '5M', '15M', '1H', '4H'].forEach(t => {
-                const el = document.getElementById(`tf-${t}`);
+            ['1', '5', '15', '60', '240', 'D'].forEach(t => {
+                const btn = document.getElementById(`tf-${t}`);
                 if (t === tf) {
-                    el.className = "px-2 py-1 rounded text-xs bg-accentBlue text-white font-bold transition";
+                    btn.className = "px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition";
                 } else {
-                    el.className = "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
+                    btn.className = "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
                 }
             });
-            generateNewMarketData();
+
+            initTradingViewChart();
+            initTechnicalGaugeWidget();
         }
 
-        function toggleScenarioDropdown() {
-            const drop = document.getElementById('scenarioDropdown');
-            drop.classList.toggle('hidden');
+        // --- REALTIME CLOCKS & KILLZONE TRACKING ---
+        function startClocksAndKillzones() {
+            function update() {
+                const now = new Date();
+                
+                // BKK Time (UTC+7)
+                const bkkString = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Bangkok', hour12: false });
+                document.getElementById('bkk-clock').textContent = `${bkkString} ICT`;
+
+                // NY Time (EST/EDT)
+                const nyString = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false });
+                document.getElementById('ny-clock').textContent = `${nyString} EST`;
+
+                // Get NY Hours and Minutes for Session Checks
+                const nyDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+                const nyHours = nyDate.getHours();
+                const nyMins = nyDate.getMinutes();
+                const nyTimeDec = nyHours + nyMins / 60;
+
+                // Check Active Sessions
+                updateKZState('asian', nyTimeDec >= 20 || nyTimeDec < 0);
+                updateKZState('london', nyTimeDec >= 2 && nyTimeDec < 5);
+                updateKZState('nyam', nyTimeDec >= 8.5 && nyTimeDec < 11);
+                updateKZState('nypm', nyTimeDec >= 13.5 && nyTimeDec < 16);
+            }
+
+            update();
+            setInterval(update, 1000);
         }
 
-        function loadScenario(scenarioType) {
-            document.getElementById('scenarioDropdown').classList.add('hidden');
-            generateNewMarketData(scenarioType);
-            
-            // Adjust bias card UI based on scenario
-            const biasText = document.getElementById('bias-text');
-            const biasCard = document.getElementById('bias-card');
-            
-            if (scenarioType === 'silver_bullet') {
-                biasText.textContent = "BULLISH EXPANSION";
-                biasText.className = "text-sm font-bold text-emerald-400";
-                biasCard.className = "p-2.5 rounded-lg border bg-emerald-950/40 border-emerald-500/30 flex items-center justify-between";
-            } else if (scenarioType === 'judas_swing') {
-                biasText.textContent = "BEARISH REVERSAL";
-                biasText.className = "text-sm font-bold text-rose-400";
-                biasCard.className = "p-2.5 rounded-lg border bg-rose-950/40 border-rose-500/30 flex items-center justify-between";
+        function updateKZState(kzKey, isActive) {
+            const card = document.getElementById(`kz-${kzKey}`);
+            const badge = document.getElementById(`badge-${kzKey}`);
+
+            if (isActive) {
+                card.className = "p-2 rounded-lg border border-emerald-500/60 bg-emerald-950/30 flex items-center justify-between transition pulse-active";
+                badge.className = "px-2 py-0.5 text-[10px] rounded bg-emerald-500 text-black font-extrabold";
+                badge.textContent = "ACTIVE";
+            } else {
+                card.className = "p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition";
+                badge.className = "px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold";
+                badge.textContent = "INACTIVE";
             }
         }
 
-        // --- RISK CALCULATOR ENGINE ---
-        function calculateRisk() {
-            const balance = parseFloat(document.getElementById('calc-balance').value) || 10000;
-            const riskPct = parseFloat(document.getElementById('calc-risk').value) || 1;
-            const slPips = parseFloat(document.getElementById('calc-sl').value) || 10;
+        // --- POSITION SIZE & RISK CALCULATOR ENGINE ---
+        function calculatePosition() {
+            const asset = document.getElementById('calc-asset').value;
+            const balance = parseFloat(document.getElementById('calc-balance').value) || 0;
+            const riskPct = parseFloat(document.getElementById('calc-risk').value) || 0;
+            const entry = parseFloat(document.getElementById('calc-entry').value) || 0;
+            const sl = parseFloat(document.getElementById('calc-sl').value) || 0;
+            const tp = parseFloat(document.getElementById('calc-tp').value) || 0;
 
             const riskAmount = balance * (riskPct / 100);
-            // standard forex lot size formula: (Risk Amt) / (SL Pips * $10)
-            const lotSize = riskAmount / (slPips * 10);
-            const profitTarget = riskAmount * 3; // 1:3 RR
+            const slDistance = Math.abs(entry - sl);
+            const tpDistance = Math.abs(tp - entry);
+
+            let lotSize = 0;
+            let profit = 0;
+
+            if (slDistance > 0) {
+                if (asset === 'forex') {
+                    // Standard Lot: 1 pip = $10 per 1.0 lot for 0.0001 move
+                    const pips = slDistance / 0.0001;
+                    lotSize = riskAmount / (pips * 10);
+                    profit = (tpDistance / 0.0001) * 10 * lotSize;
+                } else if (asset === 'gold') {
+                    // Gold: $1 move per 1 oz = $100 per 1.0 lot
+                    lotSize = riskAmount / (slDistance * 100);
+                    profit = tpDistance * 100 * lotSize;
+                } else if (asset === 'crypto') {
+                    // Crypto Units
+                    lotSize = riskAmount / slDistance;
+                    profit = tpDistance * lotSize;
+                } else if (asset === 'indices') {
+                    // Indices
+                    lotSize = riskAmount / (slDistance * 10);
+                    profit = tpDistance * 10 * lotSize;
+                }
+            }
+
+            const rrRatio = slDistance > 0 ? (tpDistance / slDistance) : 0;
 
             document.getElementById('res-risk-amt').textContent = `$${riskAmount.toFixed(2)}`;
-            document.getElementById('res-lot-size').textContent = `${lotSize.toFixed(2)} Lots`;
-            document.getElementById('res-tp-profit').textContent = `$${profitTarget.toFixed(2)}`;
+            document.getElementById('res-lot-size').textContent = `${lotSize.toFixed(2)} ${asset === 'crypto' ? 'Units' : 'Lots'}`;
+            document.getElementById('res-rr-ratio').textContent = `1 : ${rrRatio.toFixed(2)}`;
+            document.getElementById('res-tp-profit').textContent = `$${profit.toFixed(2)}`;
         }
 
-        // --- CHECKLIST & EVALUATOR ENGINE ---
+        // --- CHECKLIST & EVALUATOR LOGIC ---
         function evaluateTradeSignal() {
             const chk1 = document.getElementById('chk-1').checked;
             const chk2 = document.getElementById('chk-2').checked;
@@ -947,75 +648,73 @@
 
             const count = [chk1, chk2, chk3, chk4].filter(Boolean).length;
             const pct = (count / 4) * 100;
-
             const box = document.getElementById('signal-eval-box');
-            
+
             if (count === 4) {
                 box.className = "p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between";
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400">
-                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
+                            <i class="fa-solid fa-circle-check text-xl"></i>
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
-                            <p class="text-xs text-slate-300">เข้าเงื่อนไข ICT Silver Bullet / Model A ครบถ้วน! พิจารณาเข้าออเดอร์ Buy Limit ที่ FVG Zone</p>
+                            <p class="text-xs text-slate-300">องค์ประกอบครบตาม ICT Model A / Silver Bullet! พิจารณาตั้ง Pending Order ใน FVG Zone</p>
                         </div>
                     </div>
-                    <div class="text-right font-mono">
-                        <span class="text-xs text-slate-400 block">Confluence Score</span>
-                        <span class="text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                    <div class="text-right font-mono shrink-0 ml-2">
+                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
+                        <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (4/4)</span>
                     </div>
                 `;
             } else if (count >= 2) {
                 box.className = "p-3 rounded-lg bg-amber-950/50 border border-amber-500/40 flex items-center justify-between";
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-amber-500/20 rounded-full text-amber-400">
-                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        <div class="p-2 bg-amber-500/20 rounded-full text-amber-400 shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">MODERATE CONFLUENCE - PROCEED WITH CAUTION</h4>
-                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ควรรอให้เกิด Liquidity Sweep หรือ MSS ก่อนเข้าออเดอร์</p>
+                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ควรรอให้เกิด Liquidity Sweep หรือ MSS ใน M1/M5 ก่อนเข้าเทรด</p>
                         </div>
                     </div>
-                    <div class="text-right font-mono">
-                        <span class="text-xs text-slate-400 block">Confluence Score</span>
-                        <span class="text-lg font-extrabold text-amber-400">${pct}% (${count}/4)</span>
+                    <div class="text-right font-mono shrink-0 ml-2">
+                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
+                        <span class="text-base sm:text-lg font-extrabold text-amber-400">${pct}% (${count}/4)</span>
                     </div>
                 `;
             } else {
                 box.className = "p-3 rounded-lg bg-rose-950/50 border border-rose-500/40 flex items-center justify-between";
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-rose-500/20 rounded-full text-rose-400">
-                            <i data-lucide="x-circle" class="w-6 h-6"></i>
+                        <div class="p-2 bg-rose-500/20 rounded-full text-rose-400 shrink-0">
+                            <i class="fa-solid fa-circle-xmark text-xl"></i>
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wide">NO VALID ICT SETUP (NO TRADE ZONE)</h4>
-                            <p class="text-xs text-slate-300">ตลาดยังไม่มีการตั้งรูปทรงตามระบบ ICT ให้ความเสี่ยงสูงหากเข้าเทรดตอนนี้</p>
+                            <p class="text-xs text-slate-300">ตลาดยังไม่เข้าทรงตามระบบ ICT การเข้าเทรดตอนนี้มีความเสี่ยงสูงที่จะโดน Stop Hunt</p>
                         </div>
                     </div>
-                    <div class="text-right font-mono">
-                        <span class="text-xs text-slate-400 block">Confluence Score</span>
-                        <span class="text-lg font-extrabold text-rose-400">${pct}% (${count}/4)</span>
+                    <div class="text-right font-mono shrink-0 ml-2">
+                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
+                        <span class="text-base sm:text-lg font-extrabold text-rose-400">${pct}% (${count}/4)</span>
                     </div>
                 `;
             }
-            lucide.createIcons();
         }
 
-        // --- TAB SWITCHING LOGIC ---
+        // --- TAB SWITCHER LOGIC ---
         function switchTab(tabId) {
-            ['checklist', 'cheatsheet', 'killzone-info'].forEach(id => {
+            ['checklist', 'cheatsheet'].forEach(id => {
                 const btn = document.getElementById(`tab-btn-${id}`);
                 const content = document.getElementById(`tab-${id}`);
-                
+
                 if (id === tabId) {
-                    btn.className = "py-2.5 px-4 tab-active flex items-center space-x-1.5 transition";
+                    btn.className = "py-2.5 px-4 tab-active flex items-center space-x-2 transition whitespace-nowrap";
                     content.classList.remove('hidden');
                 } else {
-                    btn.className = "py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition";
+                    btn.className = "py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap";
                     content.classList.add('hidden');
                 }
             });
