@@ -3,884 +3,1022 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIVIL SUITE PRO - Civil Engineering Toolkit & Calculators</title>
-    <!-- Tailwind CSS CDN -->
+    <title>SMC / ICT Smart Money Trading Terminal</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        cyber: {
-                            dark: '#0a0f1d',
-                            card: '#111827',
-                            border: '#1f2937',
-                            primary: '#06b6d4',
-                            secondary: '#3b82f6',
-                            accent: '#8b5cf6',
-                            glow: '#00f0ff'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'Kanit', 'sans-serif'],
-                        mono: ['Fira Code', 'Courier New', 'monospace']
+                        darkBg: '#0e131f',
+                        cardBg: '#171e2e',
+                        borderBg: '#2a3447',
+                        accentGreen: '#00c853',
+                        accentRed: '#ff3d00',
+                        accentBlue: '#29b6f6',
+                        accentPurple: '#ab47bc',
+                        accentYellow: '#ffd600'
                     }
                 }
             }
         }
     </script>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: 'Kanit', 'Inter', sans-serif;
-            background-color: #070a12;
+            font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0e131f;
             color: #e2e8f0;
             overflow-x: hidden;
         }
-
-        /* Neon Glow Text Animations */
-        .neon-text-cyan {
-            color: #fff;
-            text-shadow: 
-                0 0 5px #06b6d4,
-                0 0 10px #06b6d4,
-                0 0 20px #06b6d4,
-                0 0 40px #0891b2,
-                0 0 80px #0891b2;
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .neon-text-gold {
-            color: #fff;
-            text-shadow: 
-                0 0 5px #f59e0b,
-                0 0 10px #f59e0b,
-                0 0 20px #d97706,
-                0 0 40px #b45309;
-        }
-
-        .neon-box {
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .neon-box:hover {
-            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
-            border-color: rgba(6, 182, 212, 0.8);
-            transform: translateY(-3px);
-        }
-
-        .bg-cyber-grid {
-            background-size: 40px 40px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        }
-
-        /* Custom Scrollbar */
+        /* Custom Scrollbars */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #0b1120;
+            background: #0e131f;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1e293b;
+            background: #2a3447;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #06b6d4;
+            background: #3b4861;
         }
 
-        /* Print Style Adjustments */
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .print-container {
-                background: white !important;
-                color: black !important;
-                box-shadow: none !important;
-            }
+        .tab-active {
+            border-bottom: 2px solid #29b6f6;
+            color: #29b6f6;
+            font-weight: 600;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
-<body class="bg-cyber-grid min-h-screen flex flex-col">
+<body class="h-screen flex flex-col bg-darkBg text-slate-200 antialiased selection:bg-accentBlue selection:text-white">
 
-    <!-- DISCLAIMER BANNER -->
-    <div class="bg-amber-900/40 border-b border-amber-500/30 text-amber-200 px-4 py-2 text-xs md:text-sm text-center flex items-center justify-center gap-2 no-print z-50">
-        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
-        <span><strong>คำเตือน (Disclaimer):</strong> เครื่องมือนี้ใช้สำหรับการประมาณการและตรวจสอบเบื้องต้นเท่านั้น งานคำนวณและออกแบบจริงต้องได้รับการตรวจสอบและรับรองโดยวิศวกรผู้มีใบอนุญาตประกอบวิชาชีพ</span>
-    </div>
-
-    <!-- ================= HERO / LANDING PAGE ================= -->
-    <div id="landing-page" class="min-h-screen flex flex-col justify-center items-center px-4 relative overflow-hidden py-12">
-        <!-- Ambient Glowing Orbs -->
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="text-center max-w-4xl z-10">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-6 uppercase tracking-widest">
-                <i class="fa-solid fa-microchip"></i> Civil Engineering Suite Pro v2.5
+    <!-- TOP NAVBAR -->
+    <header class="h-14 bg-cardBg border-b border-borderBg flex items-center justify-between px-4 shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 rounded-lg text-white font-bold tracking-wide shadow-md">
+                <i data-lucide="candlestick-chart" class="w-5 h-5"></i>
+                <span class="text-sm">ICT / SMC Pro Terminal</span>
             </div>
-            
-            <h1 class="text-4xl md:text-7xl font-extrabold tracking-tight mb-4 neon-text-cyan font-mono uppercase">
-                CIVIL SUITE PRO
-            </h1>
-            <p class="text-lg md:text-2xl text-slate-300 font-light mb-8 max-w-2xl mx-auto leading-relaxed">
-                ศูนย์รวมเครื่องมือวิเคราะห์ วิศวกรรมโครงสร้าง คอนกรีตเสริมเหล็ก งานดิน ชลศาสตร์ และประมาณราคา BOQ
-            </p>
+            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono border border-borderBg">Michael J. Huddleston Methodology</span>
+        </div>
 
-            <button onclick="switchToDashboard()" class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl shadow-lg hover:shadow-cyan-500/50 hover:scale-105 active:scale-95">
-                <span class="mr-3 text-lg">เข้าสู่ระบบคำนวณ (Dashboard)</span>
-                <i class="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform duration-300"></i>
+        <!-- Symbol & Timeframe Selection -->
+        <div class="flex items-center space-x-2 font-mono text-sm">
+            <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
+                <button onclick="setPair('EUR/USD')" id="pair-EURUSD" class="px-2.5 py-1 rounded bg-slate-700 text-white font-semibold text-xs transition">EUR/USD</button>
+                <button onclick="setPair('GBP/USD')" id="pair-GBPUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">GBP/USD</button>
+                <button onclick="setPair('XAU/USD')" id="pair-XAUUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">XAU/USD (Gold)</button>
+            </div>
+
+            <div class="h-4 w-[1px] bg-borderBg"></div>
+
+            <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
+                <button onclick="setTimeframe('1M')" id="tf-1M" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1M</button>
+                <button onclick="setTimeframe('5M')" id="tf-5M" class="px-2 py-1 rounded text-xs bg-accentBlue text-white font-bold transition">5M</button>
+                <button onclick="setTimeframe('15M')" id="tf-15M" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">15M</button>
+                <button onclick="setTimeframe('1H')" id="tf-1H" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1H</button>
+                <button onclick="setTimeframe('4H')" id="tf-4H" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">4H</button>
+            </div>
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div class="flex items-center space-x-2">
+            <button onclick="generateNewMarketData()" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-borderBg transition text-slate-200">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>สุ่มกราฟใหม่</span>
             </button>
+            
+            <div class="relative inline-block text-left">
+                <button id="scenarioBtn" onclick="toggleScenarioDropdown()" class="flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition shadow-sm">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>จำลองท่าเทรด ICT</span>
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="scenarioDropdown" class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-cardBg ring-1 ring-black ring-opacity-5 border border-borderBg z-50">
+                    <div class="py-1" role="menu">
+                        <button onclick="loadScenario('silver_bullet')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col">
+                            <span class="font-bold text-accentGreen">ICT Silver Bullet (Bullish)</span>
+                            <span class="text-[10px] text-slate-400">Sweep SSL + FVG Retrace + Expansion</span>
+                        </button>
+                        <button onclick="loadScenario('judas_swing')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col border-t border-borderBg">
+                            <span class="font-bold text-accentRed">London Judas Swing (Bearish)</span>
+                            <span class="text-[10px] text-slate-400">Fake breakout High + MSS + Order Block</span>
+                        </button>
+                        <button onclick="loadScenario('turtle_soup')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-700 flex flex-col border-t border-borderBg">
+                            <span class="font-bold text-accentPurple">Turtle Soup Liquidity Raid</span>
+                            <span class="text-[10px] text-slate-400">Sweep BSL Target Internal FVG</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+    </header>
 
-        <!-- Quick Info Highlights -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-5xl w-full z-10">
-            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
-                <i class="fa-solid fa-calculator text-cyan-400 text-2xl mb-2"></i>
-                <div class="text-white font-semibold text-sm">9 หมวดหมู่หลัก</div>
-                <div class="text-xs text-slate-400">ครบถ้วนทุกสายงานโยธา</div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
-                <i class="fa-solid fa-chart-line text-blue-400 text-2xl mb-2"></i>
-                <div class="text-white font-semibold text-sm">SFD & BMD Interactive</div>
-                <div class="text-xs text-slate-400">แสดงแผนภาพโครงสร้างสด</div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
-                <i class="fa-solid fa-file-invoice-dollar text-emerald-400 text-2xl mb-2"></i>
-                <div class="text-white font-semibold text-sm">BOQ & Material DB</div>
-                <div class="text-xs text-slate-400">ประมาณการราคาสะดวก</div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl text-center backdrop-blur">
-                <i class="fa-solid fa-code text-purple-400 text-2xl mb-2"></i>
-                <div class="text-white font-semibold text-sm">แสดงสูตรคำนวณ</div>
-                <div class="text-xs text-slate-400">ตรวจสอบย้อนหลังได้</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= MAIN APP DASHBOARD ================= -->
-    <div id="main-app" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+    <!-- MAIN APP LAYOUT -->
+    <div class="flex flex-1 overflow-hidden">
         
-        <!-- SIDEBAR / NAVIGATION -->
-        <aside class="w-full md:w-72 bg-slate-950 border-r border-slate-800 flex flex-col no-print shrink-0">
-            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="switchToLanding()">
-                    <i class="fa-solid fa-cubes text-cyan-400 text-2xl"></i>
+        <!-- LEFT SIDEBAR: SMC TOOLBAR & OVERLAY CONTROLS -->
+        <aside class="w-64 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-4 overflow-y-auto">
+            
+            <!-- Indicator Toggles -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                    <span>SMC Indicators Overlay</span>
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                </h3>
+                <div class="space-y-2 text-xs">
+                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span>Order Blocks (OB)</span>
+                        </span>
+                        <input type="checkbox" id="toggle-ob" checked onchange="renderChart()" class="rounded accent-accentGreen">
+                    </label>
+
+                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                            <span>Fair Value Gap (FVG)</span>
+                        </span>
+                        <input type="checkbox" id="toggle-fvg" checked onchange="renderChart()" class="rounded accent-accentBlue">
+                    </label>
+
+                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                            <span>BOS / MSS (CHoCH)</span>
+                        </span>
+                        <input type="checkbox" id="toggle-structure" checked onchange="renderChart()" class="rounded accent-accentPurple">
+                    </label>
+
+                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <span>Liquidity Sweeps (BSL/SSL)</span>
+                        </span>
+                        <input type="checkbox" id="toggle-liquidity" checked onchange="renderChart()" class="rounded accent-accentYellow">
+                    </label>
+
+                    <label class="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <span class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                            <span>Kill Zones (Time Sessions)</span>
+                        </span>
+                        <input type="checkbox" id="toggle-killzones" checked onchange="renderChart()" class="rounded accent-pink-500">
+                    </label>
+                </div>
+            </div>
+
+            <!-- HTF Bias Indicator -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">HTF Institutional Bias</h3>
+                <div id="bias-card" class="p-2.5 rounded-lg border bg-emerald-950/40 border-emerald-500/30 flex items-center justify-between">
                     <div>
-                        <div class="font-bold font-mono text-cyan-400 tracking-wider">CIVIL SUITE</div>
-                        <div class="text-[10px] text-slate-400">ENGINEERING TOOLKIT</div>
+                        <div id="bias-text" class="text-sm font-bold text-emerald-400">BULLISH EXPANSION</div>
+                        <div class="text-[10px] text-slate-400">Daily Order Flow: Seeking BSL</div>
+                    </div>
+                    <i data-lucide="trending-up" id="bias-icon" class="w-5 h-5 text-emerald-400"></i>
+                </div>
+            </div>
+
+            <!-- Risk & Position Sizing Calculator -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-3">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>คำนวณความเสี่ยง (Risk Calc)</span>
+                    <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+                </h3>
+                
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <label class="text-slate-400 block mb-1">Account Balance ($)</label>
+                        <input type="number" id="calc-balance" value="10000" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-slate-400 block mb-1">Risk (%)</label>
+                            <input type="number" id="calc-risk" value="1" step="0.5" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block mb-1">SL (Pips/Pts)</label>
+                            <input type="number" id="calc-sl" value="12" oninput="calculateRisk()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-accentBlue">
+                        </div>
+                    </div>
+
+                    <div class="p-2 bg-cardBg/60 rounded border border-borderBg/50 space-y-1 font-mono text-[11px]">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Risk Amount:</span>
+                            <span id="res-risk-amt" class="text-amber-400 font-semibold">$100.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Lot Size (Forex):</span>
+                            <span id="res-lot-size" class="text-accentBlue font-bold">0.83 Lots</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Target 1:3 R:R Profit:</span>
+                            <span id="res-tp-profit" class="text-accentGreen font-semibold">$300.00</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="flex-1 overflow-y-auto p-3 space-y-1">
-                <button onclick="showModule('mod-unit')" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-arrow-right-arrow-left text-cyan-400 w-5"></i>
-                    <span>1. แปลงหน่วย & คุณสมบัติ</span>
-                </button>
-                <button onclick="showModule('mod-boq')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-calculator text-emerald-400 w-5"></i>
-                    <span>2. ปริมาณงาน & BOQ</span>
-                </button>
-                <button onclick="showModule('mod-struct')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-diagram-project text-blue-400 w-5"></i>
-                    <span>3. วิเคราะห์โครงสร้าง (SFD)</span>
-                </button>
-                <button onclick="showModule('mod-rc')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-cubes-stacked text-amber-400 w-5"></i>
-                    <span>4. ออกแบบ ค.ส.ล. (RC)</span>
-                </button>
-                <button onclick="showModule('mod-steel')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-layer-group text-purple-400 w-5"></i>
-                    <span>5. งานเหล็ก & งานไม้</span>
-                </button>
-                <button onclick="showModule('mod-geotech')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-mountain text-orange-400 w-5"></i>
-                    <span>6. ธรณีเทคนิค & ฐานราก</span>
-                </button>
-                <button onclick="showModule('mod-hydro')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-water text-teal-400 w-5"></i>
-                    <span>7. ชลศาสตร์ & ระบายน้ำ</span>
-                </button>
-                <button onclick="showModule('mod-highway')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-road text-rose-400 w-5"></i>
-                    <span>8. งานทาง & สำรวจ</span>
-                </button>
-                <button onclick="showModule('mod-qc')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900 hover:text-cyan-400 transition-colors">
-                    <i class="fa-solid fa-vial text-indigo-400 w-5"></i>
-                    <span>9. วัสดุ & ควบคุมคุณภาพ</span>
-                </button>
-            </nav>
-
-            <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
-                <button onclick="switchToLanding()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded border border-slate-700 transition">
-                    <i class="fa-solid fa-house mr-2"></i> หน้าแรก
-                </button>
+            <!-- Active Setup Metrics -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg text-xs space-y-2">
+                <h3 class="font-semibold text-slate-400 uppercase tracking-wider">สถิติสภาวะตลาดปัจจุบัน</h3>
+                <div class="flex justify-between py-1 border-b border-slate-800">
+                    <span class="text-slate-400">IPDA Phase:</span>
+                    <span class="text-amber-300 font-mono">Manipulation / Seek</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-800">
+                    <span class="text-slate-400">Active Killzone:</span>
+                    <span id="active-kz-text" class="text-pink-400 font-mono font-semibold">NY Open (08:00 EST)</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-slate-400">Discount / Premium:</span>
+                    <span id="pd-array-text" class="text-emerald-400 font-mono">Deep Discount</span>
+                </div>
             </div>
+
         </aside>
 
-        <!-- MAIN CONTENT WORKSPACE -->
-        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+        <!-- CENTER AREA: INTERACTIVE CANVAS CHART & DETAILS -->
+        <main class="flex-1 flex flex-col min-w-0 bg-darkBg relative">
             
-            <!-- TOOLBAR -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800 no-print">
-                <div>
-                    <h2 id="active-module-title" class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="fa-solid fa-calculator text-cyan-400"></i> แปลงหน่วย & คุณสมบัติหน้าตัด
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-1">เครื่องมือคำนวณมาตรฐานทางวิศวกรรมโยธา</p>
+            <!-- Chart HUD Bar -->
+            <div class="h-9 bg-cardBg/80 border-b border-borderBg/80 flex items-center justify-between px-4 text-xs font-mono text-slate-300 shrink-0">
+                <div class="flex items-center space-x-4">
+                    <span class="text-slate-400">O: <span id="hud-open" class="text-white">1.08500</span></span>
+                    <span class="text-slate-400">H: <span id="hud-high" class="text-emerald-400">1.08720</span></span>
+                    <span class="text-slate-400">L: <span id="hud-low" class="text-rose-400">1.08410</span></span>
+                    <span class="text-slate-400">C: <span id="hud-close" class="text-white">1.08680</span></span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded border border-slate-700 transition flex items-center gap-2">
-                        <i class="fa-solid fa-print"></i> พิมพ์ / สรุป PDF
-                    </button>
-                    <button onclick="clearSavedData()" class="px-3 py-1.5 bg-rose-950/50 hover:bg-rose-900 text-rose-300 text-xs rounded border border-rose-800/50 transition flex items-center gap-2">
-                        <i class="fa-solid fa-trash"></i> ล้างข้อมูล
-                    </button>
+                <div class="flex items-center space-x-3 text-[11px]">
+                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span>Bull OB</span>
+                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block mr-1"></span>FVG Zone</span>
+                    <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-purple-400 inline-block mr-1"></span>MSS / CHoCH</span>
                 </div>
             </div>
 
-            <!-- MODULE CONTENT PANELS -->
-            <div id="module-container">
-
-                <!-- MODULE 1: UNIT CONVERTER & SECTIONS -->
-                <div id="mod-unit" class="module-panel space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Unit Converter -->
-                        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                            <h3 class="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
-                                <i class="fa-solid fa-right-left"></i> ระบบแปลงหน่วยวิศวกรรม (Unit Converter)
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-400 mb-1">หมวดหมู่หน่วย</label>
-                                    <select id="unit-cat" onchange="updateUnitOptions()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
-                                        <option value="force">แรง (Force)</option>
-                                        <option value="stress">หน่วยแรง / ความดัน (Stress / Pressure)</option>
-                                        <option value="length">ความยาว (Length)</option>
-                                        <option value="area">พื้นที่ (Area)</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-400 mb-1">ค่าเริ่มต้น</label>
-                                        <input type="number" id="unit-input-val" value="100" oninput="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-slate-400 mb-1">จากหน่วย</label>
-                                        <select id="unit-from" onchange="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none"></select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-400 mb-1">แปลงเป็นหน่วย</label>
-                                    <select id="unit-to" onchange="convertUnits()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none"></select>
-                                </div>
-                                <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 text-center">
-                                    <div class="text-xs text-slate-400">ผลลัพธ์การแปลง</div>
-                                    <div id="unit-result" class="text-2xl font-mono font-bold text-cyan-400 mt-1">0.00</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section Properties -->
-                        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                            <h3 class="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
-                                <i class="fa-solid fa-shapes"></i> คุณสมบัติหน้าตัด (Section Properties)
-                            </h3>
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-400 mb-1">รูปแบบหน้าตัด</label>
-                                    <select id="sec-type" onchange="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white focus:border-cyan-500 outline-none">
-                                        <option value="rect">สี่เหลี่ยม (Rectangle)</option>
-                                        <option value="circle">วงกลม (Circle)</option>
-                                    </select>
-                                </div>
-                                <div id="sec-rect-inputs" class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-xs text-slate-400">ความกว้าง b (cm)</label>
-                                        <input type="number" id="sec-b" value="20" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-slate-400">ความสูง h (cm)</label>
-                                        <input type="number" id="sec-h" value="40" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                                    </div>
-                                </div>
-                                <div id="sec-circle-inputs" class="hidden">
-                                    <label class="block text-xs text-slate-400">เส้นผ่านศูนย์กลาง d (cm)</label>
-                                    <input type="number" id="sec-d" value="30" oninput="calcSectionProps()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                                </div>
-                                <div class="bg-slate-950 p-3 rounded border border-slate-800 text-xs font-mono space-y-1 text-slate-300">
-                                    <div class="flex justify-between"><span>พื้นที่ (A):</span> <span id="sec-res-a" class="text-cyan-400">0 cm²</span></div>
-                                    <div class="flex justify-between"><span>Inertia (Ix):</span> <span id="sec-res-ix" class="text-cyan-400">0 cm⁴</span></div>
-                                    <div class="flex justify-between"><span>Modulus (Sx):</span> <span id="sec-res-sx" class="text-cyan-400">0 cm³</span></div>
-                                    <div class="flex justify-between"><span>Radius (rx):</span> <span id="sec-res-rx" class="text-cyan-400">0 cm</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 2: BOQ & MATERIAL ESTIMATION -->
-                <div id="mod-boq" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-calculator"></i> ตารางประมาณการราคาและปริมาณงาน (BOQ Calculator)
-                        </h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse min-w-[600px]">
-                                <thead>
-                                    <tr class="border-b border-slate-800 text-xs text-slate-400 bg-slate-950">
-                                        <th class="p-2">รายการ</th>
-                                        <th class="p-2 w-24">จำนวน</th>
-                                        <th class="p-2 w-24">หน่วย</th>
-                                        <th class="p-2 w-32">ราคา/หน่วย (บาท)</th>
-                                        <th class="p-2 w-36 text-right">รวมเงิน (บาท)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="boq-tbody" class="text-sm divide-y divide-slate-800/50">
-                                    <!-- Rows populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center bg-slate-950 p-4 rounded-lg border border-slate-800">
-                            <span class="font-semibold text-slate-300">ราคารวมสุทธิทั้งหมด (Total Estimated Cost):</span>
-                            <span id="boq-total" class="text-2xl font-mono font-bold text-emerald-400">0.00 บาท</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 3: STRUCTURAL ANALYSIS (SFD/BMD) -->
-                <div id="mod-struct" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line"></i> วิเคราะห์คานช่วงเดียว (Simply Supported Beam SFD & BMD)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความยาวคาน L (m)</label>
-                                <input type="number" id="beam-length" value="6" step="0.5" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">น้ำหนักบรรทุกแผ่ w (kg/m)</label>
-                                <input type="number" id="beam-w" value="1200" step="100" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">น้ำหนักกดเป็นจุด P (kg) ตรงกลาง</label>
-                                <input type="number" id="beam-p" value="500" step="100" oninput="analyzeBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <!-- Canvas Diagram -->
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center">
-                            <canvas id="beamCanvas" width="700" height="320" class="w-full max-w-full h-auto"></canvas>
-                        </div>
-
-                        <!-- Results -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs font-mono">
-                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
-                                <div class="text-slate-400">Ra = Rb (แรงปฏิกิริยา)</div>
-                                <div id="res-ra" class="text-base text-blue-400 font-bold">0 kg</div>
-                            </div>
-                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
-                                <div class="text-slate-400">V max (แรงเฉือนสูงสุด)</div>
-                                <div id="res-vmax" class="text-base text-blue-400 font-bold">0 kg</div>
-                            </div>
-                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
-                                <div class="text-slate-400">M max (โมเมนต์สูงสุด)</div>
-                                <div id="res-mmax" class="text-base text-emerald-400 font-bold">0 kg-m</div>
-                            </div>
-                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
-                                <div class="text-slate-400">สูตรโมเมนต์แผ่กว้าง</div>
-                                <div class="text-slate-300">wL² / 8</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 4: RC DESIGN -->
-                <div id="mod-rc" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-cubes-stacked"></i> ออกแบบคานคอนกรีตเสริมเหล็ก (RC Beam Design - WSD)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">กำลังอัดคอนกรีต fc' (ksc - ทรงกระบอก)</label>
-                                <input type="number" id="rc-fc" value="240" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">กำลังรับแรงดึงเหล็ก fy (ksc)</label>
-                                <input type="number" id="rc-fy" value="4000" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">โมเมนต์ดัดออกแบบ M (kg-m)</label>
-                                <input type="number" id="rc-m" value="8500" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความกว้างคาน b (cm)</label>
-                                <input type="number" id="rc-b" value="20" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความลึกประสิทธิผล d (cm)</label>
-                                <input type="number" id="rc-d" value="45" oninput="calcRCBeam()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <!-- RC Results & Calculation Steps -->
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 font-mono text-sm">
-                            <div class="text-xs text-amber-400 font-bold border-b border-slate-800 pb-2">ขั้นตอนคำนวณและผลลัพธ์ (Calculation Breakdown):</div>
-                            <div class="flex justify-between"><span>fc (0.45 fc'):</span> <span id="rc-res-fc" class="text-slate-200">0 ksc</span></div>
-                            <div class="flex justify-between"><span>fs (0.50 fy):</span> <span id="rc-res-fs" class="text-slate-200">0 ksc</span></div>
-                            <div class="flex justify-between"><span>ค่า K (Resist. Coeff.):</span> <span id="rc-res-k" class="text-slate-200">0 ksc</span></div>
-                            <div class="flex justify-between font-bold"><span>พื้นที่เหล็กเสริมดึง As Required:</span> <span id="rc-res-as" class="text-amber-400 text-lg">0 cm²</span></div>
-                            <div class="flex justify-between text-xs text-slate-400"><span>คำแนะนำเหล็กเสริม:</span> <span id="rc-res-rebar" class="text-cyan-400">DB20 x - เส้น</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 5: STEEL & TIMBER DESIGN -->
-                <div id="mod-steel" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group"></i> ตรวจสอบความชะลูดเสาเหล็ก (Steel Column Slenderness Check)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความยาวเสา L (m)</label>
-                                <input type="number" id="steel-l" value="3.5" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">รัศมีรอบวงกว้าง r (cm)</label>
-                                <input type="number" id="steel-r" value="4.5" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">สัมประสิทธิ์ความยาว K</label>
-                                <input type="number" id="steel-k" value="1.0" step="0.1" oninput="calcSteelColumn()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                            <div class="flex justify-between"><span>อัตราส่วนความชะลูด (KL/r):</span> <span id="steel-res-klr" class="font-bold text-purple-400">0</span></div>
-                            <div class="flex justify-between"><span>เกณฑ์มาตรฐาน (KL/r &le; 200):</span> <span id="steel-res-status" class="font-bold">ตรวจสอบแล้ว</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 6: GEOTECHNICAL & FOUNDATIONS -->
-                <div id="mod-geotech" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-orange-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-mountain"></i> กำลังรับน้ำหนักประลัยของดิน (Terzaghi Bearing Capacity)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">แรงยึดเหนี่ยว c (t/m²)</label>
-                                <input type="number" id="geo-c" value="2.0" step="0.5" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">หน่วยน้ำหนักดิน &gamma; (t/m³)</label>
-                                <input type="number" id="geo-gamma" value="1.8" step="0.1" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความกว้างฐานราก B (m)</label>
-                                <input type="number" id="geo-b" value="1.5" step="0.1" oninput="calcGeotech()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                            <div class="flex justify-between"><span>กำลังรับน้ำหนักประลัย (Ultimate qu):</span> <span id="geo-res-qu" class="font-bold text-orange-400">0 t/m²</span></div>
-                            <div class="flex justify-between"><span>กำลังรับน้ำหนักปลอดภัย (Allowable qa, FS=3):</span> <span id="geo-res-qa" class="font-bold text-emerald-400">0 t/m²</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 7: HYDRAULICS -->
-                <div id="mod-hydro" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-teal-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-water"></i> ปริมาณน้ำท่า (Rational Method: Q = CiA)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">สัมประสิทธิ์การไหลนอง (C)</label>
-                                <input type="number" id="hydro-c" value="0.6" step="0.05" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความเข้มฝน I (mm/hr)</label>
-                                <input type="number" id="hydro-i" value="120" step="5" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">พื้นที่รับน้ำ A (ไร่)</label>
-                                <input type="number" id="hydro-a" value="10" step="1" oninput="calcHydro()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                            <div class="flex justify-between"><span>อัตราการไหลสูงสุด Q:</span> <span id="hydro-res-q" class="font-bold text-teal-400">0 m³/s</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 8: HIGHWAY & SURVEYING -->
-                <div id="mod-highway" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-rose-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-road"></i> ระยะหยุดรถปลอดภัย (Stopping Sight Distance - SSD)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ความเร็วออกแบบ V (km/h)</label>
-                                <input type="number" id="hway-v" value="90" step="5" oninput="calcHighway()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">เวลาตอบสนอง t (sec)</label>
-                                <input type="number" id="hway-t" value="2.5" step="0.1" oninput="calcHighway()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                            <div class="flex justify-between"><span>ระยะหยุดรถปลอดภัย (SSD):</span> <span id="hway-res-ssd" class="font-bold text-rose-400">0 เมตร</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODULE 9: QUALITY & CONCRETE MIX -->
-                <div id="mod-qc" class="module-panel hidden space-y-6">
-                    <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-indigo-400 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-vial"></i> แปลงกำลังอัดคอนกรีต (Cylinder vs Cube Strength)
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ค่ากำลังอัดลูกบาศก์ Cube 15x15 cm (ksc)</label>
-                                <input type="number" id="qc-cube" value="280" oninput="calcQC()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white">
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                            <div class="flex justify-between"><span>กำลังอัดทรงกระบอก Cylinder 15x30 cm (~0.833):</span> <span id="qc-res-cyl" class="font-bold text-indigo-400">0 ksc</span></div>
-                        </div>
-                    </div>
-                </div>
-
+            <!-- Canvas Container -->
+            <div class="flex-1 relative overflow-hidden cursor-crosshair" id="chart-container">
+                <canvas id="smcCanvas" class="w-full h-full block"></canvas>
+                
+                <!-- Crosshair HUD Tooltip -->
+                <div id="chartTooltip" class="hidden absolute pointer-events-none bg-slate-900/90 border border-borderBg p-2 rounded text-[11px] font-mono text-slate-200 z-30 shadow-xl"></div>
             </div>
+
+            <!-- BOTTOM TABS: CHECKLIST & CHEATSHEET -->
+            <div class="h-64 bg-cardBg border-t border-borderBg flex flex-col shrink-0">
+                <!-- Tab Headers -->
+                <div class="flex border-b border-borderBg bg-darkBg/50 text-xs font-medium px-4">
+                    <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-2.5 px-4 tab-active flex items-center space-x-1.5 transition">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        <span>ICT Setup Checklist & Evaluator</span>
+                    </button>
+                    <button onclick="switchTab('cheatsheet')" id="tab-btn-cheatsheet" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition">
+                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                        <span>SMC / ICT Knowledge Hub & Cheatsheet</span>
+                    </button>
+                    <button onclick="switchTab('killzone-info')" id="tab-btn-killzone-info" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>Kill Zones & Session Timings</span>
+                    </button>
+                </div>
+
+                <!-- Tab Content Containers -->
+                <div class="flex-1 p-4 overflow-y-auto">
+                    
+                    <!-- TAB 1: ICT CHECKLIST -->
+                    <div id="tab-checklist" class="space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            
+                            <!-- Step 1 -->
+                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-accentBlue">STEP 1: HTF Bias</span>
+                                    <input type="checkbox" id="chk-1" checked onchange="evaluateTradeSignal()" class="accent-accentBlue rounded">
+                                </div>
+                                <p class="text-xs text-slate-300 font-semibold">1. Higher Timeframe Liquidity Target</p>
+                                <p class="text-[11px] text-slate-400">กราฟกำลังวิ่งเข้าหา BSL/SSL บน HTF (4H/1D) หรือไม่?</p>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-accentYellow">STEP 2: Liquidity Sweep</span>
+                                    <input type="checkbox" id="chk-2" checked onchange="evaluateTradeSignal()" class="accent-accentYellow rounded">
+                                </div>
+                                <p class="text-xs text-slate-300 font-semibold">2. Sweep Low/High (Judas Swing)</p>
+                                <p class="text-[11px] text-slate-400">มีการกวาดสภาพคล่อง (Sweep SSL/BSL) ก่อนเปลี่ยนทิศทางหรือไม่?</p>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-accentPurple">STEP 3: Displacement & MSS</span>
+                                    <input type="checkbox" id="chk-3" checked onchange="evaluateTradeSignal()" class="accent-accentPurple rounded">
+                                </div>
+                                <p class="text-xs text-slate-300 font-semibold">3. Market Structure Shift (CHoCH)</p>
+                                <p class="text-[11px] text-slate-400">เกิดแท่งรุนแรง (Displacement) ทำลายโครงสร้างหรือไม่?</p>
+                            </div>
+
+                            <!-- Step 4 -->
+                            <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-accentGreen">STEP 4: Entry Array</span>
+                                    <input type="checkbox" id="chk-4" checked onchange="evaluateTradeSignal()" class="accent-accentGreen rounded">
+                                </div>
+                                <p class="text-xs text-slate-300 font-semibold">4. Retrace to FVG / Order Block</p>
+                                <p class="text-[11px] text-slate-400">ราคาถอยกลับเข้าทดสอบ FVG หรือ Bullish OB ใน Discount Zone</p>
+                            </div>
+
+                        </div>
+
+                        <!-- Trade Evaluation Banner -->
+                        <div id="signal-eval-box" class="p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400">
+                                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
+                                    <p class="text-xs text-slate-300">เข้าเงื่อนไข ICT Silver Bullet / Model A ครบถ้วน! พิจารณาเข้าออเดอร์ Buy Limit ที่ FVG Zone</p>
+                                </div>
+                            </div>
+                            <div class="text-right font-mono">
+                                <span class="text-xs text-slate-400 block">Confluence Score</span>
+                                <span class="text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 2: SMC CHEATSHEET -->
+                    <div id="tab-cheatsheet" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        
+                        <!-- Card 1 -->
+                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center space-x-2 text-accentBlue font-bold text-sm">
+                                <i data-lucide="layers" class="w-4 h-4"></i>
+                                <span>Order Block (OB) & Imbalance</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed">
+                                **Order Block (OB)** คือ แท่งเทียนสุดท้ายก่อนที่จะเกิดการพุ่งตัวอย่างรุนแรง (Displacement) เป็นจุดที่สถาบันทางการเงิน (Smart Money) วางคำสั่งซื้อขายปริมาณมาก
+                            </p>
+                            <ul class="list-disc pl-4 text-slate-400 space-y-1">
+                                stroke: **Bullish OB**: แท่งทิ้งตัวลงแท่งสุดท้าย ก่อนบินขึ้นทำ Break of Structure.</li>
+                                <li>**Bearish OB**: แท่งดันขึ้นแท่งสุดท้าย ก่อนทิ้งตัวลงอย่างรุนแรง.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center space-x-2 text-accentGreen font-bold text-sm">
+                                <i data-lucide="box" class="w-4 h-4"></i>
+                                <span>Fair Value Gap (FVG)</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed">
+                                **Fair Value Gap (FVG)** คือ ช่องว่างของราคาที่เกิดจากความไม่สมดุลของแรงซื้อขาย (Inefficiency / Imbalance) พิจารณาจากช่องว่างระหว่าง High ของแท่งที่ 1 และ Low ของแท่งที่ 3
+                            </p>
+                            <p class="text-slate-400">
+                                อัลกอริทึม **IPDA** มักจะดึงราคากลับมาเติมเต็ม (Rebalance) ในโซน FVG นี้เสมอ
+                            </p>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div class="bg-darkBg p-3.5 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center space-x-2 text-accentYellow font-bold text-sm">
+                                <i data-lucide="zap" class="w-4 h-4"></i>
+                                <span>Liquidity & Power of 3 (AMD)</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed">
+                                **Power of 3 (PO3)** ประกอบด้วย 3 ระยะ:
+                            </p>
+                            <ol class="list-decimal pl-4 text-slate-400 space-y-1">
+                                <li><strong class="text-slate-200">Accumulation:</strong> สะสมราคาในกรอบ (Asian Range)</li>
+                                <li><strong class="text-slate-200">Manipulation:</strong> ลากราคาไปกวาด Liquidity (Judas Swing)</li>
+                                <li><strong class="text-slate-200">Distribution:</strong> วิ่งไปยังเป้าหมายที่แท้จริง</li>
+                            </ol>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 3: KILL ZONES -->
+                    <div id="tab-killzone-info" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        
+                        <!-- Asian Session -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-amber-400 text-sm">Asian Range</span>
+                                <span class="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded font-mono">20:00 - 00:00 EST</span>
+                            </div>
+                            <p class="text-slate-300">ช่วงสะสมราคา (Accumulation) สร้าง High และ Low ของกรอบเอเชีย ซึ่งมักถูก Sweep ใน London หรือ NY Session</p>
+                        </div>
+
+                        <!-- London Open -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-sky-400 text-sm">London Open Killzone</span>
+                                <span class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded font-mono">02:00 - 05:00 EST</span>
+                            </div>
+                            <p class="text-slate-300">ช่วงเวลากวาด Liquidity (Judas Swing) มักสร้าง High หรือ Low ของวัน (Low/High of the Day)</p>
+                        </div>
+
+                        <!-- NY Open -->
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-pink-400 text-sm">New York Open / Silver Bullet</span>
+                                <span class="text-[10px] bg-pink-950 text-pink-300 px-2 py-0.5 rounded font-mono">07:00 - 10:00 EST</span>
+                            </div>
+                            <p class="text-slate-300">ช่วงเวลาลุยตามเทรนด์หลัก (Expansion) **ICT Silver Bullet Window: 10:00 - 11:00 AM EST**</p>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT LOGIC FOR SMC ENGINE & CANVAS rendering -->
     <script>
-        // Page Navigation
-        function switchToDashboard() {
-            document.getElementById('landing-page').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            // Trigger initial calculations
-            initAllModules();
-        }
+        // --- GLOBAL STATE & VARIABLES ---
+        let candles = [];
+        let currentPair = 'EUR/USD';
+        let currentTimeframe = '5M';
+        let basePrice = 1.0850;
+        
+        // Canvas Configs
+        const canvas = document.getElementById('smcCanvas');
+        const ctx = canvas.getContext('2d');
+        let zoomLevel = 1.0;
+        let candleWidth = 10;
+        let candleGap = 4;
 
-        function switchToLanding() {
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('landing-page').classList.remove('hidden');
-        }
+        // Interactive Tooltip Position
+        let mouseX = -1;
+        let mouseY = -1;
 
-        function showModule(modId) {
-            document.querySelectorAll('.module-panel').forEach(panel => panel.classList.add('hidden'));
-            document.getElementById(modId).classList.remove('hidden');
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            resizeCanvas();
+            generateNewMarketData();
+            calculateRisk();
             
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-slate-900', 'text-cyan-400'));
-            event.currentTarget.classList.add('bg-slate-900', 'text-cyan-400');
-
-            // Update title
-            const titleMap = {
-                'mod-unit': '1. แปลงหน่วย & คุณสมบัติหน้าตัด',
-                'mod-boq': '2. ปริมาณงาน & ประมาณราคา (BOQ)',
-                'mod-struct': '3. วิเคราะห์โครงสร้าง (SFD & BMD)',
-                'mod-rc': '4. ออกแบบ ค.ส.ล. (RC Design)',
-                'mod-steel': '5. งานเหล็ก & งานไม้',
-                'mod-geotech': '6. ธรณีเทคนิค & ฐานราก',
-                'mod-hydro': '7. ชลศาสตร์ & ระบายน้ำ',
-                'mod-highway': '8. งานทาง & สำรวจ',
-                'mod-qc': '9. ควบคุมคุณภาพคอนกรีต'
-            };
-            document.getElementById('active-module-title').innerText = titleMap[modId];
-
-            if (modId === 'mod-struct') {
-                setTimeout(analyzeBeam, 100);
-            }
-        }
-
-        // ================= MODULE 1: UNIT CONVERTER =================
-        const unitData = {
-            force: { 'N': 1, 'kN': 1000, 'kgf': 9.80665, 'ton': 9806.65 },
-            stress: { 'MPa': 1000, 'ksc (kg/cm²)': 98.0665, 'psi': 6.89476, 'kPa': 1 },
-            length: { 'm': 1, 'cm': 0.01, 'mm': 0.001, 'ft': 0.3048 },
-            area: { 'm²': 1, 'cm²': 0.0001, 'ไร่': 1600, 'sq.ft': 0.092903 }
-        };
-
-        function updateUnitOptions() {
-            const cat = document.getElementById('unit-cat').value;
-            const fromSelect = document.getElementById('unit-from');
-            const toSelect = document.getElementById('unit-to');
-            fromSelect.innerHTML = '';
-            toSelect.innerHTML = '';
-
-            Object.keys(unitData[cat]).forEach(u => {
-                fromSelect.innerHTML += `<option value="${u}">${u}</option>`;
-                toSelect.innerHTML += `<option value="${u}">${u}</option>`;
+            // Handle Window Resize
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                renderChart();
             });
-            convertUnits();
+
+            // Canvas Mouse Interactivity
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseleave', () => {
+                mouseX = -1;
+                mouseY = -1;
+                document.getElementById('chartTooltip').classList.add('hidden');
+                renderChart();
+            });
+        });
+
+        function resizeCanvas() {
+            const container = document.getElementById('chart-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
 
-        function convertUnits() {
-            const cat = document.getElementById('unit-cat').value;
-            const val = parseFloat(document.getElementById('unit-input-val').value) || 0;
-            const from = document.getElementById('unit-from').value;
-            const to = document.getElementById('unit-to').value;
+        // --- SIMULATED SMC MARKET DATA GENERATOR ---
+        function generateNewMarketData(scenario = 'silver_bullet') {
+            candles = [];
+            let price = basePrice;
+            const count = 75;
+            
+            // Build base synthetic ICT pattern structure
+            for (let i = 0; i < count; i++) {
+                let open = price;
+                let delta = (Math.random() - 0.48) * 0.0008;
+                
+                // Controlled ICT scenarios injection
+                if (scenario === 'silver_bullet') {
+                    if (i > 15 && i < 25) delta -= 0.0006; // Asian / Early drop (Sweep SSL)
+                    if (i >= 25 && i < 28) delta += 0.0018; // Strong Displacement Bullish MSS
+                    if (i >= 28 && i < 33) delta -= 0.0003; // Retrace back to FVG / OB
+                    if (i >= 33) delta += 0.0007; // ICT Expansion to targets
+                } else if (scenario === 'judas_swing') {
+                    if (i > 15 && i < 25) delta += 0.0007; // Fake Breakout High (Judas)
+                    if (i >= 25 && i < 29) delta -= 0.0020; // Massive Bearish Displacement (MSS)
+                    if (i >= 29 && i < 34) delta += 0.0004; // Retrace to Bearish FVG
+                    if (i >= 34) delta -= 0.0008; // Bearish Expansion
+                } else {
+                    // Default random walk with high volatility
+                    delta = (Math.random() - 0.49) * 0.0010;
+                }
 
-            if (!unitData[cat][from] || !unitData[cat][to]) return;
-            const baseVal = val * unitData[cat][from];
-            const finalVal = baseVal / unitData[cat][to];
+                let close = open + delta;
+                let high = Math.max(open, close) + Math.random() * 0.0004;
+                let low = Math.min(open, close) - Math.random() * 0.0004;
+                
+                candles.push({
+                    time: i,
+                    open: parseFloat(open.toFixed(5)),
+                    high: parseFloat(high.toFixed(5)),
+                    low: parseFloat(low.toFixed(5)),
+                    close: parseFloat(close.toFixed(5))
+                });
 
-            document.getElementById('unit-result').innerText = `${finalVal.toLocaleString('th-TH', {maximumFractionDigits: 4})} ${to}`;
-        }
-
-        function calcSectionProps() {
-            const type = document.getElementById('sec-type').value;
-            let a = 0, ix = 0, sx = 0, rx = 0;
-
-            if (type === 'rect') {
-                document.getElementById('sec-rect-inputs').classList.remove('hidden');
-                document.getElementById('sec-circle-inputs').classList.add('hidden');
-                const b = parseFloat(document.getElementById('sec-b').value) || 0;
-                const h = parseFloat(document.getElementById('sec-h').value) || 0;
-                a = b * h;
-                ix = (b * Math.pow(h, 3)) / 12;
-                sx = (b * Math.pow(h, 2)) / 6;
-                rx = Math.sqrt(ix / a);
-            } else {
-                document.getElementById('sec-rect-inputs').classList.add('hidden');
-                document.getElementById('sec-circle-inputs').classList.remove('hidden');
-                const d = parseFloat(document.getElementById('sec-d').value) || 0;
-                a = (Math.PI * Math.pow(d, 2)) / 4;
-                ix = (Math.PI * Math.pow(d, 4)) / 64;
-                sx = (Math.PI * Math.pow(d, 3)) / 32;
-                rx = d / 4;
+                price = close;
             }
 
-            document.getElementById('sec-res-a').innerText = `${a.toFixed(2)} cm²`;
-            document.getElementById('sec-res-ix').innerText = `${ix.toFixed(2)} cm⁴`;
-            document.getElementById('sec-res-sx').innerText = `${sx.toFixed(2)} cm³`;
-            document.getElementById('sec-res-rx').innerText = `${rx.toFixed(2)} cm`;
+            // Update HUD Header
+            const last = candles[candles.length - 1];
+            document.getElementById('hud-open').textContent = last.open.toFixed(5);
+            document.getElementById('hud-high').textContent = last.high.toFixed(5);
+            document.getElementById('hud-low').textContent = last.low.toFixed(5);
+            document.getElementById('hud-close').textContent = last.close.toFixed(5);
+
+            renderChart();
         }
 
-        // ================= MODULE 2: BOQ CALCULATOR =================
-        const defaultBOQ = [
-            { name: 'งานคอนกรีตโครงสร้าง (240 ksc)', qty: 15, unit: 'ลบ.ม.', price: 2400 },
-            { name: 'เหล็กเสริม DB16 (SD40)', qty: 1200, unit: 'กก.', price: 32 },
-            { name: 'ไม้แบบงานคอนกรีต', qty: 120, unit: 'ตร.ม.', price: 350 },
-            { name: 'งานขุดดินฐานราก', qty: 45, unit: 'ลบ.ม.', price: 120 }
-        ];
+        // --- CALCULATION OF SMC / ICT OVERLAYS ---
+        
+        // 1. Detect Fair Value Gaps (FVG)
+        function detectFVG() {
+            let fvgs = [];
+            for (let i = 2; i < candles.length; i++) {
+                const c1 = candles[i - 2];
+                const c2 = candles[i - 1];
+                const c3 = candles[i];
 
-        function renderBOQ() {
-            const tbody = document.getElementById('boq-tbody');
-            tbody.innerHTML = '';
-            let total = 0;
+                // Bullish FVG: Low of candle 3 is higher than High of candle 1
+                if (c3.low > c1.high) {
+                    fvgs.push({
+                        type: 'bullish',
+                        top: c3.low,
+                        bottom: c1.high,
+                        startIndex: i - 2,
+                        endIndex: Math.min(i + 25, candles.length - 1)
+                    });
+                }
+                // Bearish FVG: High of candle 3 is lower than Low of candle 1
+                else if (c3.high < c1.low) {
+                    fvgs.push({
+                        type: 'bearish',
+                        top: c1.low,
+                        bottom: c3.high,
+                        startIndex: i - 2,
+                        endIndex: Math.min(i + 25, candles.length - 1)
+                    });
+                }
+            }
+            return fvgs;
+        }
 
-            defaultBOQ.forEach((item, index) => {
-                const lineTotal = item.qty * item.price;
-                total += lineTotal;
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="p-2 text-slate-200">${item.name}</td>
-                        <td class="p-2"><input type="number" value="${item.qty}" onchange="updateBOQ(${index}, 'qty', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded p-1 text-center"></td>
-                        <td class="p-2 text-slate-400 text-xs">${item.unit}</td>
-                        <td class="p-2"><input type="number" value="${item.price}" onchange="updateBOQ(${index}, 'price', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded p-1 text-right"></td>
-                        <td class="p-2 text-right font-mono text-emerald-400">${lineTotal.toLocaleString('th-TH')}</td>
-                    </tr>
+        // 2. Detect Order Blocks (OB)
+        function detectOrderBlocks() {
+            let obs = [];
+            for (let i = 3; i < candles.length - 2; i++) {
+                // Bullish OB: Last down candle before strong up move breaking structure
+                if (candles[i].close < candles[i].open) {
+                    let moveUp = candles[i + 2].close - candles[i].close;
+                    if (moveUp > 0.0012) {
+                        obs.push({
+                            type: 'bullish',
+                            high: candles[i].high,
+                            low: candles[i].low,
+                            index: i
+                        });
+                    }
+                }
+                // Bearish OB: Last up candle before strong down move
+                else if (candles[i].close > candles[i].open) {
+                    let moveDown = candles[i].close - candles[i + 2].close;
+                    if (moveDown > 0.0012) {
+                        obs.push({
+                            type: 'bearish',
+                            high: candles[i].high,
+                            low: candles[i].low,
+                            index: i
+                        });
+                    }
+                }
+            }
+            return obs;
+        }
+
+        // 3. Detect Market Structure (BOS / MSS)
+        function detectStructure() {
+            let structures = [];
+            let lastHigh = candles[0].high;
+            let lastLow = candles[0].low;
+
+            for (let i = 5; i < candles.length; i++) {
+                // Break of Structure (BOS) / MSS
+                if (candles[i].close > lastHigh) {
+                    structures.push({
+                        type: 'MSS / CHoCH (Bullish)',
+                        price: lastHigh,
+                        index: i,
+                        isBullish: true
+                    });
+                    lastHigh = candles[i].high;
+                } else if (candles[i].close < lastLow) {
+                    structures.push({
+                        type: 'BOS (Bearish)',
+                        price: lastLow,
+                        index: i,
+                        isBullish: false
+                    });
+                    lastLow = candles[i].low;
+                }
+            }
+            return structures;
+        }
+
+        // --- RENDERING ENGINE (CANVAS) ---
+        function renderChart() {
+            if (!ctx || candles.length === 0) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 50;
+
+            // Clear Background
+            ctx.fillStyle = '#0e131f';
+            ctx.fillRect(0, 0, width, height);
+
+            // Price Min/Max Range Calculation
+            let minPrice = Math.min(...candles.map(c => c.low));
+            let maxPrice = Math.max(...candles.map(c => c.high));
+            let priceRange = (maxPrice - minPrice) || 1;
+            
+            // Padding on top & bottom price bounds
+            minPrice -= priceRange * 0.05;
+            maxPrice += priceRange * 0.05;
+            priceRange = maxPrice - minPrice;
+
+            // Helper Y coordinate converter
+            function getY(price) {
+                return height - padding - ((price - minPrice) / priceRange) * (height - padding * 2);
+            }
+
+            // Draw Grid Lines & Price Scale
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px "JetBrains Mono", monospace';
+
+            const gridSteps = 6;
+            for (let i = 0; i <= gridSteps; i++) {
+                let p = minPrice + (priceRange / gridSteps) * i;
+                let y = getY(p);
+                
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+
+                // Y-Axis Labels
+                ctx.fillText(p.toFixed(5), width - padding + 5, y + 3);
+            }
+
+            const stepX = (width - padding - 40) / candles.length;
+
+            // --- DRAW KILL ZONES BACKGROUND ---
+            if (document.getElementById('toggle-killzones').checked) {
+                // Asian Session (0 - 20)
+                let xStart = 10;
+                let xEnd = 10 + stepX * 22;
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.05)';
+                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText('Asian Range', xStart + 5, padding + 15);
+
+                // London Open (22 - 40)
+                xStart = 10 + stepX * 22;
+                xEnd = 10 + stepX * 42;
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.06)';
+                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText('London KZ', xStart + 5, padding + 15);
+
+                // NY Open (42 - end)
+                xStart = 10 + stepX * 42;
+                xEnd = width - padding;
+                ctx.fillStyle = 'rgba(236, 72, 153, 0.06)';
+                ctx.fillRect(xStart, padding, xEnd - xStart, height - padding * 2);
+                ctx.fillStyle = '#ec4899';
+                ctx.fillText('NY Silver Bullet', xStart + 5, padding + 15);
+            }
+
+            // --- DRAW FAIR VALUE GAPS (FVG) ---
+            if (document.getElementById('toggle-fvg').checked) {
+                const fvgs = detectFVG();
+                fvgs.forEach(fvg => {
+                    const x1 = 10 + fvg.startIndex * stepX;
+                    const x2 = 10 + fvg.endIndex * stepX;
+                    const yTop = getY(fvg.top);
+                    const yBottom = getY(fvg.bottom);
+
+                    if (fvg.type === 'bullish') {
+                        ctx.fillStyle = 'rgba(56, 189, 248, 0.20)';
+                        ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+                    } else {
+                        ctx.fillStyle = 'rgba(244, 63, 94, 0.20)';
+                        ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
+                    }
+
+                    ctx.fillRect(x1, yTop, x2 - x1, yBottom - yTop);
+                    ctx.strokeRect(x1, yTop, x2 - x1, yBottom - yTop);
+
+                    // FVG Label
+                    ctx.fillStyle = fvg.type === 'bullish' ? '#38bdf8' : '#f43f5e';
+                    ctx.fillText('FVG', x1 + 4, yTop + 12);
+                });
+            }
+
+            // --- DRAW ORDER BLOCKS (OB) ---
+            if (document.getElementById('toggle-ob').checked) {
+                const obs = detectOrderBlocks();
+                obs.forEach(ob => {
+                    const x1 = 10 + ob.index * stepX;
+                    const x2 = width - padding;
+                    const yHigh = getY(ob.high);
+                    const yLow = getY(ob.low);
+
+                    if (ob.type === 'bullish') {
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+                        ctx.strokeStyle = '#10b981';
+                    } else {
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+                        ctx.strokeStyle = '#ef4444';
+                    }
+
+                    ctx.fillRect(x1, yHigh, x2 - x1, yLow - yHigh);
+                    ctx.setLineDash([3, 3]);
+                    ctx.strokeRect(x1, yHigh, x2 - x1, yLow - yHigh);
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = ob.type === 'bullish' ? '#10b981' : '#ef4444';
+                    ctx.fillText(ob.type === 'bullish' ? 'Bullish OB' : 'Bearish OB', x1 + 5, yHigh - 4);
+                });
+            }
+
+            // --- DRAW MARKET STRUCTURE SHIFTS (BOS / MSS) ---
+            if (document.getElementById('toggle-structure').checked) {
+                const structures = detectStructure();
+                structures.forEach(st => {
+                    const x = 10 + st.index * stepX;
+                    const y = getY(st.price);
+
+                    ctx.strokeStyle = st.isBullish ? '#c084fc' : '#f472b6';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 2]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x - 30, y);
+                    ctx.lineTo(x + 20, y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = st.isBullish ? '#c084fc' : '#f472b6';
+                    ctx.fillText(st.type, x - 25, y - 5);
+                });
+            }
+
+            // --- DRAW CANDLESTICKS ---
+            candles.forEach((c, i) => {
+                const x = 10 + i * stepX;
+                const openY = getY(c.open);
+                const closeY = getY(c.close);
+                const highY = getY(c.high);
+                const lowY = getY(c.low);
+
+                const isBullish = c.close >= c.open;
+                const candleColor = isBullish ? '#00c853' : '#ff3d00';
+
+                // Wick Line
+                ctx.strokeStyle = candleColor;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
+                ctx.stroke();
+
+                // Candle Body
+                ctx.fillStyle = candleColor;
+                const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
+                ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, bodyHeight);
+            });
+
+            // --- DRAW CROSSHAIR CURSOR ---
+            if (mouseX > 0 && mouseX < width - padding) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.setLineDash([2, 2]);
+
+                // Vertical Crosshair Line
+                ctx.beginPath();
+                ctx.moveTo(mouseX, 0);
+                ctx.lineTo(mouseX, height - padding);
+                ctx.stroke();
+
+                // Horizontal Crosshair Line
+                ctx.beginPath();
+                ctx.moveTo(0, mouseY);
+                ctx.lineTo(width - padding, mouseY);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+            }
+        }
+
+        // Mouse Move Listener for Crosshair
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+
+            renderChart();
+        }
+
+        // --- ACTION CONTROLS & SCENARIO LOADERS ---
+        function setPair(pair) {
+            currentPair = pair;
+            ['EURUSD', 'GBPUSD', 'XAUUSD'].forEach(p => {
+                const el = document.getElementById(`pair-${p}`);
+                if (p === pair.replace('/', '')) {
+                    el.className = "px-2.5 py-1 rounded bg-slate-700 text-white font-semibold text-xs transition";
+                } else {
+                    el.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition";
+                }
+            });
+
+            basePrice = pair.includes('XAU') ? 2350.00 : 1.0850;
+            generateNewMarketData();
+        }
+
+        function setTimeframe(tf) {
+            currentTimeframe = tf;
+            ['1M', '5M', '15M', '1H', '4H'].forEach(t => {
+                const el = document.getElementById(`tf-${t}`);
+                if (t === tf) {
+                    el.className = "px-2 py-1 rounded text-xs bg-accentBlue text-white font-bold transition";
+                } else {
+                    el.className = "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
+                }
+            });
+            generateNewMarketData();
+        }
+
+        function toggleScenarioDropdown() {
+            const drop = document.getElementById('scenarioDropdown');
+            drop.classList.toggle('hidden');
+        }
+
+        function loadScenario(scenarioType) {
+            document.getElementById('scenarioDropdown').classList.add('hidden');
+            generateNewMarketData(scenarioType);
+            
+            // Adjust bias card UI based on scenario
+            const biasText = document.getElementById('bias-text');
+            const biasCard = document.getElementById('bias-card');
+            
+            if (scenarioType === 'silver_bullet') {
+                biasText.textContent = "BULLISH EXPANSION";
+                biasText.className = "text-sm font-bold text-emerald-400";
+                biasCard.className = "p-2.5 rounded-lg border bg-emerald-950/40 border-emerald-500/30 flex items-center justify-between";
+            } else if (scenarioType === 'judas_swing') {
+                biasText.textContent = "BEARISH REVERSAL";
+                biasText.className = "text-sm font-bold text-rose-400";
+                biasCard.className = "p-2.5 rounded-lg border bg-rose-950/40 border-rose-500/30 flex items-center justify-between";
+            }
+        }
+
+        // --- RISK CALCULATOR ENGINE ---
+        function calculateRisk() {
+            const balance = parseFloat(document.getElementById('calc-balance').value) || 10000;
+            const riskPct = parseFloat(document.getElementById('calc-risk').value) || 1;
+            const slPips = parseFloat(document.getElementById('calc-sl').value) || 10;
+
+            const riskAmount = balance * (riskPct / 100);
+            // standard forex lot size formula: (Risk Amt) / (SL Pips * $10)
+            const lotSize = riskAmount / (slPips * 10);
+            const profitTarget = riskAmount * 3; // 1:3 RR
+
+            document.getElementById('res-risk-amt').textContent = `$${riskAmount.toFixed(2)}`;
+            document.getElementById('res-lot-size').textContent = `${lotSize.toFixed(2)} Lots`;
+            document.getElementById('res-tp-profit').textContent = `$${profitTarget.toFixed(2)}`;
+        }
+
+        // --- CHECKLIST & EVALUATOR ENGINE ---
+        function evaluateTradeSignal() {
+            const chk1 = document.getElementById('chk-1').checked;
+            const chk2 = document.getElementById('chk-2').checked;
+            const chk3 = document.getElementById('chk-3').checked;
+            const chk4 = document.getElementById('chk-4').checked;
+
+            const count = [chk1, chk2, chk3, chk4].filter(Boolean).length;
+            const pct = (count / 4) * 100;
+
+            const box = document.getElementById('signal-eval-box');
+            
+            if (count === 4) {
+                box.className = "p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between";
+                box.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400">
+                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
+                            <p class="text-xs text-slate-300">เข้าเงื่อนไข ICT Silver Bullet / Model A ครบถ้วน! พิจารณาเข้าออเดอร์ Buy Limit ที่ FVG Zone</p>
+                        </div>
+                    </div>
+                    <div class="text-right font-mono">
+                        <span class="text-xs text-slate-400 block">Confluence Score</span>
+                        <span class="text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                    </div>
                 `;
-            });
-
-            document.getElementById('boq-total').innerText = `${total.toLocaleString('th-TH')} บาท`;
-        }
-
-        function updateBOQ(index, field, val) {
-            defaultBOQ[index][field] = parseFloat(val) || 0;
-            renderBOQ();
-        }
-
-        // ================= MODULE 3: BEAM ANALYSIS (SFD/BMD) =================
-        function analyzeBeam() {
-            const L = parseFloat(document.getElementById('beam-length').value) || 1;
-            const w = parseFloat(document.getElementById('beam-w').value) || 0;
-            const P = parseFloat(document.getElementById('beam-p').value) || 0;
-
-            const Ra = (w * L) / 2 + P / 2;
-            const Rb = Ra;
-            const Mmax = (w * Math.pow(L, 2)) / 8 + (P * L) / 4;
-
-            document.getElementById('res-ra').innerText = `${Ra.toFixed(1)} kg`;
-            document.getElementById('res-vmax').innerText = `${Ra.toFixed(1)} kg`;
-            document.getElementById('res-mmax').innerText = `${Mmax.toFixed(1)} kg-m`;
-
-            drawSFDBMD(L, w, P, Ra, Mmax);
-        }
-
-        function drawSFDBMD(L, w, P, Ra, Mmax) {
-            const canvas = document.getElementById('beamCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Beam Axis
-            const startX = 60, endX = canvas.width - 60;
-            const beamY = 60;
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(startX, beamY);
-            ctx.lineTo(endX, beamY);
-            ctx.stroke();
-
-            // SFD
-            const sfdY = 160;
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(startX, sfdY - 30);
-            ctx.lineTo(canvas.width / 2, sfdY);
-            ctx.lineTo(endX, sfdY + 30);
-            ctx.stroke();
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '12px Fira Code';
-            ctx.fillText('SFD (Shear Force Diagram)', startX, sfdY - 45);
-
-            // BMD
-            const bmdY = 260;
-            ctx.strokeStyle = '#10b981';
-            ctx.beginPath();
-            ctx.moveTo(startX, bmdY);
-            ctx.quadraticCurveTo(canvas.width / 2, bmdY + 40, endX, bmdY);
-            ctx.stroke();
-
-            ctx.fillText('BMD (Bending Moment Diagram)', startX, bmdY - 15);
-        }
-
-        // ================= MODULE 4: RC BEAM DESIGN =================
-        function calcRCBeam() {
-            const fc = parseFloat(document.getElementById('rc-fc').value) || 0;
-            const fy = parseFloat(document.getElementById('rc-fy').value) || 0;
-            const M = parseFloat(document.getElementById('rc-m').value) || 0;
-            const b = parseFloat(document.getElementById('rc-b').value) || 1;
-            const d = parseFloat(document.getElementById('rc-d').value) || 1;
-
-            const fc_allow = 0.45 * fc;
-            const fs_allow = 0.50 * fy;
-            const n = 10; // Approx Modular ratio
-            const k = (n * fc_allow) / (n * fc_allow + fs_allow);
-            const j = 1 - (k / 3);
-            const K = 0.5 * fc_allow * k * j;
-
-            const As = (M * 100) / (fs_allow * j * d);
-
-            document.getElementById('rc-res-fc').innerText = `${fc_allow.toFixed(1)} ksc`;
-            document.getElementById('rc-res-fs').innerText = `${fs_allow.toFixed(1)} ksc`;
-            document.getElementById('rc-res-k').innerText = `${K.toFixed(2)} ksc`;
-            document.getElementById('rc-res-as').innerText = `${As.toFixed(2)} cm²`;
-
-            const rebarDb20 = 3.14; // Area DB20
-            const numRebars = Math.ceil(As / rebarDb20);
-            document.getElementById('rc-res-rebar').innerText = `ใช้เหล็ก DB20 จำนวนประมาณ ${numRebars} เส้น`;
-        }
-
-        // ================= OTHER MODULE CALCULATIONS =================
-        function calcSteelColumn() {
-            const L = (parseFloat(document.getElementById('steel-l').value) || 0) * 100;
-            const r = parseFloat(document.getElementById('steel-r').value) || 1;
-            const K = parseFloat(document.getElementById('steel-k').value) || 1;
-
-            const klr = (K * L) / r;
-            document.getElementById('steel-res-klr').innerText = klr.toFixed(1);
-
-            const status = document.getElementById('steel-res-status');
-            if (klr <= 200) {
-                status.innerText = "ผ่านเกณฑ์มาตรฐาน (KL/r ≤ 200)";
-                status.className = "font-bold text-emerald-400";
+            } else if (count >= 2) {
+                box.className = "p-3 rounded-lg bg-amber-950/50 border border-amber-500/40 flex items-center justify-between";
+                box.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-amber-500/20 rounded-full text-amber-400">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">MODERATE CONFLUENCE - PROCEED WITH CAUTION</h4>
+                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ควรรอให้เกิด Liquidity Sweep หรือ MSS ก่อนเข้าออเดอร์</p>
+                        </div>
+                    </div>
+                    <div class="text-right font-mono">
+                        <span class="text-xs text-slate-400 block">Confluence Score</span>
+                        <span class="text-lg font-extrabold text-amber-400">${pct}% (${count}/4)</span>
+                    </div>
+                `;
             } else {
-                status.innerText = "เกินเกณฑ์มาตรฐาน! (ควรเพิ่มขนาดหน้าตัด)";
-                status.className = "font-bold text-rose-400";
+                box.className = "p-3 rounded-lg bg-rose-950/50 border border-rose-500/40 flex items-center justify-between";
+                box.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-rose-500/20 rounded-full text-rose-400">
+                            <i data-lucide="x-circle" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wide">NO VALID ICT SETUP (NO TRADE ZONE)</h4>
+                            <p class="text-xs text-slate-300">ตลาดยังไม่มีการตั้งรูปทรงตามระบบ ICT ให้ความเสี่ยงสูงหากเข้าเทรดตอนนี้</p>
+                        </div>
+                    </div>
+                    <div class="text-right font-mono">
+                        <span class="text-xs text-slate-400 block">Confluence Score</span>
+                        <span class="text-lg font-extrabold text-rose-400">${pct}% (${count}/4)</span>
+                    </div>
+                `;
             }
+            lucide.createIcons();
         }
 
-        function calcGeotech() {
-            const c = parseFloat(document.getElementById('geo-c').value) || 0;
-            const gamma = parseFloat(document.getElementById('geo-gamma').value) || 0;
-            const B = parseFloat(document.getElementById('geo-b').value) || 0;
-
-            const qu = 1.3 * c * 5.7 + gamma * B * 0.4;
-            const qa = qu / 3;
-
-            document.getElementById('geo-res-qu').innerText = `${qu.toFixed(2)} t/m²`;
-            document.getElementById('geo-res-qa').innerText = `${qa.toFixed(2)} t/m²`;
-        }
-
-        function calcHydro() {
-            const C = parseFloat(document.getElementById('hydro-c').value) || 0;
-            const I = parseFloat(document.getElementById('hydro-i').value) || 0;
-            const A_rai = parseFloat(document.getElementById('hydro-a').value) || 0;
-
-            const A_m2 = A_rai * 1600;
-            const Q = (C * (I / 3600000) * A_m2);
-
-            document.getElementById('hydro-res-q').innerText = `${Q.toFixed(3)} m³/s`;
-        }
-
-        function calcHighway() {
-            const V = parseFloat(document.getElementById('hway-v').value) || 0;
-            const t = parseFloat(document.getElementById('hway-t').value) || 0;
-
-            const v_ms = V / 3.6;
-            const d_react = v_ms * t;
-            const d_brake = Math.pow(v_ms, 2) / (2 * 9.81 * 0.35);
-            const ssd = d_react + d_brake;
-
-            document.getElementById('hway-res-ssd').innerText = `${ssd.toFixed(2)} เมตร`;
-        }
-
-        function calcQC() {
-            const cube = parseFloat(document.getElementById('qc-cube').value) || 0;
-            const cyl = cube * 0.833;
-            document.getElementById('qc-res-cyl').innerText = `${cyl.toFixed(1)} ksc`;
-        }
-
-        function clearSavedData() {
-            if (confirm("คุณต้องการล้างข้อมูลบันทึกทั้งหมดหรือไม่?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        function initAllModules() {
-            updateUnitOptions();
-            calcSectionProps();
-            renderBOQ();
-            calcRCBeam();
-            calcSteelColumn();
-            calcGeotech();
-            calcHydro();
-            calcHighway();
-            calcQC();
+        // --- TAB SWITCHING LOGIC ---
+        function switchTab(tabId) {
+            ['checklist', 'cheatsheet', 'killzone-info'].forEach(id => {
+                const btn = document.getElementById(`tab-btn-${id}`);
+                const content = document.getElementById(`tab-${id}`);
+                
+                if (id === tabId) {
+                    btn.className = "py-2.5 px-4 tab-active flex items-center space-x-1.5 transition";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition";
+                    content.classList.add('hidden');
+                }
+            });
         }
     </script>
 </body>
