@@ -1,1 +1,680 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civil Engineering Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050a18; --panel:rgba(13,24,48,.74); --line:rgba(0,229,255,.25);
+  --cyan:#00e5ff; --blue:#3d7bff; --pink:#ff3df2; --amber:#ffb84d; --green:#3dffb0; --violet:#a98bff;
+  --text:#e6f1ff; --muted:#8fa6c8; --warn:#ffb84d; --ok:#3dffb0; --bad:#ff5d7a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Sarabun',system-ui,sans-serif;font-size:16px;line-height:1.5}
+body::before{ /* blueprint grid */
+  content:"";position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(61,123,255,.25),transparent 60%),
+    radial-gradient(ellipse at 80% 100%,rgba(255,61,242,.12),transparent 55%),
+    linear-gradient(rgba(0,229,255,.07) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(0,229,255,.07) 1px,transparent 1px) 0 0/48px 48px,
+    var(--bg);
+  animation:gridmove 24s linear infinite;
+}
+@keyframes gridmove{to{background-position:0 0,0 0,0 48px,48px 0,0 0}}
+a{color:inherit}
+.view{display:none;min-height:100vh}
+.view.active{display:block;animation:fadein .45s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
 
+/* ---------- Landing ---------- */
+#v-home.active{display:flex}
+#v-home{align-items:center;justify-content:center;text-align:center;padding:24px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:18px}
+.tag{font-family:'Orbitron',sans-serif;letter-spacing:.5em;font-size:clamp(.7rem,2.2vw,.95rem);color:var(--cyan);opacity:.85;margin-right:-.5em}
+.neon{
+  font-family:'Orbitron',sans-serif;font-weight:900;margin:0;line-height:1.05;
+  font-size:clamp(2rem,8.2vw,6rem);letter-spacing:.08em;color:#eaffff;
+  text-shadow:0 0 4px #fff,0 0 10px var(--cyan),0 0 24px var(--cyan),0 0 48px var(--cyan),0 0 90px var(--blue);
+  animation:neonpulse 3.4s ease-in-out infinite;
+}
+.neon.second{color:#ffeafe;text-shadow:0 0 4px #fff,0 0 10px var(--pink),0 0 24px var(--pink),0 0 48px var(--pink),0 0 90px #8b2bff;animation-delay:-1.2s}
+@keyframes neonpulse{
+  0%,100%{opacity:1;filter:brightness(1)}
+  46%{opacity:1}
+  48%{opacity:.78;filter:brightness(.8)}
+  50%{opacity:1;filter:brightness(1.15)}
+  52%{opacity:.88}
+  54%{opacity:1}
+  75%{filter:brightness(1.2)}
+}
+.sub{font-family:'Orbitron',sans-serif;font-size:clamp(.8rem,2.6vw,1.15rem);letter-spacing:.3em;color:var(--muted);margin-right:-.3em}
+.enter{
+  margin-top:18px;display:inline-flex;gap:10px;align-items:center;text-decoration:none;
+  font-family:'Orbitron',sans-serif;letter-spacing:.25em;font-size:1rem;font-weight:700;color:var(--cyan);
+  padding:14px 34px;border:1.5px solid var(--cyan);border-radius:999px;
+  box-shadow:0 0 14px rgba(0,229,255,.45),inset 0 0 14px rgba(0,229,255,.18);
+  text-shadow:0 0 8px var(--cyan);transition:.25s;
+}
+.enter:hover{background:var(--cyan);color:#021018;text-shadow:none;box-shadow:0 0 30px var(--cyan)}
+.hint{font-size:.85rem;color:var(--muted);opacity:.7}
+
+/* ---------- Menu ---------- */
+.mhead{text-align:center;margin:14px 0 30px}
+.mhead h2{font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,5vw,2.4rem);letter-spacing:.2em;margin:0;color:#eaffff;
+  text-shadow:0 0 6px var(--cyan),0 0 20px var(--cyan),0 0 40px var(--blue)}
+.mhead p{margin:6px 0 0;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.card{
+  --c:var(--cyan);position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;
+  padding:30px 16px 24px;border:1px solid var(--line);border-radius:18px;background:var(--panel);
+  backdrop-filter:blur(6px);text-decoration:none;transition:.25s;
+}
+.card:hover,.card:focus-visible{transform:translateY(-6px);border-color:var(--c);outline:none;
+  box-shadow:0 0 0 1px var(--c),0 0 30px color-mix(in srgb,var(--c) 45%,transparent),inset 0 0 34px color-mix(in srgb,var(--c) 12%,transparent)}
+.card svg{width:78px;height:78px;color:var(--c);fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px var(--c)) drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.card .no{position:absolute;top:12px;left:16px;font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--muted);letter-spacing:.15em}
+.card h3{font-family:'Orbitron',sans-serif;letter-spacing:.14em;margin:4px 0 0;font-size:1rem;color:#fff}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* ---------- Tool pages ---------- */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.btn{font-family:'Orbitron',sans-serif;font-size:.78rem;letter-spacing:.14em;text-decoration:none;color:var(--cyan);
+  padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:rgba(0,229,255,.06);cursor:pointer;transition:.2s}
+.btn:hover{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.4)}
+.crumb{font-family:'Orbitron',sans-serif;font-size:.75rem;color:var(--muted);letter-spacing:.2em}
+.title{font-family:'Orbitron',sans-serif;margin:10px 0 18px;font-size:clamp(1.4rem,5vw,2.2rem);letter-spacing:.14em;color:#eaffff;
+  text-shadow:0 0 6px var(--c,var(--cyan)),0 0 22px var(--c,var(--cyan))}
+.title small{display:block;font-family:'Sarabun',sans-serif;font-size:1rem;letter-spacing:0;color:var(--muted);text-shadow:none;margin-top:2px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:16px;background:var(--panel);backdrop-filter:blur(6px);padding:18px;margin-bottom:18px}
+.panel h4{margin:0 0 12px;font-family:'Orbitron',sans-serif;font-size:.85rem;letter-spacing:.18em;color:var(--cyan);font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field>span{font-size:.9rem;color:var(--muted)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,select{
+  width:100%;font:inherit;color:var(--text);background:rgba(3,10,26,.85);border:1px solid rgba(143,166,200,.3);
+  border-radius:10px;padding:9px 11px;outline:none;transition:.2s;min-width:0
+}
+input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.18)}
+input:disabled{opacity:.35}
+select option{background:#0a1430}
+.note{font-size:.85rem;color:var(--muted)}
+.note a{color:var(--cyan)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(0,229,255,.05)}
+.stat span{display:block;font-size:.8rem;color:var(--muted)}
+.stat b{font-family:'Orbitron',sans-serif;font-size:1.05rem;color:#fff;font-weight:700;word-break:break-word}
+.stat b i{font-style:normal;font-family:'Sarabun',sans-serif;font-size:.8rem;color:var(--cyan);font-weight:400;margin-left:4px}
+.stat.big{grid-column:1/-1;border-color:var(--cyan);box-shadow:0 0 18px rgba(0,229,255,.2)}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.82rem;margin-top:10px}
+.badge.ok{color:var(--ok);border:1px solid var(--ok)}
+.badge.warn{color:var(--warn);border:1px solid var(--warn)}
+.alert{color:var(--bad);border:1px solid var(--bad);border-radius:10px;padding:10px 12px;background:rgba(255,93,122,.08)}
+canvas{width:100%;display:block}
+.chart{height:190px;margin-bottom:10px;border:1px solid rgba(143,166,200,.15);border-radius:12px;background:rgba(3,10,26,.55)}
+.sketch{height:130px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th{font-size:.78rem;color:var(--muted);font-weight:400;text-align:left;padding:2px 6px 6px}
+td{padding:4px 5px;vertical-align:middle}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.92rem}
+.tw{overflow-x:auto}
+.tw table{min-width:560px}
+.x{border:1px solid rgba(255,93,122,.5);background:transparent;color:var(--bad);border-radius:8px;width:32px;height:34px;cursor:pointer;font-size:1.1rem}
+.x:hover{background:rgba(255,93,122,.15)}
+.add{margin-top:8px}
+.tot{margin-top:14px}
+.conv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.foot{margin-top:26px;text-align:center;font-size:.82rem;color:var(--muted);opacity:.8}
+.rtable td:first-child{color:var(--muted)}
+.rtable td.num{font-family:'Orbitron',sans-serif;font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<section class="view active" id="v-home">
+  <div class="hero">
+    <div class="tag">// WELCOME TO //</div>
+    <h1 class="neon">CIVIL</h1>
+    <h1 class="neon second">ENGINEERING</h1>
+    <div class="sub">CALCULATION TOOLKIT</div>
+    <a class="enter" href="#/menu">ENTER <span>&#9656;</span></a>
+    <div class="hint">กดปุ่ม ENTER หรือกดคีย์ Enter เพื่อเข้าสู่เมนู</div>
+  </div>
+</section>
+
+<!-- ================= MENU ================= -->
+<section class="view" id="v-menu">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/home">&#9666; HOME</a><span class="crumb">MAIN MENU</span></div>
+    <div class="mhead">
+      <h2>SELECT TOOL</h2>
+      <p>เลือกเครื่องมือคำนวณที่ต้องการ</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="#/beam" style="--c:var(--cyan)">
+        <span class="no">01</span>
+        <svg viewBox="0 0 64 64"><rect x="6" y="26" width="52" height="8" rx="1"/><path d="M14 34 8 50h12zM50 34l-6 16h12z"/><path d="M20 8v13M16 17l4 4 4-4M32 8v13M28 17l4 4 4-4M44 8v13M40 17l4 4 4-4"/></svg>
+        <h3>BEAM</h3><p>คำนวณคาน</p>
+      </a>
+      <a class="card" href="#/rebar" style="--c:var(--pink)">
+        <span class="no">02</span>
+        <svg viewBox="0 0 64 64"><g transform="rotate(-35 32 32)"><rect x="2" y="26" width="60" height="12" rx="6"/><path d="M14 26l5 12M25 26l5 12M36 26l5 12M47 26l5 12"/></g></svg>
+        <h3>REBAR</h3><p>คำนวณเหล็กเสริม</p>
+      </a>
+      <a class="card" href="#/concrete" style="--c:var(--amber)">
+        <span class="no">03</span>
+        <svg viewBox="0 0 64 64"><path d="M32 6l24 12v26L32 58 8 44V18z"/><path d="M8 18l24 14 24-14M32 32v26"/><circle cx="20" cy="40" r="1.5"/><circle cx="44" cy="40" r="1.5"/></svg>
+        <h3>CONCRETE</h3><p>ปริมาณคอนกรีต</p>
+      </a>
+      <a class="card" href="#/section" style="--c:var(--green)">
+        <span class="no">04</span>
+        <svg viewBox="0 0 64 64"><path d="M12 10h40v10H37v24h15v10H12V44h15V20H12z"/></svg>
+        <h3>SECTION</h3><p>คุณสมบัติหน้าตัด</p>
+      </a>
+      <a class="card" href="#/units" style="--c:var(--violet)">
+        <span class="no">05</span>
+        <svg viewBox="0 0 64 64"><path d="M10 22h40M42 14l8 8-8 8M54 42H14M22 34l-8 8 8 8"/></svg>
+        <h3>UNITS</h3><p>แปลงหน่วย</p>
+      </a>
+    </div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<!-- ================= BEAM ================= -->
+<section class="view" id="v-beam">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 01</span></div>
+    <h2 class="title" style="--c:var(--cyan)">BEAM<small>คำนวณคาน: แรงปฏิกิริยา แรงเฉือน โมเมนต์ และการโก่งตัว</small></h2>
+    <div class="cols">
+      <div class="panel">
+        <h4>INPUT</h4>
+        <label class="field"><span>ประเภทคาน</span>
+          <select id="b-type"><option value="simple">คานช่วงเดียวรองรับธรรมดา (Simply supported)</option><option value="cant">คานยื่น (Cantilever, ปลายซ้ายยึดแน่น)</option></select></label>
+        <div class="g2">
+          <label class="field"><span>ช่วงคาน L (m)</span><input id="b-L" type="number" step="any" value="6"></label>
+          <label class="field"><span>น้ำหนักแผ่สม่ำเสมอ w (kN/m)</span><input id="b-w" type="number" step="any" value="10"></label>
+          <label class="field"><span>น้ำหนักจุด P (kN)</span><input id="b-P" type="number" step="any" value="20"></label>
+          <label class="field"><span>ตำแหน่ง P จากปลายซ้าย a (m)</span><input id="b-a" type="number" step="any" value="3"></label>
+        </div>
+        <div class="g2">
+          <label class="field"><span>วัสดุ (ตั้งค่า E อัตโนมัติ)</span>
+            <select id="b-mat"><option value="200000">เหล็ก</option><option value="23500">คอนกรีต (f'c ≈ 25 MPa)</option><option value="10000">ไม้</option><option value="custom">กำหนดเอง</option></select></label>
+          <label class="field"><span>โมดูลัสยืดหยุ่น E (MPa)</span><input id="b-E" type="number" step="any" value="200000"></label>
+        </div>
+        <label class="field"><span>โมเมนต์ความเฉื่อย I (cm⁴)</span><input id="b-I" type="number" step="any" value="8000"></label>
+        <div class="note">ไม่ทราบค่า I? ใช้เครื่องมือ <a href="#/section">SECTION</a> คำนวณจากหน้าตัดได้ · ยังไม่รวมน้ำหนักตัวคานเอง ให้บวกเข้าใน w เอง</div>
+      </div>
+      <div class="panel">
+        <h4>RESULT</h4>
+        <canvas id="b-sketch" class="sketch"></canvas>
+        <div id="b-out"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h4>DIAGRAMS</h4>
+      <canvas id="b-cv" class="chart"></canvas>
+      <canvas id="b-cm" class="chart"></canvas>
+      <canvas id="b-cd" class="chart"></canvas>
+      <div class="note">แรงเฉือน (V) และโมเมนต์ (M) พล็อตค่าบวกขึ้นด้านบน (โมเมนต์บวก = ท้องคานแอ่น) · การโก่งตัวพล็อตค่าบวกลงด้านล่าง</div>
+    </div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<!-- ================= REBAR ================= -->
+<section class="view" id="v-rebar">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 02</span></div>
+    <h2 class="title" style="--c:var(--pink)">REBAR<small>คำนวณน้ำหนักและจำนวนเหล็กเสริม (RB / DB)</small></h2>
+    <div class="panel">
+      <h4>BAR LIST</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>ขนาด</th><th>ความยาว/เส้น (m)</th><th>จำนวน (เส้น)</th><th>kg/m</th><th>น้ำหนัก (kg)</th><th>ต้องซื้อ (เส้น)</th><th></th></tr></thead>
+          <tbody id="r-rows"></tbody>
+        </table>
+      </div>
+      <button class="btn add" type="button" id="r-add">+ ADD ROW</button>
+      <div class="g2 tot">
+        <label class="field"><span>ความยาวเหล็กเส้นที่ซื้อ (m)</span><select id="r-stock"><option value="10">10 m</option><option value="12" selected>12 m</option></select></label>
+        <label class="field"><span>เผื่อเศษ/ทาบ/งอ (%)</span><input id="r-waste" type="number" step="any" min="0" value="5"></label>
+      </div>
+      <div class="note">น้ำหนักต่อเมตร = d² / 162.2 (kg/m, d เป็น mm) · "ต้องซื้อ" คิดจากการตัดต่อเส้นต่อแถว (ไม่ได้ปรับให้เศษเหล็กต่างแถวใช้ร่วมกัน)</div>
+    </div>
+    <div class="panel"><h4>SUMMARY</h4><div id="r-out"></div></div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<!-- ================= CONCRETE ================= -->
+<section class="view" id="v-concrete">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 03</span></div>
+    <h2 class="title" style="--c:var(--amber)">CONCRETE<small>ปริมาณคอนกรีตและวัสดุผสมโดยประมาณ</small></h2>
+    <div class="panel">
+      <h4>ELEMENT LIST</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>รูปแบบ</th><th>จำนวน</th><th>A (m)</th><th>B (m)</th><th>C (m)</th><th>ปริมาตร (m³)</th><th></th></tr></thead>
+          <tbody id="c-rows"></tbody>
+        </table>
+      </div>
+      <button class="btn add" type="button" id="c-add">+ ADD ROW</button>
+      <div class="note" style="margin-top:10px">สี่เหลี่ยม: A = กว้าง, B = ยาว, C = หนา/สูง (พื้น คาน เสา ฐานราก ผนัง) · วงกลม (เสากลม): A = เส้นผ่านศูนย์กลาง Ø, B = ความสูง</div>
+      <div class="g2 tot">
+        <label class="field"><span>เผื่อสูญเสีย (%)</span><input id="c-waste" type="number" step="any" min="0" value="5"></label>
+        <label class="field"><span>อัตราส่วนผสม ปูน : ทราย : หิน</span>
+          <select id="c-mix"><option value="1,1.5,3">1 : 1.5 : 3</option><option value="1,2,4" selected>1 : 2 : 4</option><option value="1,3,6">1 : 3 : 6</option></select></label>
+      </div>
+    </div>
+    <div class="panel"><h4>SUMMARY</h4><div id="c-out"></div></div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<!-- ================= SECTION ================= -->
+<section class="view" id="v-section">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 04</span></div>
+    <h2 class="title" style="--c:var(--green)">SECTION<small>คุณสมบัติหน้าตัด: พื้นที่ I, S, r</small></h2>
+    <div class="cols">
+      <div class="panel">
+        <h4>INPUT (mm)</h4>
+        <label class="field"><span>รูปหน้าตัด</span>
+          <select id="s-type">
+            <option value="rect">สี่เหลี่ยมตัน (Rectangle)</option>
+            <option value="circ">วงกลมตัน (Circle)</option>
+            <option value="hrect">สี่เหลี่ยมกลวง (Hollow rectangle)</option>
+            <option value="pipe">ท่อกลม (Pipe)</option>
+            <option value="isec">ตัว I / H (I-section)</option>
+          </select></label>
+        <div class="g2" id="s-fields"></div>
+      </div>
+      <div class="panel"><h4>RESULT</h4><div id="s-out"></div></div>
+    </div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<!-- ================= UNITS ================= -->
+<section class="view" id="v-units">
+  <div class="wrap">
+    <div class="topbar"><a class="btn" href="#/menu">&#9666; MENU</a><span class="crumb">TOOL 05</span></div>
+    <h2 class="title" style="--c:var(--violet)">UNITS<small>แปลงหน่วยที่ใช้บ่อยในงานวิศวกรรมโยธา</small></h2>
+    <div class="panel">
+      <h4>CONVERTER</h4>
+      <div class="g2">
+        <label class="field"><span>ประเภท</span>
+          <select id="u-cat">
+            <option value="force">แรง (Force)</option>
+            <option value="stress">หน่วยแรง / ความดัน (Stress)</option>
+            <option value="moment">โมเมนต์ (Moment)</option>
+            <option value="length">ความยาว (Length)</option>
+            <option value="area">พื้นที่ (Area)</option>
+          </select></label>
+        <label class="field"><span>หน่วยต้นทาง</span><select id="u-from"></select></label>
+      </div>
+      <label class="field"><span>ค่า</span><input id="u-val" type="number" step="any" value="1"></label>
+      <div class="conv" id="u-out"></div>
+      <div class="note" style="margin-top:12px">ใช้ g = 9.80665 m/s² (1 kgf = 9.80665 N, 1 ksc = 1 kgf/cm² = 0.0980665 MPa, 1 tf = 9.80665 kN)</div>
+    </div>
+    <div class="foot">ผลลัพธ์ใช้เพื่อประมาณการ/ตรวจสอบเบื้องต้นเท่านั้น ต้องให้วิศวกรผู้มีใบอนุญาตตรวจสอบก่อนนำไปใช้งานจริง</div>
+  </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = (n, d = 3) => Number.isFinite(n)
+  ? (Math.abs(n) < 5 * Math.pow(10, -(d + 1)) ? 0 : n).toLocaleString('en-US', { maximumFractionDigits: d })
+  : '—';
+const stat = (label, val, unit, big) =>
+  `<div class="stat${big ? ' big' : ''}"><span>${label}</span><b>${val}${unit ? `<i>${unit}</i>` : ''}</b></div>`;
+
+/* ============ CORE (pure functions) ============ */
+//<core
+function solveBeam(p) {
+  const { type, L, w, P, a, E, I } = p;
+  const Lm = L * 1000, am = a * 1000, PN = P * 1000, EI = E * I * 1e4; // N, mm, N*mm^2
+  const N = 400, pts = [];
+  for (let i = 0; i <= N; i++) pts.push({ x: L * i / N, after: true });
+  if (P !== 0 && a > 0 && a < L) { pts.push({ x: a, after: false }); pts.push({ x: a, after: true }); }
+  pts.sort((p1, p2) => p1.x - p2.x || (p1.after - p2.after));
+  const RA = type === 'simple' ? w * L / 2 + P * (L - a) / L : w * L + P;
+  const RB = type === 'simple' ? w * L / 2 + P * a / L : 0;
+  const MF = type === 'simple' ? 0 : w * L * L / 2 + P * a;
+  const xs = [], V = [], M = [], D = [];
+  for (const pt of pts) {
+    const x = pt.x, xm = x * 1000; let v, m, d;
+    if (type === 'simple') {
+      const past = x > a || (x === a && pt.after);
+      v = RA - w * x - (past ? P : 0);
+      m = RA * x - w * x * x / 2 - (x > a ? P * (x - a) : 0);
+      d = w * xm * (Math.pow(Lm, 3) - 2 * Lm * xm * xm + Math.pow(xm, 3)) / (24 * EI);
+      if (xm <= am) d += PN * (Lm - am) * xm * (Lm * Lm - Math.pow(Lm - am, 2) - xm * xm) / (6 * EI * Lm);
+      else d += PN * am * (Lm - xm) * (Lm * Lm - am * am - Math.pow(Lm - xm, 2)) / (6 * EI * Lm);
+    } else {
+      const before = x < a || (x === a && !pt.after);
+      v = w * (L - x) + (before ? P : 0);
+      m = -(w * Math.pow(L - x, 2) / 2 + (x < a ? P * (a - x) : 0));
+      d = w * xm * xm * (6 * Lm * Lm - 4 * Lm * xm + xm * xm) / (24 * EI);
+      d += xm <= am ? PN * xm * xm * (3 * am - xm) / (6 * EI) : PN * am * am * (3 * xm - am) / (6 * EI);
+    }
+    xs.push(x); V.push(v); M.push(m); D.push(d);
+  }
+  return { xs, V, M, D, RA, RB, MF };
+}
+function extreme(arr) { let k = 0; arr.forEach((v, i) => { if (Math.abs(v) > Math.abs(arr[k])) k = i; }); return k; }
+//core>
+
+/* ============ ROUTER ============ */
+const calcMap = {};
+function route() {
+  let h = location.hash.replace(/^#\/?/, '') || 'home';
+  let v = $('v-' + h);
+  if (!v) { v = $('v-home'); h = 'home'; }
+  document.querySelectorAll('.view').forEach(x => x.classList.toggle('active', x === v));
+  window.scrollTo(0, 0);
+  if (calcMap[h]) calcMap[h]();
+}
+addEventListener('hashchange', route);
+addEventListener('keydown', e => {
+  if (e.key === 'Enter' && $('v-home').classList.contains('active')) location.hash = '#/menu';
+});
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if ($('v-beam').classList.contains('active')) calcBeam(); }, 120); });
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'b-mat') { if (e.target.value !== 'custom') $('b-E').value = e.target.value; }
+  if (e.target.id === 'b-E') $('b-mat').value = 'custom';
+  const v = e.target.closest('.view');
+  if (v && calcMap[v.id.slice(2)]) calcMap[v.id.slice(2)]();
+});
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('c-type')) updateConcreteRow(e.target.closest('tr'));
+  if (e.target.id === 's-type') buildSectionFields();
+  if (e.target.id === 'u-cat') buildUnitFrom();
+  const v = e.target.closest('.view');
+  if (v && calcMap[v.id.slice(2)]) calcMap[v.id.slice(2)]();
+});
+document.addEventListener('click', e => {
+  if (e.target.matches('[data-del]')) {
+    const tb = e.target.closest('tbody');
+    if (tb.rows.length > 1) e.target.closest('tr').remove();
+    const v = e.target.closest('.view'); calcMap[v.id.slice(2)]();
+  }
+});
+
+/* ============ BEAM UI ============ */
+function arrow(c, x, y1, y2, color) {
+  c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y2); c.stroke();
+  c.beginPath(); c.moveTo(x, y2 + 2); c.lineTo(x - 5, y2 - 8); c.lineTo(x + 5, y2 - 8); c.closePath(); c.fill();
+}
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  return { c, W, H };
+}
+function drawSketch(cv, type, L, w, P, a) {
+  const { c, W } = setupCanvas(cv); if (!W) return;
+  const x0 = 40, x1 = W - 40, y = 82, X = x => x0 + x / L * (x1 - x0);
+  c.font = '12px Sarabun, sans-serif';
+  // supports
+  c.strokeStyle = '#8fa6c8'; c.fillStyle = 'rgba(143,166,200,.25)'; c.lineWidth = 1.5;
+  if (type === 'simple') {
+    c.beginPath(); c.moveTo(x0, y + 4); c.lineTo(x0 - 12, y + 22); c.lineTo(x0 + 12, y + 22); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(x1, y + 4); c.lineTo(x1 - 12, y + 20); c.lineTo(x1 + 12, y + 20); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.arc(x1, y + 24, 4, 0, 7); c.stroke();
+  } else {
+    c.beginPath(); c.moveTo(x0, y - 28); c.lineTo(x0, y + 28); c.stroke();
+    for (let t = -28; t < 28; t += 8) { c.beginPath(); c.moveTo(x0, y + t + 8); c.lineTo(x0 - 9, y + t); c.stroke(); }
+  }
+  // beam
+  c.strokeStyle = '#00e5ff'; c.lineWidth = 6; c.lineCap = 'round'; c.shadowColor = '#00e5ff'; c.shadowBlur = 10;
+  c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke(); c.shadowBlur = 0;
+  // loads
+  if (w > 0) {
+    c.strokeStyle = '#ffb84d'; c.lineWidth = 2; c.beginPath(); c.moveTo(x0, y - 30); c.lineTo(x1, y - 30); c.stroke();
+    const n = Math.max(3, Math.floor((x1 - x0) / 28));
+    for (let i = 0; i <= n; i++) arrow(c, x0 + (x1 - x0) * i / n, y - 30, y - 8, '#ffb84d');
+    c.fillStyle = '#ffb84d'; c.textAlign = 'center'; c.fillText('w', (x0 + x1) / 2, y - 36);
+  }
+  if (P !== 0) {
+    arrow(c, X(a), y - 66, y - 8, '#ff3df2');
+    c.fillStyle = '#ff3df2'; c.textAlign = 'center'; c.fillText('P', X(a), y - 70);
+  }
+  // dimension
+  c.strokeStyle = '#8fa6c8'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(x0, y + 40); c.lineTo(x1, y + 40); c.moveTo(x0, y + 35); c.lineTo(x0, y + 45); c.moveTo(x1, y + 35); c.lineTo(x1, y + 45); c.stroke();
+  c.fillStyle = '#8fa6c8'; c.textAlign = 'center'; c.fillText('L = ' + fmt(L, 2) + ' m', (x0 + x1) / 2, y + 56);
+}
+function drawChart(cv, xs, ys, L, o) {
+  const { c, W, H } = setupCanvas(cv); if (!W) return;
+  const pl = 14, pr = 14, pt = 30, pb = 22, iw = W - pl - pr, ih = H - pt - pb;
+  let mn = Math.min(0, ...ys), mx = Math.max(0, ...ys);
+  if (mx - mn < 1e-12) { mn = -1; mx = 1; }
+  const pad = (mx - mn) * .12; mn -= pad; mx += pad;
+  const X = x => pl + x / L * iw;
+  const Y = v => o.flip ? pt + (v - mn) / (mx - mn) * ih : pt + (mx - v) / (mx - mn) * ih;
+  c.strokeStyle = 'rgba(120,160,220,.12)'; c.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) { const gx = pl + iw * i / 4; c.beginPath(); c.moveTo(gx, pt); c.lineTo(gx, pt + ih); c.stroke(); }
+  const y0 = Y(0);
+  c.strokeStyle = 'rgba(200,225,255,.45)'; c.beginPath(); c.moveTo(pl, y0); c.lineTo(pl + iw, y0); c.stroke();
+  c.beginPath(); c.moveTo(X(xs[0]), y0); xs.forEach((x, i) => c.lineTo(X(x), Y(ys[i]))); c.lineTo(X(xs[xs.length - 1]), y0); c.closePath();
+  c.fillStyle = o.fill; c.fill();
+  c.beginPath(); xs.forEach((x, i) => i ? c.lineTo(X(x), Y(ys[i])) : c.moveTo(X(x), Y(ys[i])));
+  c.strokeStyle = o.color; c.lineWidth = 2; c.shadowColor = o.color; c.shadowBlur = 10; c.stroke(); c.shadowBlur = 0;
+  const k = extreme(ys);
+  c.font = '12px Sarabun, sans-serif';
+  c.fillStyle = o.color; c.textAlign = 'left'; c.fillText(o.title, pl, 18);
+  if (Math.abs(ys[k]) > 1e-9) {
+    c.beginPath(); c.arc(X(xs[k]), Y(ys[k]), 4, 0, 7); c.fill();
+    c.fillStyle = '#e6f1ff'; c.textAlign = 'right';
+    c.fillText(`${fmt(ys[k])} ${o.unit}  @ x = ${fmt(xs[k], 2)} m`, W - pr, 18);
+  }
+  c.fillStyle = '#8fa6c8'; c.textAlign = 'left'; c.fillText('0', pl, H - 6);
+  c.textAlign = 'right'; c.fillText(fmt(L, 2) + ' m', pl + iw, H - 6);
+}
+function calcBeam() {
+  const g = id => parseFloat($(id).value);
+  const p = { type: $('b-type').value, L: g('b-L'), w: g('b-w') || 0, P: g('b-P') || 0, a: g('b-a') || 0, E: g('b-E'), I: g('b-I') };
+  const err = [];
+  if (!(p.L > 0)) err.push('ช่วงคาน L ต้องมากกว่า 0');
+  if (p.P !== 0 && !(p.a >= 0 && p.a <= p.L)) err.push('ตำแหน่ง a ต้องอยู่ระหว่าง 0 ถึง L');
+  if (!(p.E > 0) || !(p.I > 0)) err.push('E และ I ต้องมากกว่า 0');
+  const out = $('b-out');
+  if (err.length) {
+    out.innerHTML = `<div class="alert">${err.join('<br>')}</div>`;
+    ['b-sketch', 'b-cv', 'b-cm', 'b-cd'].forEach(id => setupCanvas($(id)));
+    return;
+  }
+  const r = solveBeam(p);
+  const kv = extreme(r.V), km = extreme(r.M), kd = extreme(r.D);
+  const dmax = r.D[kd], ratio = dmax > 1e-9 ? p.L * 1000 / dmax : Infinity;
+  const ok = ratio >= 360;
+  let h = '<div class="stats">';
+  if (p.type === 'simple') {
+    h += stat('แรงปฏิกิริยา R<sub>A</sub> (ซ้าย)', fmt(r.RA), 'kN') + stat('แรงปฏิกิริยา R<sub>B</sub> (ขวา)', fmt(r.RB), 'kN');
+  } else {
+    h += stat('แรงปฏิกิริยาที่จุดยึด R', fmt(r.RA), 'kN') + stat('โมเมนต์ที่จุดยึด M<sub>f</sub>', fmt(r.MF), 'kN·m');
+  }
+  h += stat('แรงเฉือนสูงสุด |V|max', fmt(Math.abs(r.V[kv])), 'kN');
+  h += stat('โมเมนต์สูงสุด |M|max', fmt(Math.abs(r.M[km])), 'kN·m');
+  h += stat('ตำแหน่ง |M|max', fmt(r.xs[km], 2), 'm จากซ้าย');
+  h += stat('การโก่งตัวสูงสุด δmax', fmt(dmax, 2), 'mm @ ' + fmt(r.xs[kd], 2) + ' m');
+  h += stat('อัตราส่วน L/δ', Number.isFinite(ratio) ? fmt(ratio, 0) : '∞', '', true);
+  h += '</div>';
+  h += `<span class="badge ${ok ? 'ok' : 'warn'}">${ok ? '✔ L/δ ≥ 360' : '⚠ L/δ < 360'} (เกณฑ์อ้างอิง ปรับตามมาตรฐานที่ใช้)</span>`;
+  out.innerHTML = h;
+  drawSketch($('b-sketch'), p.type, p.L, p.w, p.P, p.a);
+  drawChart($('b-cv'), r.xs, r.V, p.L, { title: 'Shear Force V (kN)', unit: 'kN', color: '#00e5ff', fill: 'rgba(0,229,255,.14)' });
+  drawChart($('b-cm'), r.xs, r.M, p.L, { title: 'Bending Moment M (kN·m)', unit: 'kN·m', color: '#ff3df2', fill: 'rgba(255,61,242,.14)' });
+  drawChart($('b-cd'), r.xs, r.D, p.L, { title: 'Deflection δ (mm)', unit: 'mm', color: '#3dffb0', fill: 'rgba(61,255,176,.14)', flip: true });
+}
+calcMap.beam = calcBeam;
+
+/* ============ REBAR UI ============ */
+const REB = { RB6: 6, RB9: 9, RB12: 12, RB15: 15, DB10: 10, DB12: 12, DB16: 16, DB20: 20, DB25: 25, DB28: 28, DB32: 32, DB36: 36, DB40: 40 };
+function addRebarRow(sz = 'DB12', len = 6, cnt = 10) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><select class="r-size">${Object.keys(REB).map(n => `<option value="${n}"${n === sz ? ' selected' : ''}>${n}</option>`).join('')}</select></td>
+    <td><input class="r-len" type="number" min="0" step="any" value="${len}"></td>
+    <td><input class="r-cnt" type="number" min="0" step="1" value="${cnt}"></td>
+    <td class="num r-uw"></td><td class="num r-w"></td><td class="num r-st"></td>
+    <td><button class="x" type="button" data-del title="ลบแถว">×</button></td>`;
+  $('r-rows').appendChild(tr);
+}
+function calcRebar() {
+  const stock = parseFloat($('r-stock').value), waste = parseFloat($('r-waste').value) || 0;
+  let tl = 0, tw = 0, ts = 0; const bySize = {};
+  document.querySelectorAll('#r-rows tr').forEach(tr => {
+    const name = tr.querySelector('.r-size').value, d = REB[name];
+    const len = parseFloat(tr.querySelector('.r-len').value) || 0, cnt = parseFloat(tr.querySelector('.r-cnt').value) || 0;
+    const uw = d * d / 162.2, w = uw * len * cnt;
+    let st = 0;
+    if (len > 0 && cnt > 0) st = len <= stock ? Math.ceil(cnt / Math.floor(stock / len)) : Math.ceil(len * cnt / stock);
+    tr.querySelector('.r-uw').textContent = fmt(uw, 3);
+    tr.querySelector('.r-w').textContent = fmt(w, 2);
+    tr.querySelector('.r-st').textContent = fmt(st, 0);
+    tl += len * cnt; tw += w; ts += st;
+    bySize[name] = bySize[name] || { w: 0, st: 0 }; bySize[name].w += w; bySize[name].st += st;
+  });
+  const f = 1 + waste / 100;
+  let h = '<div class="stats">' +
+    stat('ความยาวรวม', fmt(tl, 2), 'm') + stat('น้ำหนักรวม (ก่อนเผื่อ)', fmt(tw, 2), 'kg') +
+    stat(`น้ำหนักรวมเผื่อ ${fmt(waste, 1)}%`, fmt(tw * f, 2), 'kg', true) +
+    stat('น้ำหนักรวมเผื่อ (ตัน)', fmt(tw * f / 1000, 3), 'ton') + stat(`เหล็กเส้นที่ต้องซื้อ (${stock} m)`, fmt(ts, 0), 'เส้น') + '</div>';
+  h += '<table class="rtable" style="margin-top:14px"><thead><tr><th>ขนาด</th><th style="text-align:right">น้ำหนัก (kg)</th><th style="text-align:right">เผื่อแล้ว (kg)</th><th style="text-align:right">ซื้อ (เส้น)</th></tr></thead><tbody>';
+  Object.keys(bySize).forEach(n => { h += `<tr><td>${n}</td><td class="num">${fmt(bySize[n].w, 2)}</td><td class="num">${fmt(bySize[n].w * f, 2)}</td><td class="num">${fmt(bySize[n].st, 0)}</td></tr>`; });
+  $('r-out').innerHTML = h + '</tbody></table>';
+}
+calcMap.rebar = calcRebar;
+$('r-add').onclick = () => { addRebarRow(); calcRebar(); };
+addRebarRow('DB16', 6, 8); addRebarRow('DB12', 6, 12); addRebarRow('RB9', 1.2, 60);
+
+/* ============ CONCRETE UI ============ */
+function addConcreteRow(type = 'rect', cnt = 1, A = 3, B = 4, C = 0.15) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><select class="c-type"><option value="rect"${type === 'rect' ? ' selected' : ''}>สี่เหลี่ยม</option><option value="circ"${type === 'circ' ? ' selected' : ''}>วงกลม (เสา)</option></select></td>
+    <td><input class="c-n" type="number" min="0" step="1" value="${cnt}"></td>
+    <td><input class="c-a" type="number" min="0" step="any" value="${A}"></td>
+    <td><input class="c-b" type="number" min="0" step="any" value="${B}"></td>
+    <td><input class="c-c" type="number" min="0" step="any" value="${C}"></td>
+    <td class="num c-v"></td>
+    <td><button class="x" type="button" data-del title="ลบแถว">×</button></td>`;
+  $('c-rows').appendChild(tr); updateConcreteRow(tr);
+}
+function updateConcreteRow(tr) { tr.querySelector('.c-c').disabled = tr.querySelector('.c-type').value === 'circ'; }
+function calcConcrete() {
+  let total = 0;
+  document.querySelectorAll('#c-rows tr').forEach(tr => {
+    const t = tr.querySelector('.c-type').value, n = parseFloat(tr.querySelector('.c-n').value) || 0;
+    const a = parseFloat(tr.querySelector('.c-a').value) || 0, b = parseFloat(tr.querySelector('.c-b').value) || 0, c = parseFloat(tr.querySelector('.c-c').value) || 0;
+    const v = n * (t === 'rect' ? a * b * c : Math.PI * a * a / 4 * b);
+    tr.querySelector('.c-v').textContent = fmt(v, 3); total += v;
+  });
+  const waste = parseFloat($('c-waste').value) || 0, order = total * (1 + waste / 100);
+  const [pc, ps, pg] = $('c-mix').value.split(',').map(Number), sum = pc + ps + pg, dry = 1.54;
+  const cementKg = dry * pc / sum * 1440, bags = cementKg / 50, sand = dry * ps / sum, stone = dry * pg / sum;
+  $('c-out').innerHTML = '<div class="stats">' +
+    stat('ปริมาตรคอนกรีตรวม', fmt(total, 3), 'm³') +
+    stat(`ปริมาตรสั่งซื้อ (เผื่อ ${fmt(waste, 1)}%)`, fmt(order, 3), 'm³', true) +
+    stat('ปูนซีเมนต์ (ถุง 50 kg)', fmt(bags * order, 1), 'ถุง') +
+    stat('ปูนซีเมนต์', fmt(cementKg * order, 0), 'kg') +
+    stat('ทราย', fmt(sand * order, 2), 'm³') +
+    stat('หิน', fmt(stone * order, 2), 'm³') + '</div>' +
+    `<div class="note" style="margin-top:10px">ปริมาณวัสดุผสมเป็นค่าประมาณจากปริมาตรแห้ง = 1.54 × ปริมาตรคอนกรีต และปูน 1,440 kg/m³ ค่าจริงขึ้นกับวัสดุและการออกแบบส่วนผสม (mix design)</div>`;
+}
+calcMap.concrete = calcConcrete;
+$('c-add').onclick = () => { addConcreteRow(); calcConcrete(); };
+addConcreteRow('rect', 1, 4, 5, 0.12); addConcreteRow('rect', 4, 0.2, 0.4, 5); addConcreteRow('circ', 4, 0.3, 3);
+
+/* ============ SECTION UI ============ */
+const SEC = {
+  rect: [['b', 'กว้าง b', 200], ['h', 'สูง h', 400]],
+  circ: [['D', 'เส้นผ่านศูนย์กลาง D', 300]],
+  hrect: [['B', 'กว้างนอก B', 150], ['H', 'สูงนอก H', 150], ['t', 'ความหนา t', 6]],
+  pipe: [['D', 'เส้นผ่านศูนย์กลางนอก D', 114.3], ['t', 'ความหนา t', 4.5]],
+  isec: [['bf', 'กว้างปีก bf', 100], ['tf', 'หนาปีก tf', 8], ['H', 'สูงรวม H', 200], ['tw', 'หนาเอว tw', 5.5]]
+};
+function buildSectionFields() {
+  $('s-fields').innerHTML = SEC[$('s-type').value].map(([k, l, v]) => `<label class="field"><span>${l} (mm)</span><input data-k="${k}" type="number" step="any" min="0" value="${v}"></label>`).join('');
+  calcSection();
+}
+function calcSection() {
+  const t = $('s-type').value, v = {};
+  document.querySelectorAll('#s-fields input').forEach(i => v[i.dataset.k] = parseFloat(i.value));
+  let A, Ix, Iy, bx, hy, err = '';
+  const pos = Object.keys(v).every(k => v[k] > 0);
+  if (!pos) err = 'ทุกค่าต้องมากกว่า 0';
+  else if (t === 'rect') { A = v.b * v.h; Ix = v.b * v.h ** 3 / 12; Iy = v.h * v.b ** 3 / 12; bx = v.b; hy = v.h; }
+  else if (t === 'circ') { A = Math.PI * v.D ** 2 / 4; Ix = Iy = Math.PI * v.D ** 4 / 64; bx = hy = v.D; }
+  else if (t === 'hrect') {
+    const b = v.B - 2 * v.t, h = v.H - 2 * v.t;
+    if (b <= 0 || h <= 0) err = 'ความหนา t ใหญ่เกินไป (ขนาดภายในต้องมากกว่า 0)';
+    else { A = v.B * v.H - b * h; Ix = (v.B * v.H ** 3 - b * h ** 3) / 12; Iy = (v.H * v.B ** 3 - h * b ** 3) / 12; bx = v.B; hy = v.H; }
+  } else if (t === 'pipe') {
+    const d = v.D - 2 * v.t;
+    if (d <= 0) err = 'ความหนา t ใหญ่เกินไป (เส้นผ่านศูนย์กลางภายในต้องมากกว่า 0)';
+    else { A = Math.PI * (v.D ** 2 - d ** 2) / 4; Ix = Iy = Math.PI * (v.D ** 4 - d ** 4) / 64; bx = hy = v.D; }
+  } else if (t === 'isec') {
+    const hw = v.H - 2 * v.tf;
+    if (hw <= 0 || v.tw > v.bf) err = 'ขนาดไม่สมเหตุสมผล (ตรวจสอบ tf, H, tw, bf)';
+    else { A = 2 * v.bf * v.tf + hw * v.tw; Ix = (v.bf * v.H ** 3 - (v.bf - v.tw) * hw ** 3) / 12; Iy = (2 * v.tf * v.bf ** 3 + hw * v.tw ** 3) / 12; bx = v.bf; hy = v.H; }
+  }
+  if (err) { $('s-out').innerHTML = `<div class="alert">${err}</div>`; return; }
+  const Sx = Ix / (hy / 2), Sy = Iy / (bx / 2), rx = Math.sqrt(Ix / A), ry = Math.sqrt(Iy / A);
+  $('s-out').innerHTML = '<div class="stats">' +
+    stat('พื้นที่ A', fmt(A / 100, 2), 'cm²') +
+    stat('น้ำหนักต่อเมตร (ถ้าเป็นเหล็ก)', fmt(A * 1e-6 * 7850, 2), 'kg/m') +
+    stat('I<sub>x</sub> (แกนแข็ง)', fmt(Ix / 1e4, 2), 'cm⁴', true) +
+    stat('S<sub>x</sub>', fmt(Sx / 1e3, 2), 'cm³') + stat('r<sub>x</sub>', fmt(rx / 10, 2), 'cm') +
+    stat('I<sub>y</sub> (แกนอ่อน)', fmt(Iy / 1e4, 2), 'cm⁴') +
+    stat('S<sub>y</sub>', fmt(Sy / 1e3, 2), 'cm³') + stat('r<sub>y</sub>', fmt(ry / 10, 2), 'cm') + '</div>' +
+    '<div class="note" style="margin-top:10px">แกน x = แกนที่ดัดตามความสูงหน้าตัด (ใช้ค่า I<sub>x</sub> ไปกรอกในเครื่องมือ BEAM ได้เลย)</div>';
+}
+calcMap.section = calcSection;
+buildSectionFields();
+
+/* ============ UNITS UI ============ */
+const UNITS = {
+  force: { N: 1, kN: 1000, kgf: 9.80665, 'tf (ตัน-แรง)': 9806.65, lbf: 4.4482216 },
+  stress: { Pa: 1, kPa: 1e3, MPa: 1e6, 'ksc (kgf/cm²)': 98066.5, psi: 6894.757, 'tf/m²': 9806.65, 'kgf/m²': 9.80665 },
+  moment: { 'N·mm': 0.001, 'N·m': 1, 'kN·m': 1000, 'kgf·m': 9.80665, 'tf·m': 9806.65 },
+  length: { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 },
+  area: { 'mm²': 1e-6, 'cm²': 1e-4, 'm²': 1, 'in²': 6.4516e-4, 'ft²': 0.09290304 }
+};
+function fmtSig(n) {
+  if (n === 0) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e9 || a < 1e-6) return n.toExponential(4);
+  return parseFloat(n.toPrecision(7)).toLocaleString('en-US', { maximumFractionDigits: 10 });
+}
+function buildUnitFrom() {
+  $('u-from').innerHTML = Object.keys(UNITS[$('u-cat').value]).map(u => `<option>${u}</option>`).join('');
+  calcUnits();
+}
+function calcUnits() {
+  const cat = UNITS[$('u-cat').value], val = parseFloat($('u-val').value), from = $('u-from').value;
+  if (!Number.isFinite(val)) { $('u-out').innerHTML = '<div class="alert">กรอกตัวเลข</div>'; return; }
+  const base = val * cat[from];
+  $('u-out').innerHTML = Object.keys(cat).map(u => stat(u, fmtSig(base / cat[u]), '')).join('');
+}
+calcMap.units = calcUnits;
+buildUnitFrom();
+
+route();
+</script>
+</body>
+</html>
