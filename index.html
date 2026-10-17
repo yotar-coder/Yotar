@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC / ICT Smart Money Pro Terminal (TradingView Real-Time)</title>
+    <title>SMC / ICT Smart Money Pro Terminal + Macro News Engine</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -16,14 +16,15 @@
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#080b11',
-                        cardBg: '#111622',
-                        borderBg: '#1f293d',
+                        darkBg: '#0b0e14',
+                        cardBg: '#121824',
+                        cardHeaderBg: '#182030',
+                        borderBg: '#1e293b',
                         accentGold: '#ffd700',
-                        accentGreen: '#00e676',
-                        accentRed: '#ff1744',
-                        accentBlue: '#29b6f6',
-                        accentPurple: '#b388ff'
+                        accentGreen: '#10b981',
+                        accentRed: '#ef4444',
+                        accentBlue: '#38bdf8',
+                        accentPurple: '#a855f7'
                     }
                 }
             }
@@ -34,7 +35,7 @@
         
         body {
             font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #080b11;
+            background-color: #0b0e14;
             color: #e2e8f0;
             overflow-x: hidden;
         }
@@ -43,20 +44,20 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Custom Scrollbars */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 5px;
             height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #080b11;
+            background: #0b0e14;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1f293d;
+            background: #1e293b;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #2d3e5e;
+            background: #334155;
         }
 
         .tab-active {
@@ -71,27 +72,38 @@
         }
 
         @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .pulse-danger {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
 <body class="h-screen flex flex-col bg-darkBg text-slate-200 antialiased selection:bg-amber-500 selection:text-black">
 
-    <!-- TOP NAVBAR -->
+    <!-- TOP NAVIGATION BAR -->
     <header class="h-14 bg-cardBg border-b border-borderBg flex items-center justify-between px-3 md:px-5 shrink-0 z-30">
         <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-amber-700 px-3 py-1 rounded-lg text-black font-extrabold tracking-wide shadow-lg">
+            <div class="flex items-center space-x-2 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 px-3 py-1 rounded-lg text-black font-extrabold tracking-wide shadow-lg">
                 <i class="fa-solid fa-chart-line text-lg"></i>
-                <span class="text-sm uppercase tracking-wider">ICT / SMC PRO TERMINAL</span>
+                <span class="text-xs sm:text-sm uppercase tracking-wider">ICT / SMC PRO TERMINAL</span>
             </div>
-            <span class="hidden lg:inline-block text-[11px] bg-slate-800/80 text-amber-400 px-2.5 py-1 rounded font-mono border border-amber-500/20">
-                <i class="fa-solid fa-microchip mr-1"></i>Michael J. Huddleston Methodology
+            <span class="hidden xl:inline-flex items-center space-x-1.5 text-[11px] bg-slate-800/80 text-amber-400 px-2.5 py-1 rounded font-mono border border-amber-500/20">
+                <i class="fa-solid fa-globe"></i>
+                <span>Macro & News Integration Engine</span>
             </span>
         </div>
 
-        <!-- Quick Symbol Picker -->
+        <!-- Symbol & Timeframe Quick Selector -->
         <div class="flex items-center space-x-2 font-mono text-xs overflow-x-auto py-1">
             <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
                 <button onclick="changeSymbol('FX:EURUSD')" id="sym-EURUSD" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-xs transition">EUR/USD</button>
@@ -104,7 +116,6 @@
 
             <div class="hidden sm:block h-4 w-[1px] bg-borderBg"></div>
 
-            <!-- Timeframe Selector -->
             <div class="hidden sm:flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
                 <button onclick="changeTimeframe('1')" id="tf-1" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1m</button>
                 <button onclick="changeTimeframe('5')" id="tf-5" class="px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition">5m</button>
@@ -115,10 +126,10 @@
             </div>
         </div>
 
-        <!-- Live Clock Header -->
+        <!-- Clocks Header -->
         <div class="hidden md:flex items-center space-x-4 font-mono text-xs">
             <div class="text-right">
-                <div class="text-[10px] text-slate-400 uppercase tracking-widest">New York (EST)</div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-widest">New York (EST/EDT)</div>
                 <div id="ny-clock" class="text-amber-400 font-bold">00:00:00 EST</div>
             </div>
             <div class="h-6 w-[1px] bg-borderBg"></div>
@@ -129,13 +140,26 @@
         </div>
     </header>
 
-    <!-- MAIN DASHBOARD CONTENT -->
+    <!-- LIVE HIGH IMPACT NEWS WARNING BANNER -->
+    <div id="news-volatility-banner" class="bg-amber-950/80 border-b border-amber-500/40 px-4 py-2 flex items-center justify-between text-xs font-mono transition-all">
+        <div class="flex items-center space-x-2.5">
+            <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span class="text-amber-300 font-bold uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>HIGH IMPACT MACRO WARNING:</span>
+            <span id="news-banner-text" class="text-slate-200">US Core CPI & Unemployment Claims scheduled at 08:30 EST (19:30 BKK). Expect Liquidity Sweeps & High Volatility.</span>
+        </div>
+        <div class="hidden lg:flex items-center space-x-2">
+            <span class="text-slate-400 text-[11px]">Recommended Rule:</span>
+            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-[10px]">STAND ASIDE OR HUNT JUDAS SWING</span>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT GRID -->
     <div class="flex flex-1 overflow-hidden flex-col lg:flex-row">
         
-        <!-- LEFT SIDEBAR: RISK CALCULATOR & KILLZONE MONITOR -->
-        <aside class="w-full lg:w-80 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[40vh] lg:max-h-full">
+        <!-- LEFT COLUMN: SESSIONS & RISK CALCULATOR & TECHNICAL GAUGE -->
+        <aside class="w-full lg:w-80 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[35vh] lg:max-h-full">
             
-            <!-- Live Kill Zones Status -->
+            <!-- Live Killzones Status -->
             <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2">
                 <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
                     <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
@@ -148,7 +172,6 @@
                 </div>
 
                 <div class="space-y-1.5 text-xs font-mono">
-                    <!-- Asian Range -->
                     <div id="kz-asian" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
                         <div>
                             <div class="font-bold text-slate-300">Asian Range (Accumulation)</div>
@@ -157,7 +180,6 @@
                         <span id="badge-asian" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
                     </div>
 
-                    <!-- London Open -->
                     <div id="kz-london" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
                         <div>
                             <div class="font-bold text-slate-300">London KZ (Judas Swing)</div>
@@ -166,7 +188,6 @@
                         <span id="badge-london" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
                     </div>
 
-                    <!-- NY AM & Silver Bullet -->
                     <div id="kz-nyam" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
                         <div>
                             <div class="font-bold text-slate-300">NY AM / Silver Bullet (10-11)</div>
@@ -175,7 +196,6 @@
                         <span id="badge-nyam" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
                     </div>
 
-                    <!-- NY PM Killzone -->
                     <div id="kz-nypm" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
                         <div>
                             <div class="font-bold text-slate-300">NY PM Killzone</div>
@@ -186,7 +206,7 @@
                 </div>
             </div>
 
-            <!-- Position Size & Risk Calculator -->
+            <!-- Integrated Risk & Position Calculator -->
             <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2.5">
                 <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
                     <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
@@ -235,7 +255,7 @@
                         </div>
                     </div>
 
-                    <!-- Calculated Output -->
+                    <!-- Output -->
                     <div class="p-2.5 bg-cardBg/80 rounded-lg border border-borderBg/70 space-y-1.5 font-mono text-[11px] mt-2">
                         <div class="flex justify-between">
                             <span class="text-slate-400">Risk Amount:</span>
@@ -257,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- TradingView Technical Gauge Widget Embed -->
+            <!-- TradingView Sentiment Gauge -->
             <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
                 <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
                     <i class="fa-solid fa-gauge-high"></i>
@@ -270,170 +290,225 @@
 
         </aside>
 
-        <!-- CENTER & RIGHT: REAL-TIME CHART & ICT ANALYZER -->
+        <!-- CENTER COLUMN: REAL-TIME CHART -->
         <main class="flex-1 flex flex-col min-w-0 bg-darkBg relative overflow-hidden">
-            
-            <!-- REALTIME TRADINGVIEW CHART CONTAINER -->
             <div class="flex-1 w-full h-full relative" id="tradingview-chart-box">
                 <div id="tradingview_advanced_chart" class="w-full h-full"></div>
             </div>
 
-            <!-- BOTTOM DASHBOARD: SETUP EVALUATOR & CHEATSHEET -->
+            <!-- BOTTOM TABBED DASHBOARD: CONFLUENCE EVALUATOR & CHEATSHEET -->
             <div class="h-64 bg-cardBg border-t border-borderBg flex flex-col shrink-0">
-                <!-- Tab Controls -->
                 <div class="flex border-b border-borderBg bg-darkBg/60 text-xs font-medium px-4 overflow-x-auto">
                     <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-2.5 px-4 tab-active flex items-center space-x-2 transition whitespace-nowrap">
                         <i class="fa-solid fa-list-check"></i>
-                        <span>ICT Trade Model Checklist</span>
+                        <span>AI SMC + Macro Confluence Evaluator</span>
                     </button>
                     <button onclick="switchTab('cheatsheet')" id="tab-btn-cheatsheet" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap">
                         <i class="fa-solid fa-book-bookmark"></i>
-                        <span>ICT Concept Reference Hub</span>
+                        <span>ICT Fundamental & Liquidity Knowledge Hub</span>
                     </button>
                 </div>
 
-                <!-- Tab Body Content -->
                 <div class="flex-1 p-3.5 overflow-y-auto">
-                    
-                    <!-- TAB 1: ICT CHECKLIST -->
+                    <!-- TAB 1: NEWS-AWARE EVALUATOR -->
                     <div id="tab-checklist" class="space-y-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                            
-                            <!-- Step 1 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                            <!-- Technical 1 -->
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[11px] font-bold text-sky-400">1. HTF BIAS / DRAW</span>
+                                    <span class="text-[10px] font-bold text-sky-400">1. HTF BIAS</span>
                                     <input type="checkbox" id="chk-1" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs font-semibold text-slate-200">Higher Timeframe Liquidity</p>
-                                <p class="text-[11px] text-slate-400">ราคากำลังมุ่งหน้าเข้าหา BSL / SSL หรือ FVG บน Daily/H4 ใช่หรือไม่?</p>
+                                <p class="text-xs font-semibold text-slate-200">Draw on Liquidity</p>
+                                <p class="text-[10px] text-slate-400">ราคาวิ่งมุ่งหน้าหา BSL/SSL บน Daily/H4</p>
                             </div>
 
-                            <!-- Step 2 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
+                            <!-- Technical 2 -->
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[11px] font-bold text-amber-400">2. LIQUIDITY SWEEP</span>
+                                    <span class="text-[10px] font-bold text-amber-400">2. SWEEP / RAID</span>
                                     <input type="checkbox" id="chk-2" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs font-semibold text-slate-200">Liquidity Raid (Judas)</p>
-                                <p class="text-[11px] text-slate-400">มีการกวาดสภาพคล่อง High/Low เก่า ในช่วง Killzone หรือไม่?</p>
+                                <p class="text-xs font-semibold text-slate-200">Judas Liquidity Sweep</p>
+                                <p class="text-[10px] text-slate-400">กวาด High/Low เก่า ในช่วง Killzone</p>
                             </div>
 
-                            <!-- Step 3 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
+                            <!-- Technical 3 -->
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[11px] font-bold text-purple-400">3. DISPLACEMENT / MSS</span>
+                                    <span class="text-[10px] font-bold text-purple-400">3. DISPLACEMENT</span>
                                     <input type="checkbox" id="chk-3" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
                                 <p class="text-xs font-semibold text-slate-200">Market Structure Shift</p>
-                                <p class="text-[11px] text-slate-400">เกิดแท่งรุนแรงดันเปลี่ยนทิศทาง (CHoCH / MSS) ชัดเจนหรือไม่?</p>
+                                <p class="text-[10px] text-slate-400">เกิดแท่งเปลี่ยนทิศทางรุนแรง (MSS)</p>
                             </div>
 
-                            <!-- Step 4 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1.5">
+                            <!-- Fundamental 1 -->
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[11px] font-bold text-emerald-400">4. ENTRY ARRAY (OTE/FVG)</span>
+                                    <span class="text-[10px] font-bold text-emerald-400">4. DXY ALIGNMENT</span>
                                     <input type="checkbox" id="chk-4" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
                                 </div>
-                                <p class="text-xs font-semibold text-slate-200">Retrace to FVG / Order Block</p>
-                                <p class="text-[11px] text-slate-400">ราคาย้อนกลับเข้าทดสอบ FVG / OTE Zone (0.62-0.79 Fibo) ใน Discount?</p>
+                                <p class="text-xs font-semibold text-slate-200">Dollar Index Divergence</p>
+                                <p class="text-[10px] text-slate-400">DXY วิ่งตรงข้ามกับคู่เงินที่เทรด (SMT)</p>
                             </div>
 
+                            <!-- Fundamental 2 -->
+                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold text-rose-400">5. NEWS CLEARANCE</span>
+                                    <input type="checkbox" id="chk-5" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
+                                </div>
+                                <p class="text-xs font-semibold text-slate-200">No Red Folder Event</p>
+                                <p class="text-[10px] text-slate-400">ไม่อยู่ในช่วงก่อน/หลังข่าวแรง 15 นาที</p>
+                            </div>
                         </div>
 
-                        <!-- Signal Status Banner -->
+                        <!-- Confluence Score Output -->
                         <div id="signal-eval-box" class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
-                                    <i class="fa-solid fa-circle-check text-xl"></i>
+                                    <i class="fa-solid fa-shield-cat text-xl"></i>
                                 </div>
                                 <div>
-                                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
-                                    <p class="text-xs text-slate-300">องค์ประกอบครบตาม ICT Model A / Silver Bullet! พิจารณาตั้ง Pending Order ใน FVG Zone</p>
+                                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY SMC + MACRO SETUP CONFIRMED</h4>
+                                    <p class="text-xs text-slate-300">องค์ประกอบทางเทคนิคและปัจจัยข่าวสารหนุนไปทางเดียวกัน! ตั้ง Pending Order ใน FVG ได้อย่างมั่นใจ</p>
                                 </div>
                             </div>
                             <div class="text-right font-mono shrink-0 ml-2">
                                 <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                                <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                                <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (5/5)</span>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- TAB 2: SMC CHEATSHEET -->
+                    <!-- TAB 2: KNOWLEDGE HUB -->
                     <div id="tab-cheatsheet" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                        
-                        <!-- FVG Card -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
-                            <div class="flex items-center space-x-2 text-sky-400 font-bold">
-                                <i class="fa-solid fa-layer-group"></i>
-                                <span>Fair Value Gap (FVG)</span>
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
+                            <div class="flex items-center space-x-2 text-rose-400 font-bold">
+                                <i class="fa-solid fa-newspaper"></i>
+                                <span>High-Impact News & IPDA</span>
                             </div>
                             <p class="text-slate-300 leading-relaxed text-[11px]">
-                                ช่องว่างราคาไม่สมดุล (Imbalance) จากแรงซื้อขายข้างเดียว พิจารณาจาก **High ของแท่งที่ 1** และ **Low ของแท่งที่ 3** IPDA มักจะย้อนกลับมา Rebalance
+                                ข่าวปัจจัยพื้นฐาน (เช่น NFP, CPI, FOMC) ไม่ใช่ผู้กำหนดทิศทางราคา แต่เป็น **"เชื้อเพลิง (Fuel)"** ที่อัลกอริทึม IPDA ใช้กวาด Liquidity เพื่อขับเคลื่อนราคาไปยัง FVG / Order Block ของสถาบัน
                             </p>
                         </div>
 
-                        <!-- Order Block Card -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
                             <div class="flex items-center space-x-2 text-amber-400 font-bold">
-                                <i class="fa-solid fa-cube"></i>
-                                <span>Order Block (OB)</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed text-[11px]">
-                                แท่งเทียนสุดท้ายก่อนเกิดการพุ่งตัวรุนแรง (Displacement) **Bullish OB** = แท่งแดงสุดท้ายก่อนบินข้าม Break Structure
-                            </p>
-                        </div>
-
-                        <!-- Power of 3 (AMD) -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
-                            <div class="flex items-center space-x-2 text-purple-400 font-bold">
                                 <i class="fa-solid fa-bolt"></i>
-                                <span>Power of 3 (AMD)</span>
+                                <span>Judas Swing News Pattern</span>
                             </div>
                             <p class="text-slate-300 leading-relaxed text-[11px]">
-                                **Accumulation**: สะสมกรอบราคา (Asian)<br>
-                                **Manipulation**: ลากกวาด Liquidity (Judas Swing)<br>
-                                **Distribution**: วิ่งไปหาราคาจริง (Expansion)
+                                ในช่วง 1-5 นาทีแรกของการประกาศข่าว ราคามักจะทุบหรือพุ่งไปในทิศทางหลอกเพื่อกวาด Buy/Sell Stops (Fakeout) ก่อนจะกลับตัวพุ่งรุนแรงไปยัง True Institutional Target
                             </p>
                         </div>
 
-                        <!-- OTE Fibonacci -->
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1.5">
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
+                            <div class="flex items-center space-x-2 text-sky-400 font-bold">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>DXY SMT Divergence</span>
+                            </div>
+                            <p class="text-slate-300 leading-relaxed text-[11px]">
+                                การเปรียบเทียบดัชนีดอลลาร์ (DXY) กับ EURUSD/GBPUSD หาก DXY ทำ Higher High แต่ EURUSD ไม่ทำ Lower Low เกิดสัญญาณ **SMT Divergence** บ่งบอกการสะสมออเดอร์ของ Smart Money
+                            </p>
+                        </div>
+
+                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
                             <div class="flex items-center space-x-2 text-emerald-400 font-bold">
-                                <i class="fa-solid fa-chart-pie"></i>
-                                <span>Optimal Trade Entry (OTE)</span>
+                                <i class="fa-solid fa-clock"></i>
+                                <span>Silver Bullet Window</span>
                             </div>
                             <p class="text-slate-300 leading-relaxed text-[11px]">
-                                ระดับย่อตัวสมบูรณ์แบบในการเข้าออเดอร์ Fibo Retracement: **0.62, 0.705 (Sweet Spot), และ 0.79** ใน Discount/Premium Zone
+                                ช่วงเวลาทองคำ **10:00 - 11:00 EST** (21:00 - 22:00 BKK) เกิดขึ้นหลังข่าวรอบเช้าปรับตัวเสร็จ ตลาดมักจะสร้าง FVG ชัดเจนที่มีอัตรา Win Rate สูงสุดในการเทรดตามเทรนด์
                             </p>
                         </div>
-
                     </div>
+                </div>
+            </div>
+        </main>
 
+        <!-- RIGHT COLUMN: REAL-TIME ECONOMIC CALENDAR & MACRO NEWS FEED -->
+        <aside class="w-full lg:w-96 bg-cardBg border-l border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[40vh] lg:max-h-full">
+            
+            <!-- Real-Time Economic Calendar -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2 flex flex-col h-1/2 min-h-[220px]">
+                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2 shrink-0">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Economic Calendar</span>
+                    </h3>
+                    <div class="flex space-x-1">
+                        <button onclick="filterNews('all')" id="btn-news-all" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black">ALL</button>
+                        <button onclick="filterNews('high')" id="btn-news-high" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-rose-400 border border-borderBg hover:border-rose-500/50">HIGH</button>
+                    </div>
+                </div>
+
+                <!-- Calendar Feed Scroll Area -->
+                <div id="econ-calendar-feed" class="space-y-2 overflow-y-auto flex-1 pr-1 font-mono text-xs">
+                    <!-- Dynamic Items Injected Here -->
                 </div>
             </div>
 
-        </main>
+            <!-- Live Macro News Feed -->
+            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2 flex flex-col h-1/2 min-h-[220px]">
+                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2 shrink-0">
+                    <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rss"></i>
+                        <span>Live Macro Breaking Wire</span>
+                    </h3>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-950 text-sky-400 border border-sky-500/30">
+                        REALTIME
+                    </span>
+                </div>
+
+                <div id="macro-news-feed" class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs">
+                    <!-- Dynamic Live News Articles -->
+                </div>
+            </div>
+
+        </aside>
+
     </div>
 
-    <!-- JAVASCRIPT APP LOGIC -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         // --- GLOBAL STATE ---
         let currentSymbol = 'FX:EURUSD';
         let currentTimeframe = '5';
+        let newsFilter = 'all';
         let tvWidget = null;
+
+        // --- MOCK REAL-TIME ECONOMIC CALENDAR DATA ---
+        const calendarEvents = [
+            { time: '08:30 EST', country: 'USD', impact: 'high', name: 'Core CPI (MoM)', forecast: '0.3%', previous: '0.4%', actual: '0.3%' },
+            { time: '08:30 EST', country: 'USD', impact: 'high', name: 'Initial Jobless Claims', forecast: '215K', previous: '211K', actual: '218K' },
+            { time: '10:00 EST', country: 'USD', impact: 'medium', name: 'Existing Home Sales', forecast: '4.10M', previous: '3.98M', actual: '--' },
+            { time: '14:00 EST', country: 'USD', impact: 'high', name: 'FOMC Meeting Minutes', forecast: '--', previous: '--', actual: '--' },
+            { time: '04:30 EST', country: 'GBP', impact: 'high', name: 'UK CPI (YoY)', forecast: '3.1%', previous: '3.4%', actual: '3.2%' },
+            { time: '05:00 EST', country: 'EUR', impact: 'medium', name: 'German ZEW Sentiment', forecast: '17.5', previous: '15.0', actual: '17.8' }
+        ];
+
+        // --- MOCK MACRO NEWS ARTICLES ---
+        const breakingNewsArticles = [
+            { time: '2 mins ago', source: 'FED WIRE', title: 'Fed Chair Powell signals interest rates may remain elevated if inflation persists.', impact: 'high' },
+            { time: '12 mins ago', source: 'BLOOMBERG', title: 'US Dollar Index (DXY) tests 105.20 resistance following higher Treasury yields.', impact: 'medium' },
+            { time: '28 mins ago', source: 'ECB SPEECH', title: 'ECB Lagarde hints at potential June rate cut as Eurozone inflation cools.', impact: 'medium' },
+            { time: '45 mins ago', source: 'REUTERS', title: 'Gold surges past $2,350 as safe-haven demand increases amid geopolitical tensions.', impact: 'high' }
+        ];
 
         // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', () => {
             initTradingViewChart();
             initTechnicalGaugeWidget();
             startClocksAndKillzones();
+            renderEconomicCalendar();
+            renderMacroNews();
             calculatePosition();
             evaluateTradeSignal();
         });
 
-        // --- TRADINGVIEW ADVANCED CHART EMBED ---
+        // --- TRADINGVIEW CHART ENGINE ---
         function initTradingViewChart() {
             document.getElementById('tradingview_advanced_chart').innerHTML = '';
 
@@ -443,27 +518,24 @@
                 "interval": currentTimeframe,
                 "timezone": "Asia/Bangkok",
                 "theme": "dark",
-                "style": "1", // Candlesticks
-                "locale": "th_TH",
-                "toolbar_bg": "#111622",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#121824",
                 "enable_publishing": false,
                 "hide_side_toolbar": false,
                 "allow_symbol_change": true,
                 "container_id": "tradingview_advanced_chart",
-                "studies": [
-                    "STD;Fair_Value_Gap" // Automatic TradingView FVG indicator if available
-                ],
                 "overrides": {
-                    "paneProperties.background": "#080b11",
-                    "paneProperties.vertGridProperties.color": "#141c2b",
-                    "paneProperties.horzGridProperties.color": "#141c2b",
+                    "paneProperties.background": "#0b0e14",
+                    "paneProperties.vertGridProperties.color": "#182030",
+                    "paneProperties.horzGridProperties.color": "#182030",
                     "symbolWatermarkProperties.transparency": 90,
                     "scalesProperties.textColor": "#94a3b8"
                 }
             });
         }
 
-        // --- TRADINGVIEW TECHNICAL ANALYSIS GAUGE WIDGET ---
+        // --- TRADINGVIEW TECHNICAL GAUGE ---
         function initTechnicalGaugeWidget() {
             const container = document.getElementById('tv-gauge-container');
             container.innerHTML = '';
@@ -480,7 +552,7 @@
                 "symbol": currentSymbol,
                 "showIntervalTabs": false,
                 "displayMode": "single",
-                "locale": "th",
+                "locale": "en",
                 "colorTheme": "dark"
             });
             container.appendChild(script);
@@ -489,8 +561,6 @@
         // --- ASSET & TIMEFRAME SWITCHERS ---
         function changeSymbol(symbol) {
             currentSymbol = symbol;
-            
-            // Highlight button
             const symKeys = ['EURUSD', 'GBPUSD', 'GOLD', 'BTCUSDT', 'US30', 'NAS100'];
             symKeys.forEach(k => {
                 const btn = document.getElementById(`sym-${k}`);
@@ -501,7 +571,7 @@
                 }
             });
 
-            // Adjust Risk Calc default prices based on Asset
+            // Adjust Risk Calculator defaults
             const entryInput = document.getElementById('calc-entry');
             const slInput = document.getElementById('calc-sl');
             const tpInput = document.getElementById('calc-tp');
@@ -538,37 +608,97 @@
             currentTimeframe = tf;
             ['1', '5', '15', '60', '240', 'D'].forEach(t => {
                 const btn = document.getElementById(`tf-${t}`);
-                if (t === tf) {
-                    btn.className = "px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition";
-                } else {
-                    btn.className = "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
-                }
+                btn.className = t === tf 
+                    ? "px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition" 
+                    : "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
             });
 
             initTradingViewChart();
             initTechnicalGaugeWidget();
         }
 
-        // --- REALTIME CLOCKS & KILLZONE TRACKING ---
+        // --- RENDER CALENDAR & NEWS ---
+        function filterNews(type) {
+            newsFilter = type;
+            document.getElementById('btn-news-all').className = type === 'all' 
+                ? "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black" 
+                : "px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-slate-400 border border-borderBg";
+            
+            document.getElementById('btn-news-high').className = type === 'high' 
+                ? "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white" 
+                : "px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-rose-400 border border-borderBg hover:border-rose-500/50";
+
+            renderEconomicCalendar();
+        }
+
+        function renderEconomicCalendar() {
+            const container = document.getElementById('econ-calendar-feed');
+            container.innerHTML = '';
+
+            const filtered = newsFilter === 'high' 
+                ? calendarEvents.filter(e => e.impact === 'high') 
+                : calendarEvents;
+
+            filtered.forEach(ev => {
+                const impactBadge = ev.impact === 'high' 
+                    ? '<span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-500/40 text-[9px] font-bold">HIGH</span>'
+                    : '<span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-500/40 text-[9px] font-bold">MED</span>';
+
+                const div = document.createElement('div');
+                div.className = "p-2 rounded-lg bg-cardBg border border-borderBg/80 flex flex-col space-y-1 hover:border-amber-500/30 transition";
+                div.innerHTML = `
+                    <div class="flex items-center justify-between text-[11px]">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="font-bold text-amber-400">${ev.time}</span>
+                            <span class="px-1 rounded bg-slate-800 text-slate-200 font-bold">${ev.country}</span>
+                        </div>
+                        ${impactBadge}
+                    </div>
+                    <div class="text-slate-200 font-sans font-semibold text-xs">${ev.name}</div>
+                    <div class="flex justify-between text-[10px] text-slate-400 pt-0.5 border-t border-borderBg/40">
+                        <span>Act: <b class="text-emerald-400">${ev.actual}</b></span>
+                        <span>Exp: ${ev.forecast}</span>
+                        <span>Prev: ${ev.previous}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderMacroNews() {
+            const container = document.getElementById('macro-news-feed');
+            container.innerHTML = '';
+
+            breakingNewsArticles.forEach(art => {
+                const div = document.createElement('div');
+                div.className = "p-2 rounded-lg bg-cardBg border border-borderBg/80 space-y-1 hover:border-sky-500/30 transition";
+                div.innerHTML = `
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-bold text-sky-400">${art.source}</span>
+                        <span class="text-slate-500">${art.time}</span>
+                    </div>
+                    <p class="text-slate-300 text-[11px] leading-snug font-sans">${art.title}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- REALTIME CLOCKS & KILLZONE TRACKER ---
         function startClocksAndKillzones() {
             function update() {
                 const now = new Date();
                 
-                // BKK Time (UTC+7)
                 const bkkString = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Bangkok', hour12: false });
                 document.getElementById('bkk-clock').textContent = `${bkkString} ICT`;
 
-                // NY Time (EST/EDT)
                 const nyString = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false });
                 document.getElementById('ny-clock').textContent = `${nyString} EST`;
 
-                // Get NY Hours and Minutes for Session Checks
                 const nyDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
                 const nyHours = nyDate.getHours();
                 const nyMins = nyDate.getMinutes();
                 const nyTimeDec = nyHours + nyMins / 60;
 
-                // Check Active Sessions
                 updateKZState('asian', nyTimeDec >= 20 || nyTimeDec < 0);
                 updateKZState('london', nyTimeDec >= 2 && nyTimeDec < 5);
                 updateKZState('nyam', nyTimeDec >= 8.5 && nyTimeDec < 11);
@@ -594,7 +724,7 @@
             }
         }
 
-        // --- POSITION SIZE & RISK CALCULATOR ENGINE ---
+        // --- POSITION RISK CALCULATOR ---
         function calculatePosition() {
             const asset = document.getElementById('calc-asset').value;
             const balance = parseFloat(document.getElementById('calc-balance').value) || 0;
@@ -612,20 +742,16 @@
 
             if (slDistance > 0) {
                 if (asset === 'forex') {
-                    // Standard Lot: 1 pip = $10 per 1.0 lot for 0.0001 move
                     const pips = slDistance / 0.0001;
                     lotSize = riskAmount / (pips * 10);
                     profit = (tpDistance / 0.0001) * 10 * lotSize;
                 } else if (asset === 'gold') {
-                    // Gold: $1 move per 1 oz = $100 per 1.0 lot
                     lotSize = riskAmount / (slDistance * 100);
                     profit = tpDistance * 100 * lotSize;
                 } else if (asset === 'crypto') {
-                    // Crypto Units
                     lotSize = riskAmount / slDistance;
                     profit = tpDistance * lotSize;
                 } else if (asset === 'indices') {
-                    // Indices
                     lotSize = riskAmount / (slDistance * 10);
                     profit = tpDistance * 10 * lotSize;
                 }
@@ -639,35 +765,36 @@
             document.getElementById('res-tp-profit').textContent = `$${profit.toFixed(2)}`;
         }
 
-        // --- CHECKLIST & EVALUATOR LOGIC ---
+        // --- AI CONFLUENCE EVALUATOR ---
         function evaluateTradeSignal() {
             const chk1 = document.getElementById('chk-1').checked;
             const chk2 = document.getElementById('chk-2').checked;
             const chk3 = document.getElementById('chk-3').checked;
             const chk4 = document.getElementById('chk-4').checked;
+            const chk5 = document.getElementById('chk-5').checked;
 
-            const count = [chk1, chk2, chk3, chk4].filter(Boolean).length;
-            const pct = (count / 4) * 100;
+            const count = [chk1, chk2, chk3, chk4, chk5].filter(Boolean).length;
+            const pct = (count / 5) * 100;
             const box = document.getElementById('signal-eval-box');
 
-            if (count === 4) {
+            if (count === 5) {
                 box.className = "p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between";
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
-                            <i class="fa-solid fa-circle-check text-xl"></i>
+                            <i class="fa-solid fa-shield-cat text-xl"></i>
                         </div>
                         <div>
-                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY ICT SETUP CONFIRMED</h4>
-                            <p class="text-xs text-slate-300">องค์ประกอบครบตาม ICT Model A / Silver Bullet! พิจารณาตั้ง Pending Order ใน FVG Zone</p>
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY SMC + MACRO SETUP CONFIRMED</h4>
+                            <p class="text-xs text-slate-300">องค์ประกอบทางเทคนิคและปัจจัยข่าวสารหนุนไปทางเดียวกัน! ตั้ง Pending Order ใน FVG ได้อย่างมั่นใจ</p>
                         </div>
                     </div>
                     <div class="text-right font-mono shrink-0 ml-2">
                         <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (4/4)</span>
+                        <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (5/5)</span>
                     </div>
                 `;
-            } else if (count >= 2) {
+            } else if (count >= 3) {
                 box.className = "p-3 rounded-lg bg-amber-950/50 border border-amber-500/40 flex items-center justify-between";
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
@@ -676,12 +803,12 @@
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">MODERATE CONFLUENCE - PROCEED WITH CAUTION</h4>
-                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ควรรอให้เกิด Liquidity Sweep หรือ MSS ใน M1/M5 ก่อนเข้าเทรด</p>
+                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ระวังความผันผวนจากข่าวสารหรือรอให้เกิด Liquidity Sweep ใน M1/M5 ก่อน</p>
                         </div>
                     </div>
                     <div class="text-right font-mono shrink-0 ml-2">
                         <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-amber-400">${pct}% (${count}/4)</span>
+                        <span class="text-base sm:text-lg font-extrabold text-amber-400">${pct}% (${count}/5)</span>
                     </div>
                 `;
             } else {
@@ -689,16 +816,16 @@
                 box.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <div class="p-2 bg-rose-500/20 rounded-full text-rose-400 shrink-0">
-                            <i class="fa-solid fa-circle-xmark text-xl"></i>
+                            <i class="fa-solid fa-ban text-xl"></i>
                         </div>
                         <div>
-                            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wide">NO VALID ICT SETUP (NO TRADE ZONE)</h4>
-                            <p class="text-xs text-slate-300">ตลาดยังไม่เข้าทรงตามระบบ ICT การเข้าเทรดตอนนี้มีความเสี่ยงสูงที่จะโดน Stop Hunt</p>
+                            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wide">HIGH RISK / NO TRADE ZONE</h4>
+                            <p class="text-xs text-slate-300">ขัดแย้งกับทิศทางข่าวสารหรือขาดการกวาดสภาพคล่อง ไม่แนะนำให้เปิดออเดอร์ในเวลานี้</p>
                         </div>
                     </div>
                     <div class="text-right font-mono shrink-0 ml-2">
                         <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-rose-400">${pct}% (${count}/4)</span>
+                        <span class="text-base sm:text-lg font-extrabold text-rose-400">${pct}% (${count}/5)</span>
                     </div>
                 `;
             }
