@@ -3,144 +3,165 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SMC Trading Assistant</title>
+<title>EURUSD SMC/ICT Terminal + News Engine</title>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-:root{--bg:#0b0e14;--panel:#131722;--line:#222836;--tx:#d1d4dc;--mut:#7d8597;--up:#26a69a;--dn:#ef5350;--ac:#f0b90b}
+:root{--bg:#0b0e14;--panel:#121824;--line:#1e293b;--tx:#d1d4dc;--mut:#7d8597;--up:#10b981;--dn:#ef4444;--ac:#ffd700;--bl:#38bdf8}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.55 system-ui,'Noto Sans Thai','Segoe UI',sans-serif}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
-header b{color:var(--ac);font-size:16px}
-select,input,button{background:#1b2030;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:5px 9px;font:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,'Noto Sans Thai','Segoe UI',sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header b{color:var(--ac);font-size:15px}
+select,input,button{background:#182030;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font:inherit;font-size:13px}
 button{cursor:pointer}button:hover{border-color:var(--ac)}
-.seg button{border-radius:0;margin-left:-1px}.seg button.on{background:var(--ac);color:#000;border-color:var(--ac)}
-.price{font-size:18px;font-weight:700;margin-left:auto}
+button:disabled{opacity:.45;cursor:not-allowed}
+.seg button{border-radius:0;margin-left:-1px}.seg button.on{background:var(--ac);color:#000;border-color:var(--ac);font-weight:700}
+.price{font-size:18px;font-weight:700}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--mut);display:inline-block}.dot.on{background:var(--up);box-shadow:0 0 6px var(--up)}
 .mut{color:var(--mut);font-size:12px}
-.tabs{display:flex;gap:2px;background:var(--panel);padding:0 10px;border-bottom:1px solid var(--line);overflow-x:auto}
-.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 14px;white-space:nowrap;color:var(--mut)}
+.clock{font:12px ui-monospace,Consolas,monospace;text-align:right;line-height:1.25}.clock small{color:var(--mut);display:block;font-size:10px}
+#banner{padding:7px 14px;font-size:13px;border-bottom:1px solid var(--line);background:#1b1a10;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#banner.hot{background:#3a1212}#banner.calm{background:#0f1f1a}
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:10px;padding:10px}
+@media(max-width:1250px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.card h3{margin:0 0 8px;font-size:12px;color:var(--ac);text-transform:uppercase;letter-spacing:.05em}
+.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:13px}
+.bar{height:10px;background:#182030;border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
+.up{color:var(--up)}.dn{color:var(--dn)}.ac{color:var(--ac)}.bl{color:var(--bl)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:8px;overflow-x:auto}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 14px;white-space:nowrap;color:var(--mut)}
 .tabs button.on{color:var(--ac);border-color:var(--ac)}
-.tab{display:none;padding:10px}.tab.on{display:block}
-.grid{display:grid;grid-template-columns:1fr 330px;gap:10px}
-@media(max-width:980px){.grid{grid-template-columns:1fr}}
-.chartwrap{position:relative;height:calc(100vh - 150px);min-height:440px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tab{display:none}.tab.on{display:block}
+.chartwrap{position:relative;height:calc(100vh - 215px);min-height:440px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 #chart,#ov{position:absolute;inset:0;width:100%;height:100%}#ov{pointer-events:none}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}
-.card h3{margin:0 0 8px;font-size:14px;color:var(--ac)}
-.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
-.bar{height:10px;background:#1b2030;border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
-.up{color:var(--up)}.dn{color:var(--dn)}.ac{color:var(--ac)}
+#tvc{height:calc(100vh - 215px);min-height:460px}
 label.ck{display:inline-flex;gap:5px;margin:2px 10px 2px 0;align-items:center;font-size:13px}
-#tvc{height:calc(100vh - 130px);min-height:480px}
 table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .big{font-size:22px;font-weight:700}
 .warn{border-left:3px solid var(--ac);padding:8px 12px;background:#1b1a10;border-radius:4px;margin:8px 0}
+.kz{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:12px}
+.kz.on{border-color:#10b98199;background:#0f2a22}.kz .b{padding:1px 8px;border-radius:5px;background:#1e293b;color:var(--mut);font-weight:700;font-size:11px}.kz.on .b{background:var(--up);color:#000}
+.feed>div{padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
+.feed a{color:var(--tx);text-decoration:none}.feed a:hover{color:var(--ac)}
+.pill{padding:1px 7px;border-radius:5px;font-size:10px;font-weight:700}
+.pill.high{background:#3a1212;color:#fca5a5}.pill.med{background:#3a2a0a;color:#fcd34d}.pill.low{background:#1e293b;color:var(--mut)}
 a{color:#64b5f6}ul{padding-left:20px;margin:6px 0}
-.news a{color:var(--tx);text-decoration:none}.news a:hover{color:var(--ac)}.news div{padding:6px 0;border-bottom:1px solid var(--line)}
+dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:10px;max-width:440px}
+dialog::backdrop{background:#0009}
 </style>
 </head>
 <body>
 <header>
-  <b>◆ SMC Trading Assistant</b>
-  <select id="sym"></select>
+  <b>◆ EURUSD · SMC/ICT Terminal</b>
+  <select id="src" title="แหล่งข้อมูลราคา">
+    <option value="bn">Binance EURUSDT (ฟรี · เรียลไทม์ · ตัวแทน EURUSD)</option>
+    <option value="td">Twelve Data EUR/USD (ต้องมี API key)</option>
+  </select>
+  <button id="keyBtn" title="ตั้งค่า API key">🔑 Key</button>
   <div id="tfs" class="seg"></div>
-  <span class="price" id="price">—</span><span class="dot" id="live"></span><span class="mut" id="status"></span>
+  <span class="price" id="price" style="margin-left:auto">—</span><span class="dot" id="live"></span><span class="mut" id="status"></span>
+  <div class="clock"><small>New York</small><span id="nyc">--:--:--</span></div>
+  <div class="clock"><small>Thailand</small><span id="bkc">--:--:--</span></div>
 </header>
-<nav class="tabs">
-  <button data-tab="chart" class="on">กราฟ SMC เรียลไทม์</button>
-  <button data-tab="tv">TradingView เต็มรูปแบบ</button>
-  <button data-tab="news">ข่าว &amp; ปฏิทินเศรษฐกิจ</button>
-  <button data-tab="bt">Backtest</button>
-  <button data-tab="proof">ความน่าเชื่อถือ &amp; การพิสูจน์</button>
-</nav>
+<div id="banner"><span class="mut">กำลังโหลดปฏิทินข่าว...</span></div>
 
-<section id="tab-chart" class="tab on"><div class="grid">
-  <div class="chartwrap"><div id="chart"></div><canvas id="ov"></canvas></div>
+<div class="layout">
+  <!-- LEFT -->
   <aside>
-    <div class="card"><h3>สัญญาณ / แผนเทรด (confluence)</h3><div id="sig" class="mut">กำลังโหลด...</div>
-      <button id="saveJ" style="margin-top:8px;width:100%" disabled>บันทึกสัญญาณนี้เข้า Forward-test journal</button></div>
-    <div class="card"><h3>เลเยอร์บนกราฟ</h3>
-      <label class="ck"><input type="checkbox" data-l="ob" checked>Order Block</label>
-      <label class="ck"><input type="checkbox" data-l="fvg" checked>FVG</label>
-      <label class="ck"><input type="checkbox" data-l="str" checked>BOS/CHoCH</label>
-      <label class="ck"><input type="checkbox" data-l="liq" checked>Liquidity</label>
-      <label class="ck"><input type="checkbox" data-l="pd" checked>Premium/Discount+OTE</label>
-      <label class="ck"><input type="checkbox" data-l="sw">จุด Swing</label>
-      <div style="margin-top:8px">Swing length <input id="swing" type="number" value="5" min="2" max="20" style="width:60px">
-      &nbsp;RR <input id="rr" type="number" value="2" min="1" max="6" step="0.5" style="width:60px"></div>
+    <div class="card"><h3>สัญญาณ SMC + ข่าว (คำนวณอัตโนมัติ)</h3><div id="sig" class="mut">กำลังโหลด...</div>
+      <button id="saveJ" style="margin-top:8px;width:100%" disabled>บันทึกสัญญาณเข้า Forward-test journal</button></div>
+    <div class="card"><h3>ICT Sessions &amp; Killzones</h3><div id="kzs"></div><div class="mut">เวลาไทยคำนวณตามฤดูกาล (DST) ของนิวยอร์กโดยอัตโนมัติ</div></div>
+    <div class="card"><h3>คำนวณขนาดไม้ (EURUSD)</h3>
+      <div class="row"><span>ทุน ($)</span><input id="cb" type="number" value="1000" style="width:100px"></div>
+      <div class="row"><span>เสี่ยง (%)</span><input id="cr" type="number" value="1" step="0.25" style="width:100px"></div>
+      <div class="row"><span>Entry</span><input id="ce" type="number" step="0.00001" style="width:100px"></div>
+      <div class="row"><span>Stop Loss</span><input id="cs" type="number" step="0.00001" style="width:100px"></div>
+      <div class="row"><span>Take Profit</span><input id="ct" type="number" step="0.00001" style="width:100px"></div>
+      <button id="fillPlan" style="width:100%;margin:6px 0">ใช้ค่าจากแผนปัจจุบัน</button>
+      <div id="calcOut" style="border-top:1px solid var(--line);padding-top:6px"></div></div>
+  </aside>
+
+  <!-- CENTER -->
+  <main>
+    <div class="tabs" id="tabs">
+      <button data-tab="chart" class="on">กราฟ SMC</button>
+      <button data-tab="tv">TradingView (FX:EURUSD จริง)</button>
+      <button data-tab="bt">Backtest</button>
+      <button data-tab="proof">ความน่าเชื่อถือ &amp; การพิสูจน์</button>
     </div>
-    <div class="card mut">⚠ เครื่องมือช่วยวิเคราะห์เท่านั้น ไม่ใช่คำแนะนำการลงทุน และไม่มีการรับประกันผลลัพธ์ ดูรายละเอียดที่แท็บ "ความน่าเชื่อถือ"</div>
-  </aside></div></section>
 
-<section id="tab-tv" class="tab"><div id="tvc"></div></section>
+    <section id="tab-chart" class="tab on">
+      <div class="chartwrap"><div id="chart"></div><canvas id="ov"></canvas></div>
+      <div class="card" style="margin-top:10px">
+        <label class="ck"><input type="checkbox" data-l="ob" checked>Order Block</label>
+        <label class="ck"><input type="checkbox" data-l="fvg" checked>FVG</label>
+        <label class="ck"><input type="checkbox" data-l="str" checked>BOS/CHoCH</label>
+        <label class="ck"><input type="checkbox" data-l="liq" checked>Liquidity</label>
+        <label class="ck"><input type="checkbox" data-l="pd" checked>Premium/Discount+OTE</label>
+        <label class="ck"><input type="checkbox" data-l="asia" checked>Asian Range</label>
+        <label class="ck"><input type="checkbox" data-l="sw">จุด Swing</label>
+        &nbsp; Swing <input id="swing" type="number" value="5" min="2" max="20" style="width:55px">
+        RR <input id="rr" type="number" value="2" min="1" max="6" step="0.5" style="width:55px">
+      </div>
+    </section>
 
-<section id="tab-news" class="tab">
-  <div class="cols">
-    <div class="card"><h3>Sentiment จากข่าวคริปโต (ประมาณการด้วย keyword)</h3><div id="newsSum" class="mut">กำลังโหลด...</div><div id="newsList" class="news"></div></div>
-    <div class="card"><h3>ปฏิทินเศรษฐกิจ (TradingView)</h3><div id="calw"></div></div>
-    <div class="card"><h3>ไทม์ไลน์ข่าวตลาด (TradingView)</h3><div id="tlw"></div></div>
-  </div>
-</section>
+    <section id="tab-tv" class="tab"><div id="tvc"></div></section>
 
-<section id="tab-bt" class="tab">
-  <div class="card"><h3>Backtest กฎ SMC บนข้อมูลย้อนหลังจริงจาก Binance</h3>
-    <div>สินทรัพย์/TF: ใช้ตามที่เลือกด้านบน &nbsp;|&nbsp; จำนวนแท่ง
-      <select id="btN"><option>2000</option><option selected>5000</option><option>10000</option></select>
-      Swing <input id="btSw" type="number" value="5" style="width:55px">
-      RR <input id="btRR" type="number" value="2" step="0.5" style="width:55px">
-      ค่าธรรมเนียมรวมไป-กลับ % <input id="btFee" type="number" value="0.08" step="0.01" style="width:70px">
-      <button id="btRun">รัน Backtest</button> <span id="btProg" class="mut"></span></div>
-    <div class="mut" style="margin-top:6px">กฎ: เทรดตามโครงสร้างล่าสุด เข้าเมื่อราคาย่อกลับแตะ Order Block ที่ยังไม่ถูกเจาะ และอยู่ฝั่ง Discount (ซื้อ) / Premium (ขาย) | SL นอก OB | TP = RR เท่า | ถ้าแท่งเดียวชนทั้ง SL และ TP นับเป็นแพ้ (เข้มงวด)</div></div>
-  <div id="btOut"></div>
-</section>
+    <section id="tab-bt" class="tab">
+      <div class="card"><h3>Backtest กฎ SMC บนข้อมูลย้อนหลัง (แหล่งข้อมูลตามที่เลือกด้านบน)</h3>
+        จำนวนแท่ง <select id="btN"><option>2000</option><option selected>5000</option><option>10000</option></select>
+        Swing <input id="btSw" type="number" value="5" style="width:55px">
+        RR <input id="btRR" type="number" value="2" step="0.5" style="width:55px">
+        ค่าธรรมเนียม/สเปรดรวม % <input id="btFee" type="number" value="0.01" step="0.005" style="width:70px">
+        <button id="btRun">รัน Backtest</button> <span id="btProg" class="mut"></span>
+        <div class="mut" style="margin-top:6px">กฎ: เทรดตามโครงสร้างล่าสุด เข้าเมื่อราคาย่อกลับแตะ Order Block ที่ยังไม่ถูกเจาะ ฝั่ง Discount (ซื้อ)/Premium (ขาย) | SL นอก OB | TP = RR เท่า | แท่งเดียวชนทั้ง SL/TP นับเป็นแพ้ | Twelve Data ดึงได้สูงสุด 5000 แท่ง</div></div>
+      <div id="btOut"></div>
+    </section>
 
-<section id="tab-proof" class="tab"><div class="cols">
-  <div class="card"><h3>1) กฎมาจากไหน</h3>
-    <p>แนวคิดหลักทั้งหมดมาจากคอร์สสาธารณะของ <b>Michael J. Huddleston (ICT – Inner Circle Trader)</b> ซึ่งเปิดสอนฟรีทางช่อง YouTube "InnerCircleTrader" (เช่นชุด ICT Mentorship 2016 / 2022) ส่วนคำว่า "SMC" เป็นชื่อที่ชุมชนเรียกต่อยอดจาก ICT:</p>
-    <ul>
-      <li><b>Market Structure</b> – swing high/low, BOS (ทะลุตามเทรนด์), CHoCH (ทะลุสวนเทรนด์ ≈ market structure shift)</li>
-      <li><b>Order Block</b> – แท่งสุดท้ายฝั่งตรงข้ามก่อนการเคลื่อนที่ที่ทำให้เกิด BOS/CHoCH</li>
-      <li><b>Fair Value Gap (FVG)</b> – ช่องว่าง 3 แท่งที่ราคามักกลับมาเติม</li>
-      <li><b>Liquidity</b> – Equal highs/lows และการกวาด stop (BSL/SSL)</li>
-      <li><b>Premium/Discount &amp; OTE</b> – แบ่งช่วงราคา 50% และโซน Fib 62–79%</li>
-    </ul>
-    <div class="warn">ข้อควรรู้: ICT เป็นการเทรดแบบ <b>ใช้ดุลยพินิจ (discretionary)</b> โค้ดนี้เป็นเพียง "การตีความเป็นกฎตายตัว" จึงไม่เท่ากับการเทรดแบบ ICT จริง ผู้พัฒนาเขียนจากความเข้าใจแนวคิดเหล่านี้ ไม่ได้ดึงเนื้อหาวิดีโอมาโดยตรง ควรตรวจเทียบกับต้นฉบับด้วยตัวเอง</div></div>
+    <section id="tab-proof" class="tab"><div class="cols">
+      <div class="card"><h3>1) กฎมาจากไหน</h3>
+        <p>แนวคิดมาจากคอร์สสาธารณะของ <b>Michael J. Huddleston (ICT)</b> บนช่อง YouTube "InnerCircleTrader" (เช่น ICT Mentorship 2016/2022) ส่วน "SMC" เป็นชื่อที่ชุมชนเรียกต่อยอด</p>
+        <ul><li>Market Structure: BOS / CHoCH (≈ MSS)</li><li>Order Block, Fair Value Gap</li><li>Liquidity: Equal H/L, การกวาด stop, Asian Range high/low</li><li>Premium/Discount และ OTE 62–79%</li><li>Killzones: London, NY AM / Silver Bullet, NY PM</li></ul>
+        <div class="warn">ICT เป็นการเทรดแบบใช้ดุลยพินิจ โค้ดนี้เป็นการตีความเป็นกฎตายตัว ไม่เท่ากับ ICT จริง ผมเขียนจากความเข้าใจแนวคิด ไม่ได้ดึงเนื้อหาวิดีโอมาโดยตรง โปรดเทียบกับต้นฉบับ</div></div>
+      <div class="card"><h3>2) สิ่งที่พิสูจน์ได้ในเว็บนี้</h3>
+        <ul><li>โค้ดเปิดทั้งหมด ฟังก์ชัน <code>smc()</code> ตรวจสอบได้</li>
+        <li>ข่าว ปฏิทิน และคะแนน confluence <b>คำนวณจากข้อมูลจริง</b> ไม่ใช่ตัวเลขตายตัวหรือช่องติ๊กมือ</li>
+        <li>ไม่มี look-ahead: swing ยืนยันหลังผ่านไป N แท่ง</li>
+        <li>Backtest มีค่าธรรมเนียม ช่วงเชื่อมั่น 95% และแยก In/Out-of-sample</li>
+        <li>Forward-test journal บันทึกสัญญาณก่อนรู้ผล แล้วตรวจจากแท่งเทียนจริง</li></ul>
+        <div id="jBox"></div></div>
+      <div class="card"><h3>3) ข้อจำกัดที่ต้องรู้</h3>
+        <ul><li>ยังไม่มีงานวิจัยอิสระยืนยัน edge ของ ICT/SMC ผลในอดีตไม่รับประกันอนาคต</li>
+        <li>โหมดฟรีใช้ Binance <b>EURUSDT</b> ซึ่งเป็นคู่ EUR/stablecoin เทรด 24/7 ราคาใกล้ EURUSD แต่ไม่ใช่ตลาดฟอเร็กซ์จริง (มีวันเสาร์-อาทิตย์ และอาจต่างเล็กน้อย) ถ้าต้องการ EUR/USD จริงให้ใส่ Twelve Data key หรือดูแท็บ TradingView</li>
+        <li>Twelve Data แผนฟรีอัปเดตทุก ~2 นาที (จำกัดเครดิต/วัน) ไม่ใช่ tick-by-tick</li>
+        <li>ปฏิทินข่าว/ข่าวพาดหัวดึงจากบริการสาธารณะ ถ้าเบราว์เซอร์หรือบริการบล็อก ระบบจะสลับไปใช้วิดเจ็ต TradingView (แสดงผลได้ แต่ไม่ถูกนำไปคิดคะแนน)</li>
+        <li>Sentiment ข่าวใช้ keyword อย่างง่าย อาจผิดพลาดได้ ไม่ใช่การอ่านข่าวแบบมนุษย์</li>
+        <li>คะแนน confluence ไม่ใช่ความน่าจะเป็นที่จะชนะ</li>
+        <li>เว็บนี้ไม่ใช่คำแนะนำการลงทุน</li></ul></div>
+      <div class="card" style="grid-column:1/-1"><h3>Forward-test journal (เก็บในเบราว์เซอร์นี้)</h3>
+        <button id="jRef">ตรวจผลอีกครั้ง</button> <button id="jClr">ล้าง journal</button>
+        <div id="jTab" style="overflow-x:auto;margin-top:8px"></div></div>
+    </div></section>
+  </main>
 
-  <div class="card"><h3>2) สิ่งที่ "พิสูจน์ได้" ในเว็บนี้</h3>
-    <ul>
-      <li><b>โค้ดเปิดทั้งหมด</b> – ฟังก์ชัน <code>smc()</code> อ่านและตรวจได้ ไม่มีกล่องดำ</li>
-      <li><b>ข้อมูลจริง</b> – แท่งเทียนจาก Binance public API และ WebSocket โดยตรง</li>
-      <li><b>ไม่มี look-ahead bias</b> – swing ถูกยืนยันหลังผ่านไป N แท่งเท่านั้น และ backtest ตัดสินใจจากข้อมูลถึงแท่งปัจจุบัน</li>
-      <li><b>Backtest รวมค่าธรรมเนียม</b> พร้อมช่วงความเชื่อมั่น 95% ของ win rate (Wilson) และแยก In-sample / Out-of-sample</li>
-      <li><b>Forward-test journal</b> – บันทึกสัญญาณ "ก่อน" รู้ผล แล้วระบบตรวจผลจากแท่งเทียนจริงภายหลัง นี่คือหลักฐานที่ดีกว่า backtest</li>
-    </ul>
-    <div id="jBox"></div></div>
+  <!-- RIGHT -->
+  <aside>
+    <div class="card"><h3>ปฏิทินเศรษฐกิจ USD/EUR <span class="mut" style="text-transform:none">(เวลาไทย)</span></h3>
+      <div style="margin-bottom:6px"><button id="calAll" class="on">ทั้งหมด</button> <button id="calHigh">เฉพาะ High</button></div>
+      <div id="calBox" class="feed" style="max-height:380px;overflow:auto"><div class="mut">กำลังโหลด...</div></div></div>
+    <div class="card"><h3>ข่าวที่เกี่ยวข้อง EUR/USD</h3>
+      <div id="newsSum" class="mut"></div>
+      <div id="newsBox" class="feed" style="max-height:420px;overflow:auto"><div class="mut">กำลังโหลด...</div></div></div>
+  </aside>
+</div>
 
-  <div class="card"><h3>3) สิ่งที่ "ยังพิสูจน์ไม่ได้" / ข้อจำกัด</h3>
-    <ul>
-      <li>ยังไม่มีงานวิจัยอิสระที่ผ่านการทบทวนรองรับว่า ICT/SMC มี edge ทางสถิติ หลักฐานส่วนใหญ่เป็นประสบการณ์ส่วนบุคคล</li>
-      <li>Backtest ในอดีตไม่รับประกันอนาคต และผลขึ้นกับสินทรัพย์ ช่วงเวลา และพารามิเตอร์ (เสี่ยง overfit ถ้าปรับจนสวย)</li>
-      <li>ไม่ได้จำลอง slippage, การไม่ถูกเติมออเดอร์ลิมิต และ spread ช่วงข่าวแรง</li>
-      <li>คะแนน confluence <b>ไม่ใช่ความน่าจะเป็นที่จะชนะ</b> เป็นเพียงจำนวนปัจจัยที่สอดคล้องกัน</li>
-      <li>Sentiment ข่าวใช้ keyword แบบง่าย อาจผิดพลาดกับข่าวประชด/กำกวม</li>
-      <li>กราฟ SMC ของเราใช้ข้อมูล Binance (คริปโต และ PAXG แทนทอง) ส่วนฟอเร็กซ์/ทองสปอตดูได้ในแท็บ TradingView แต่ไม่มีเลเยอร์ SMC ของเราซ้อน</li>
-      <li>ยังไม่รวม Kill Zone / session, Breaker Block, IPDA ฯลฯ</li>
-      <li>โบรกเกอร์ CFD ในยุโรปต้องเปิดเผยว่าบัญชีรายย่อยส่วนใหญ่ (ราว 70–90%) ขาดทุน</li>
-    </ul></div>
-
-  <div class="card"><h3>4) แนวทางใช้อย่างรอบคอบ</h3>
-    <ul>
-      <li>ทดสอบบนบัญชีเดโม และสะสมสัญญาณใน journal ให้ได้อย่างน้อยหลายสิบ–ร้อยรายการก่อนเชื่อผล</li>
-      <li>ดู Out-of-sample ก่อน In-sample และดู expectancy (R เฉลี่ย) ไม่ใช่แค่ win rate</li>
-      <li>กำหนดความเสี่ยงต่อไม้ต่ำ ๆ และใช้ SL ทุกครั้ง</li>
-      <li>เว็บนี้ไม่ใช่คำแนะนำการลงทุน ผู้ใช้รับผิดชอบการตัดสินใจเอง</li>
-    </ul></div>
-
-  <div class="card" style="grid-column:1/-1"><h3>Forward-test journal (เก็บในเบราว์เซอร์นี้)</h3>
-    <button id="jRef">ตรวจผลอีกครั้ง</button> <button id="jClr">ล้าง journal</button>
-    <div id="jTab" style="overflow-x:auto;margin-top:8px"></div></div>
-</div></section>
+<dialog id="keyDlg"><form method="dialog">
+  <p><b>Twelve Data API key</b></p>
+  <p class="mut">สมัครฟรีที่ twelvedata.com แล้ววาง key ที่นี่ จะถูกเก็บในเบราว์เซอร์ของคุณเท่านั้น (localStorage) ห้ามนำเว็บที่ใส่ key แล้วไปแชร์หรือใช้บนเครื่องสาธารณะ</p>
+  <input id="keyIn" type="password" style="width:100%" placeholder="API key">
+  <p style="text-align:right"><button value="cancel">ยกเลิก</button> <button id="keySave" value="ok">บันทึก</button></p>
+</form></dialog>
 
 <script>
 /*CORE_START*/
@@ -172,7 +193,6 @@ function smc(c,o){
   };
   for(let i=0;i<N;i++){
     const b=c[i];
-    // 1) ยืนยัน swing (หน่วง n แท่ง = ไม่มี look-ahead)
     const p=i-n;
     if(p>=n){
       let isH=true,isL=true;
@@ -194,9 +214,7 @@ function smc(c,o){
         pivL.push(lastL);
       }
     }
-    // 2) จัดการไม้ที่เปิดอยู่
     if(open){const r=chk(b);if(r!==null)closeT(r,i);}
-    // 3) หาจุดเข้า (OB ที่ยังไม่ถูกเจาะ สร้างก่อนแท่งนี้)
     if(!open&&trend&&lastH&&lastL){
       const eq=(lastH.price+lastL.price)/2;
       for(let k=obs.length-1;k>=0;k--){
@@ -214,7 +232,6 @@ function smc(c,o){
         break;
       }
     }
-    // 4) mitigation
     for(const ob of obs){
       if(ob.mit!=null||ob.i>=i)continue;
       if(ob.dir===1&&b.c<ob.bottom)ob.mit=i;
@@ -225,12 +242,10 @@ function smc(c,o){
       if(f.dir===1&&b.l<=f.bottom)f.mit=i;
       if(f.dir===-1&&b.h>=f.top)f.mit=i;
     }
-    // 5) FVG ใหม่
     if(i>=2){
       if(c[i].l>c[i-2].h&&c[i].l-c[i-2].h>0.1*atr[i]&&c[i-1].c>c[i-1].o)fvgs.push({i:i-2,i2:i,dir:1,top:c[i].l,bottom:c[i-2].h,mit:null});
       if(c[i].h<c[i-2].l&&c[i-2].l-c[i].h>0.1*atr[i]&&c[i-1].c<c[i-1].o)fvgs.push({i:i-2,i2:i,dir:-1,top:c[i-2].l,bottom:c[i].h,mit:null});
     }
-    // 6) BOS / CHoCH + Order Block
     if(lastH&&!lastH.crossed&&b.c>lastH.price){
       lastH.crossed=true;const type=trend===-1?'CHoCH':'BOS';trend=1;
       events.push({i,from:lastH.i,price:lastH.price,type,dir:1});
@@ -243,7 +258,6 @@ function smc(c,o){
       let mi=lastL.i,hi=-Infinity;for(let k=lastL.i;k<i;k++)if(c[k].h>hi){hi=c[k].h;mi=k;}
       obs.push({ci:mi,i,dir:-1,top:c[mi].h,bottom:c[mi].l,mit:null,used:false});
     }
-    // 7) Liquidity sweep
     if(lastH&&!lastH.crossed&&!lastH.swept&&b.h>lastH.price&&b.c<lastH.price){lastH.swept=true;sweeps.push({i,dir:-1,price:lastH.price,kind:'BSL'});}
     if(lastL&&!lastL.crossed&&!lastL.swept&&b.l<lastL.price&&b.c>lastL.price){lastL.swept=true;sweeps.push({i,dir:1,price:lastL.price,kind:'SSL'});}
     for(const l of liq){
@@ -256,53 +270,96 @@ function smc(c,o){
 }
 /*CORE_END*/
 
+/*HELP_START*/
+const nyFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function nyParts(ms){const o={};for(const p of nyFmt.formatToParts(new Date(ms)))if(p.type!=='literal')o[p.type]=+p.value;o.hour=o.hour%24;return o;}
+function nyDec(ms){const p=nyParts(ms);return p.hour+p.minute/60;}
+function nyOffsetH(ms){const p=nyParts(ms);return Math.round((Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second)-Math.floor(ms/1000)*1000)/3600000);}
+const KZ=[{k:'asian',n:'Asian Range (สะสม)',s:20,e:24},{k:'london',n:'London KZ (Judas Swing)',s:2,e:5},{k:'nyam',n:'NY AM / Silver Bullet',s:8.5,e:11},{k:'nypm',n:'NY PM',s:13.5,e:16}];
+function kzActive(ms){const d=nyDec(ms);return KZ.filter(z=>d>=z.s&&d<z.e);}
+function asianRange(c){
+  let end=-1;
+  for(let i=c.length-1;i>=0&&i>c.length-400;i--){if(nyDec(c[i].t)>=20){end=i;break;}}
+  if(end<0)return null;
+  let st=end;while(st>0&&nyDec(c[st-1].t)>=20&&c[end].t-c[st-1].t<5*3600e3)st--;
+  let hi=-Infinity,lo=Infinity;for(let i=st;i<=end;i++){hi=Math.max(hi,c[i].h);lo=Math.min(lo,c[i].l);}
+  return{i1:st,i2:end,hi,lo};
+}
+const EUR_UP=['dollar falls','dollar weakens','dollar slips','dollar drops','dollar retreats','dollar dips','weaker dollar','fed cut','fed cuts','dovish fed','fed dovish','ecb hike','ecb hawkish','hawkish ecb','euro rises','euro gains','euro rallies','euro climbs','euro jumps','dxy falls','dxy drops','dollar index falls'];
+const EUR_DN=['dollar rises','dollar strengthens','dollar gains','dollar climbs','dollar jumps','dollar rallies','stronger dollar','fed hike','fed hikes','fed hawkish','hawkish fed','higher for longer','ecb cut','ecb cuts','ecb dovish','dovish ecb','euro falls','euro slips','euro drops','euro weakens','euro slides','euro tumbles','dxy rises','dxy climbs','dollar index rises','eurozone recession'];
+function headlineScore(t){t=String(t).toLowerCase();let s=0;for(const k of EUR_UP)if(t.includes(k))s++;for(const k of EUR_DN)if(t.includes(k))s--;return Math.sign(s);}
+function parseCal(arr){
+  return (Array.isArray(arr)?arr:[]).filter(e=>e&&['USD','EUR'].includes(e.country)).map(e=>({t:Date.parse(e.date),cur:e.country,imp:String(e.impact||'').toLowerCase(),title:e.title,f:e.forecast,p:e.previous})).filter(e=>!isNaN(e.t)&&e.imp!=='holiday').sort((a,b)=>a.t-b.t);
+}
+function newsGate(cal,now){
+  for(const e of cal)if(e.imp==='high'&&now>=e.t-15*6e4&&now<=e.t+15*6e4)return{block:true,ev:e};
+  return{block:false};
+}
+/*HELP_END*/
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const TZ=7*3600;
-const TFS=['1m','5m','15m','1h','4h','1d'];
+const TZ=7*3600,TFS=['1m','5m','15m','1h','4h','1d'];
 const TFMS={'1m':6e4,'5m':3e5,'15m':9e5,'1h':36e5,'4h':144e5,'1d':864e5,'1w':6048e5};
-const SYMS={BTCUSDT:'BTC/USDT',ETHUSDT:'ETH/USDT',SOLUSDT:'SOL/USDT',BNBUSDT:'BNB/USDT',XRPUSDT:'XRP/USDT',PAXGUSDT:'PAXG/USDT (ทองคำ)'};
-const TVS={BTCUSDT:'BINANCE:BTCUSDT',ETHUSDT:'BINANCE:ETHUSDT',SOLUSDT:'BINANCE:SOLUSDT',BNBUSDT:'BINANCE:BNBUSDT',XRPUSDT:'BINANCE:XRPUSDT',PAXGUSDT:'OANDA:XAUUSD'};
 const TVI={'1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'};
 const HTF={'1m':'15m','5m':'1h','15m':'4h','1h':'1d','4h':'1d','1d':'1w'};
-const BASES=['https://api.binance.com','https://data-api.binance.vision'];
-const WSB=['wss://stream.binance.com:9443/ws/','wss://data-stream.binance.vision/ws/'];
-let sym='BTCUSDT',tf='15m',C=[],S=null,HT=0,PLAN=null,NEWS=[],FNG=null,NEWSC=0,ws=null,wsOn=false,wsIdx=0,tvKey='',timer=null,priceLines=[],newsWid=false;
-const L={ob:1,fvg:1,str:1,liq:1,pd:1,sw:0};
+const TDI={'1m':'1min','5m':'5min','15m':'15min','1h':'1h','4h':'4h','1d':'1day','1w':'1week'};
+const BASES=['https://api.binance.com','https://data-api.binance.vision'],WSB=['wss://stream.binance.com:9443/ws/','wss://data-stream.binance.vision/ws/'];
+const CFG={src:'bn',key:''};
+try{CFG.key=localStorage.getItem('td_key')||'';CFG.src=localStorage.getItem('src')||'bn';}catch(e){}
+let tf='15m',C=[],S=null,HT=0,PLAN=null,CAL=[],CALOK=false,NEWS=[],NEWSOK=false,SENT=0,ws=null,wsOn=false,wsIdx=0,pollT=null,tvKey='',timer=null,priceLines=[],calHigh=false,GATE={block:false};
+const L={ob:1,fvg:1,str:1,liq:1,pd:1,asia:1,sw:0};
+const fmt=x=>x==null?'—':x.toFixed(5);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const P=()=>({swing:+$('#swing').value||5,rr:+$('#rr').value||2,fee:0});
+const bkk=ms=>new Date(ms).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
 
-async function kl(s,t,limit=500,end,start){
-  let q=`/api/v3/klines?symbol=${s}&interval=${t}&limit=${limit}`;
-  if(end)q+=`&endTime=${end}`;if(start)q+=`&startTime=${start}`;
+// ---------- data sources ----------
+async function bnK(t,limit,o={}){
+  let q=`/api/v3/klines?symbol=EURUSDT&interval=${t}&limit=${Math.min(limit,1000)}`;
+  if(o.end)q+=`&endTime=${o.end}`;if(o.start)q+=`&startTime=${o.start}`;
   let err;
   for(const b of BASES){
     try{const r=await fetch(b+q);if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();
-      return a.map(k=>({t:k[0],time:k[0]/1000+TZ,o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));}
-    catch(e){err=e}
+      return a.map(k=>({t:k[0],time:k[0]/1000+TZ,o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));}catch(e){err=e}
   }
   throw err;
 }
-const fmt=x=>x==null?'—':x>=1000?x.toLocaleString('en',{maximumFractionDigits:1}):x>=1?x.toFixed(3):x.toFixed(5);
-const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const P=()=>({swing:+$('#swing').value||5,rr:+$('#rr').value||2,fee:0});
+const tdDate=ms=>new Date(ms).toISOString().slice(0,19).replace('T',' ');
+async function tdK(t,limit,o={}){
+  if(!CFG.key)throw new Error('ยังไม่ได้ใส่ Twelve Data API key (กดปุ่ม 🔑 Key)');
+  let q=`https://api.twelvedata.com/time_series?symbol=EUR/USD&interval=${TDI[t]}&outputsize=${Math.min(limit,5000)}&timezone=UTC&order=ASC&apikey=${encodeURIComponent(CFG.key)}`;
+  if(o.start)q+=`&start_date=${encodeURIComponent(tdDate(o.start))}`;
+  const r=await fetch(q);const j=await r.json();
+  if(j.status==='error'||!Array.isArray(j.values))throw new Error(j.message||'Twelve Data error');
+  return j.values.map(v=>{const d=v.datetime.length<=10?v.datetime+'T00:00:00Z':v.datetime.replace(' ','T')+'Z';const ms=Date.parse(d);
+    return{t:ms,time:ms/1000+TZ,o:+v.open,h:+v.high,l:+v.low,c:+v.close,v:0};});
+}
+const fetchK=(t,limit,o)=>CFG.src==='td'?tdK(t,limit,o):bnK(t,limit,o);
+async function history(total,prog){
+  if(CFG.src==='td'){const a=await tdK(tf,total);prog(a.length);return a.slice(-total);}
+  let arr=[],end;
+  while(arr.length<total){
+    const b=await bnK(tf,1000,{end});if(!b.length)break;
+    arr=b.concat(arr);end=b[0].t-1;prog(arr.length);if(b.length<1000)break;
+  }
+  return arr.slice(-total);
+}
 
 // ---------- chart ----------
 const chart=LightweightCharts.createChart($('#chart'),{
-  layout:{background:{color:'#131722'},textColor:'#b2b5be'},
-  grid:{vertLines:{color:'#1c2230'},horzLines:{color:'#1c2230'}},
-  rightPriceScale:{borderColor:'#2a2e39'},timeScale:{borderColor:'#2a2e39',timeVisible:true,secondsVisible:false},
-  crosshair:{mode:0}
+  layout:{background:{color:'#121824'},textColor:'#b2b5be'},
+  grid:{vertLines:{color:'#182030'},horzLines:{color:'#182030'}},
+  rightPriceScale:{borderColor:'#2a2e39'},timeScale:{borderColor:'#2a2e39',timeVisible:true,secondsVisible:false},crosshair:{mode:0}
 });
-const cs=chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
+const cs=chart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderVisible:false,wickUpColor:'#10b981',wickDownColor:'#ef4444',priceFormat:{type:'price',precision:5,minMove:0.00001}});
 const vs=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
-chart.priceScale('vol').applyOptions({scaleMargins:{top:.82,bottom:0}});
+chart.priceScale('vol').applyOptions({scaleMargins:{top:.85,bottom:0}});
 const ov=$('#ov'),ctx=ov.getContext('2d');
 function resize(){
   const b=$('#chart'),w=b.clientWidth,h=b.clientHeight,d=window.devicePixelRatio||1;
-  if(!w||!h)return;
-  chart.applyOptions({width:w,height:h});
-  ov.width=w*d;ov.height=h*d;ctx.setTransform(d,0,0,d,0,0);
+  if(!w||!h)return;chart.applyOptions({width:w,height:h});ov.width=w*d;ov.height=h*d;ctx.setTransform(d,0,0,d,0,0);
 }
-new ResizeObserver(resize).observe($('#chartWrapProbe')||$('.chartwrap'));
-
+new ResizeObserver(resize).observe($('.chartwrap'));
 function rect(x1,x2,a,b,fill,stroke,label){
   if(a==null||b==null||x2<=x1)return;
   const y=Math.min(a,b),h=Math.max(1,Math.abs(a-b));
@@ -312,84 +369,78 @@ function rect(x1,x2,a,b,fill,stroke,label){
 }
 function hline(x1,x2,y,col,dash,label){
   if(y==null)return;
-  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash(dash||[]);
-  ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash(dash||[]);ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();ctx.setLineDash([]);
   if(label){ctx.fillStyle=col;ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(label,(x1+x2)/2,y-3);ctx.textAlign='left';}
 }
 function draw(){
-  const W=$('#chart').clientWidth,H=$('#chart').clientHeight;
-  ctx.clearRect(0,0,W,H);
+  const W=$('#chart').clientWidth,H=$('#chart').clientHeight;ctx.clearRect(0,0,W,H);
   if(!S||!C.length||!$('#tab-chart').classList.contains('on'))return;
-  const ts=chart.timeScale();
-  let pw=60;try{pw=chart.priceScale('right').width()}catch(e){}
+  const ts=chart.timeScale();let pw=60;try{pw=chart.priceScale('right').width()}catch(e){}
   const R=W-pw;
   const X=i=>{const v=ts.timeToCoordinate(C[Math.min(Math.max(i,0),C.length-1)].time);return v==null?null:v};
   const Y=p=>cs.priceToCoordinate(p);
   ctx.save();ctx.beginPath();ctx.rect(0,0,R,H);ctx.clip();
   if(L.pd&&S.lastH&&S.lastL){
-    const x1=Math.max(0,X(Math.min(S.lastH.i,S.lastL.i))??0),hi=S.lastH.price,lo=S.lastL.price,eq=(hi+lo)/2;
-    rect(x1,R,Y(hi),Y(eq),'rgba(239,83,80,.06)');
-    rect(x1,R,Y(eq),Y(lo),'rgba(38,166,154,.06)');
+    const x1=Math.max(0,X(Math.min(S.lastH.i,S.lastL.i))??0),hi=S.lastH.price,lo=S.lastL.price,eq=(hi+lo)/2,r=hi-lo;
+    rect(x1,R,Y(hi),Y(eq),'rgba(239,68,68,.06)');rect(x1,R,Y(eq),Y(lo),'rgba(16,185,129,.06)');
     hline(x1,R,Y(eq),'#9e9e9e',[3,4],'EQ 50%');
-    const r=hi-lo;
-    if(S.trend===1)rect(x1,R,Y(hi-.62*r),Y(hi-.79*r),'rgba(240,185,11,.16)','rgba(240,185,11,.6)','OTE 62–79%');
-    if(S.trend===-1)rect(x1,R,Y(lo+.62*r),Y(lo+.79*r),'rgba(240,185,11,.16)','rgba(240,185,11,.6)','OTE 62–79%');
+    if(S.trend===1)rect(x1,R,Y(hi-.62*r),Y(hi-.79*r),'rgba(255,215,0,.15)','rgba(255,215,0,.6)','OTE 62–79%');
+    if(S.trend===-1)rect(x1,R,Y(lo+.62*r),Y(lo+.79*r),'rgba(255,215,0,.15)','rgba(255,215,0,.6)','OTE 62–79%');
   }
-  if(L.fvg){
-    const a=S.fvgs.filter(f=>f.mit==null).slice(-8);
-    for(const f of a)rect(X(f.i)??0,R,Y(f.top),Y(f.bottom),f.dir===1?'rgba(66,165,245,.2)':'rgba(255,167,38,.2)',null,'FVG');
+  if(L.asia&&S.asian){
+    const a=S.asian,x1=X(a.i1)??0;
+    rect(x1,R,Y(a.hi),Y(a.lo),'rgba(56,189,248,.07)');
+    hline(x1,R,Y(a.hi),'#38bdf8',[6,3],'Asian High');hline(x1,R,Y(a.lo),'#38bdf8',[6,3],'Asian Low');
   }
-  if(L.ob){
-    const a=S.obs.filter(o=>o.mit==null).slice(-8);
-    for(const o of a)rect(X(o.ci)??0,R,Y(o.top),Y(o.bottom),o.dir===1?'rgba(38,166,154,.25)':'rgba(239,83,80,.25)',o.dir===1?'#26a69a':'#ef5350',o.dir===1?'Bull OB':'Bear OB');
+  if(L.fvg)for(const f of S.fvgs.filter(f=>f.mit==null).slice(-8))rect(X(f.i)??0,R,Y(f.top),Y(f.bottom),f.dir===1?'rgba(66,165,245,.2)':'rgba(255,167,38,.2)',null,'FVG');
+  if(L.ob)for(const o of S.obs.filter(o=>o.mit==null).slice(-8))rect(X(o.ci)??0,R,Y(o.top),Y(o.bottom),o.dir===1?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)',o.dir===1?'#10b981':'#ef4444',o.dir===1?'Bull OB':'Bear OB');
+  if(L.liq)for(const l of S.liq.filter(l=>l.swept==null).slice(-6))hline(X(l.i1)??0,R,Y(l.price),'#cfd8dc',[2,3],l.type==='H'?'EQH':'EQL');
+  if(L.str)for(const e of S.events.slice(-12)){
+    const x1=X(e.from),x2=X(e.i);if(x1==null||x2==null)continue;
+    hline(x1,x2,Y(e.price),e.type==='CHoCH'?'#ffd700':(e.dir===1?'#10b981':'#ef4444'),[5,4],e.type);
   }
-  if(L.liq){
-    for(const l of S.liq.filter(l=>l.swept==null).slice(-6))hline(X(l.i1)??0,R,Y(l.price),'#cfd8dc',[2,3],l.type==='H'?'EQH':'EQL');
-  }
-  if(L.str){
-    for(const e of S.events.slice(-12)){
-      const x1=X(e.from),x2=X(e.i);if(x1==null||x2==null)continue;
-      hline(x1,x2,Y(e.price),e.type==='CHoCH'?'#f0b90b':(e.dir===1?'#26a69a':'#ef5350'),[5,4],e.type);
-    }
-  }
-  if(L.sw){
-    ctx.fillStyle='#90a4ae';
-    for(const s of S.swings.slice(-24)){const x=X(s.i),y=Y(s.price);if(x==null||y==null)continue;ctx.beginPath();ctx.arc(x,y+(s.type==='H'?-6:6),3,0,7);ctx.fill();}
-  }
+  if(L.sw){ctx.fillStyle='#90a4ae';for(const s of S.swings.slice(-24)){const x=X(s.i),y=Y(s.price);if(x==null||y==null)continue;ctx.beginPath();ctx.arc(x,y+(s.type==='H'?-6:6),3,0,7);ctx.fill();}}
   ctx.restore();
 }
 (function loop(){draw();requestAnimationFrame(loop)})();
 
-// ---------- plan ----------
+// ---------- plan / confluence ----------
 function makePlan(){
   const s=S,c=C,i=c.length-1;if(i<20)return null;
-  const price=c[i].c,atr=s.atr[i]||price*.002,dir=s.trend,o={dir,price,atr,items:[],score:0};
-  if(!dir||!s.lastH||!s.lastL){o.msg='โครงสร้างยังไม่ชัด — รอให้เกิด BOS/CHoCH';return o;}
+  const price=c[i].c,atr=s.atr[i]||price*.0005,dir=s.trend,o={dir,price,atr,items:[],score:0};
+  if(!dir||!s.lastH||!s.lastL){o.msg='โครงสร้างยังไม่ชัด — รอ BOS/CHoCH';return o;}
   const eq=(s.lastH.price+s.lastL.price)/2;o.zone=price>eq?'premium':'discount';
   const act=s.obs.filter(x=>x.mit==null&&x.dir===dir);
   let ob=null;
-  if(dir===1){const a=act.filter(x=>x.bottom<price).sort((a,b)=>b.top-a.top);ob=a[0];}
-  else{const a=act.filter(x=>x.top>price).sort((a,b)=>a.bottom-b.bottom);ob=a[0];}
+  if(dir===1)ob=act.filter(x=>x.bottom<price).sort((a,b)=>b.top-a.top)[0];
+  else ob=act.filter(x=>x.top>price).sort((a,b)=>a.bottom-b.bottom)[0];
   const add=(name,pts,max,note)=>{o.items.push({name,pts,max,note});o.score+=pts;};
-  add('โครงสร้างตลาด (BOS/CHoCH)',25,25,dir===1?'Bullish':'Bearish');
+  const lastEv=s.events[s.events.length-1],recent=lastEv&&i-lastEv.i<=60;
+  add(`โครงสร้าง (${lastEv?lastEv.type:'-'})`,recent?15:8,15,recent?'ล่าสุด':'เก่า');
   add('เทรนด์ TF ใหญ่ ('+HTF[tf]+')',HT===dir?20:HT===0?8:0,20,HT===dir?'ตรงกัน':HT===0?'ไม่ชัด':'สวนทาง');
   const pdok=(dir===1&&o.zone==='discount')||(dir===-1&&o.zone==='premium');
-  add('ราคาอยู่ฝั่ง '+(dir===1?'Discount':'Premium'),pdok?15:0,15,o.zone==='premium'?'Premium':'Discount');
+  add(dir===1?'อยู่ฝั่ง Discount':'อยู่ฝั่ง Premium',pdok?10:0,10,o.zone==='premium'?'Premium':'Discount');
   if(ob){
-    const inside=price<=ob.top&&price>=ob.bottom;
-    const dist=dir===1?price-ob.top:ob.bottom-price;
+    const inside=price<=ob.top&&price>=ob.bottom,dist=dir===1?price-ob.top:ob.bottom-price;
     o.inZone=inside;o.ob=ob;
     add('ใกล้/ในโซน Order Block',inside?20:dist<=1.5*atr?10:0,20,inside?'อยู่ในโซน':dist<=1.5*atr?'ใกล้โซน':'ยังห่าง');
-    const entry=inside?price:(dir===1?ob.top:ob.bottom);
-    const sl=dir===1?ob.bottom-.1*atr:ob.top+.1*atr,risk=Math.abs(entry-sl);
+    const entry=inside?price:(dir===1?ob.top:ob.bottom),sl=dir===1?ob.bottom-.1*atr:ob.top+.1*atr,risk=Math.abs(entry-sl);
     o.entry=entry;o.sl=sl;o.tp1=entry+dir*2*risk;
-    const tgt=dir===1?s.lastH.price:s.lastL.price;
-    o.tp2=(dir===1?tgt>entry:tgt<entry)?tgt:null;
+    const tgt=dir===1?s.lastH.price:s.lastL.price;o.tp2=(dir===1?tgt>entry:tgt<entry)?tgt:null;
   }else add('ใกล้/ในโซน Order Block',0,20,'ไม่มี OB ที่ยังไม่ถูกเจาะ');
-  const sw=s.sweeps.some(x=>x.i>i-40&&x.dir===dir);
-  add('กวาด Liquidity ล่าสุดตรงทิศ',sw?10:0,10,sw?'พบ':'ไม่พบ');
-  const nsc=NEWS.length?NEWSC:0,aligned=dir*nsc;
-  add('ข่าว/Sentiment',aligned>.15?10:aligned>-.15?5:0,10,NEWS.length?(nsc>.15?'บวก':nsc<-.15?'ลบ':'กลาง'):'ไม่มีข้อมูล');
+  let sw=s.sweeps.some(x=>x.i>i-40&&x.dir===dir),swNote=sw?'พบ':'ไม่พบ';
+  if(!sw&&s.asian){
+    const a=s.asian,from=Math.max(a.i2+1,i-60);
+    for(let k=from;k<=i;k++){if(dir===1&&c[k].l<a.lo){sw=true;swNote='กวาด Asian Low';break;}if(dir===-1&&c[k].h>a.hi){sw=true;swNote='กวาด Asian High';break;}}
+  }
+  add('กวาด Liquidity ตรงทิศ',sw?10:0,10,swNote);
+  const kz=kzActive(Date.now()).filter(z=>z.k!=='asian');
+  add('อยู่ใน Killzone',kz.length?10:0,10,kz.length?kz.map(z=>z.n.split(' ')[0]+' '+z.n.split(' ')[1]).join(', '):'นอก Killzone');
+  GATE=CALOK?newsGate(CAL,Date.now()):{block:false};
+  o.blocked=GATE.block;
+  add('ไม่ชนข่าวแรง ±15 นาที',GATE.block?0:CALOK?10:5,10,GATE.block?'ใกล้ข่าว: '+GATE.ev.title:CALOK?'ปลอดข่าว':'ไม่ทราบ (โหลดปฏิทินไม่ได้)');
+  const al=dir*SENT;
+  add('Sentiment ข่าวพาดหัว',!NEWSOK?3:al>.15?5:al>-.15?3:0,5,!NEWSOK?'ไม่มีข้อมูล':SENT>.15?'หนุน EUR':SENT<-.15?'หนุน USD':'กลาง');
   return o;
 }
 function renderSignal(){
@@ -398,91 +449,65 @@ function renderSignal(){
   const dn=p.dir===1?'<span class="up">Bullish ▲</span>':p.dir===-1?'<span class="dn">Bearish ▼</span>':'—';
   let h=`<div class="row"><span>ทิศทางตามโครงสร้าง</span><b>${dn}</b></div>`;
   if(p.msg){el.innerHTML=h+`<div class="mut">${p.msg}</div>`;$('#saveJ').disabled=true;return;}
-  const col=p.score>=70?'#26a69a':p.score>=50?'#f0b90b':'#ef5350';
-  h+=`<div class="big" style="color:${col}">${p.score}<span class="mut" style="font-size:13px"> / 100 confluence</span></div>
-  <div class="bar"><i style="width:${p.score}%;background:${col}"></i></div>`;
-  h+=p.items.map(x=>`<div class="row"><span>${x.name}</span><span class="${x.pts===x.max?'up':x.pts?'ac':'dn'}">${x.note} (${x.pts}/${x.max})</span></div>`).join('');
+  const col=p.blocked?'#ef4444':p.score>=75?'#10b981':p.score>=55?'#ffd700':'#ef4444';
+  const verdict=p.blocked?'งดเทรด: ใกล้ข่าวแรง':p.score>=75?'confluence สูง':p.score>=55?'confluence ปานกลาง':'confluence ต่ำ';
+  h+=`<div class="big" style="color:${col}">${p.score}<span class="mut" style="font-size:13px"> / 100 · ${verdict}</span></div><div class="bar"><i style="width:${p.score}%;background:${col}"></i></div>`;
+  h+=p.items.map(x=>`<div class="row"><span>${esc(x.name)}</span><span class="${x.pts===x.max?'up':x.pts?'ac':'dn'}">${esc(x.note)} (${x.pts}/${x.max})</span></div>`).join('');
   if(p.entry){
-    h+=`<hr style="border-color:#222836"><div class="row"><span>${p.inZone?'ราคาอยู่ในโซนแล้ว':'รอราคาเข้าโซน'}</span><b>${p.dir===1?'BUY':'SELL'}</b></div>
-    <div class="row"><span>Entry</span><b>${fmt(p.entry)}</b></div>
-    <div class="row"><span>Stop Loss</span><b class="dn">${fmt(p.sl)}</b></div>
-    <div class="row"><span>TP1 (2R)</span><b class="up">${fmt(p.tp1)}</b></div>
-    <div class="row"><span>TP2 (swing ตรงข้าม)</span><b class="up">${fmt(p.tp2)}</b></div>`;
-  }else h+='<div class="mut" style="margin-top:6px">ไม่มีโซนที่ใช้เข้าได้ในตอนนี้ — รอ</div>';
+    h+=`<hr style="border-color:#1e293b"><div class="row"><span>${p.inZone?'ราคาอยู่ในโซนแล้ว':'รอราคาเข้าโซน'}</span><b>${p.dir===1?'BUY':'SELL'}</b></div>
+    <div class="row"><span>Entry</span><b>${fmt(p.entry)}</b></div><div class="row"><span>Stop Loss</span><b class="dn">${fmt(p.sl)}</b></div>
+    <div class="row"><span>TP1 (2R)</span><b class="up">${fmt(p.tp1)}</b></div><div class="row"><span>TP2 (swing ตรงข้าม)</span><b class="up">${fmt(p.tp2)}</b></div>`;
+  }else h+='<div class="mut" style="margin-top:6px">ไม่มีโซนที่ใช้เข้าได้ — รอ</div>';
   h+='<div class="mut" style="margin-top:6px">คะแนนคือจำนวนปัจจัยที่สอดคล้อง ไม่ใช่ความน่าจะเป็นที่จะชนะ</div>';
-  el.innerHTML=h;$('#saveJ').disabled=!p.entry;
+  el.innerHTML=h;$('#saveJ').disabled=!p.entry||p.blocked;
 }
 function analyze(){
   if(C.length<30)return;
-  S=smc(C,P());PLAN=makePlan();renderSignal();
-  const mk=S.sweeps.slice(-15).map(x=>({time:C[x.i].time,position:x.dir===1?'belowBar':'aboveBar',color:x.dir===1?'#26a69a':'#ef5350',shape:x.dir===1?'arrowUp':'arrowDown',text:x.kind}));
+  S=smc(C,P());S.asian=(tf==='4h'||tf==='1d')?null:asianRange(C);
+  PLAN=makePlan();renderSignal();
+  const mk=S.sweeps.slice(-15).map(x=>({time:C[x.i].time,position:x.dir===1?'belowBar':'aboveBar',color:x.dir===1?'#10b981':'#ef4444',shape:x.dir===1?'arrowUp':'arrowDown',text:x.kind}));
   mk.sort((a,b)=>a.time-b.time);cs.setMarkers(mk);
   priceLines.forEach(l=>cs.removePriceLine(l));priceLines=[];
   if(PLAN&&PLAN.entry){
     const pl=(price,color,title)=>priceLines.push(cs.createPriceLine({price,color,lineWidth:1,lineStyle:2,axisLabelVisible:true,title}));
-    pl(PLAN.entry,'#f0b90b','Entry');pl(PLAN.sl,'#ef5350','SL');pl(PLAN.tp1,'#26a69a','TP1');
+    pl(PLAN.entry,'#ffd700','Entry');pl(PLAN.sl,'#ef4444','SL');pl(PLAN.tp1,'#10b981','TP1');
   }
 }
 const sched=()=>{if(timer)return;timer=setTimeout(()=>{timer=null;analyze()},800)};
 
-// ---------- data / websocket ----------
+// ---------- live ----------
 const setStatus=t=>$('#status').textContent=t;
-function stopWS(){wsOn=false;if(ws){try{ws.close()}catch(e){}ws=null}$('#live').classList.remove('on');}
-function startWS(){
+function stopLive(){wsOn=false;if(ws){try{ws.close()}catch(e){}ws=null}if(pollT){clearInterval(pollT);pollT=null}$('#live').classList.remove('on');}
+function applyCandle(b){
+  const last=C[C.length-1];
+  if(last.t===b.t)C[C.length-1]=b;else if(b.t>last.t){C.push(b);if(C.length>1500)C.shift();}else return;
+  cs.update({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c});
+  if(b.v)vs.update({time:b.time,value:b.v,color:b.c>=b.o?'#10b98155':'#ef444455'});
+  const pe=$('#price');pe.textContent=fmt(b.c);pe.className='price '+(b.c>=b.o?'up':'dn');sched();
+}
+function startLive(){
+  if(CFG.src==='td'){
+    setStatus('Twelve Data · อัปเดตทุก 2 นาที');$('#live').classList.add('on');
+    pollT=setInterval(async()=>{try{const a=await tdK(tf,3);a.forEach(applyCandle);}catch(e){setStatus('อัปเดตไม่ได้: '+e.message)}},120000);return;
+  }
   wsOn=true;
-  const w=new WebSocket(WSB[wsIdx]+sym.toLowerCase()+'@kline_'+tf);ws=w;
-  w.onopen=()=>{$('#live').classList.add('on');setStatus('เรียลไทม์ (Binance)')};
-  w.onmessage=e=>{
-    const k=JSON.parse(e.data).k;if(!k||!C.length)return;
-    const b={t:k.t,time:k.t/1000+TZ,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v},last=C[C.length-1];
-    if(last.t===b.t)C[C.length-1]=b;else if(b.t>last.t){C.push(b);if(C.length>1500)C.shift();}
-    cs.update({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c});
-    vs.update({time:b.time,value:b.v,color:b.c>=b.o?'#26a69a55':'#ef535055'});
-    const pe=$('#price');pe.textContent=fmt(b.c);pe.className='price '+(b.c>=b.o?'up':'dn');
-    sched();
-  };
+  const w=new WebSocket(WSB[wsIdx]+'eurusdt@kline_'+tf);ws=w;
+  w.onopen=()=>{$('#live').classList.add('on');setStatus('เรียลไทม์ · Binance EURUSDT')};
+  w.onmessage=e=>{const k=JSON.parse(e.data).k;if(!k||!C.length)return;applyCandle({t:k.t,time:k.t/1000+TZ,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v});};
   w.onerror=()=>{wsIdx=1-wsIdx};
-  w.onclose=()=>{$('#live').classList.remove('on');if(wsOn&&ws===w){setStatus('หลุดการเชื่อมต่อ กำลังต่อใหม่...');setTimeout(()=>{if(wsOn&&ws===w)startWS()},2000)}};
+  w.onclose=()=>{$('#live').classList.remove('on');if(wsOn&&ws===w){setStatus('หลุดการเชื่อมต่อ กำลังต่อใหม่...');setTimeout(()=>{if(wsOn&&ws===w)startLive()},2000)}};
 }
 async function load(){
-  stopWS();setStatus('กำลังโหลดข้อมูล...');
-  try{C=await kl(sym,tf,800);}
-  catch(e){setStatus('โหลดข้อมูลไม่ได้ (เครือข่ายอาจบล็อก Binance): '+e.message);return;}
+  stopLive();setStatus('กำลังโหลดข้อมูล...');
+  try{C=await fetchK(tf,800);}catch(e){setStatus('โหลดข้อมูลไม่ได้: '+e.message);return;}
   cs.setData(C.map(b=>({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c})));
-  vs.setData(C.map(b=>({time:b.time,value:b.v,color:b.c>=b.o?'#26a69a55':'#ef535055'})));
-  try{const h=await kl(sym,HTF[tf],500);HT=smc(h,{swing:P().swing,rr:2}).trend;}catch(e){HT=0}
+  vs.setData(CFG.src==='td'?[]:C.map(b=>({time:b.time,value:b.v,color:b.c>=b.o?'#10b98155':'#ef444455'})));
+  try{const h=await fetchK(HTF[tf],500);HT=smc(h,{swing:P().swing,rr:2}).trend;}catch(e){HT=0}
   chart.timeScale().setVisibleLogicalRange({from:C.length-120,to:C.length+10});
-  $('#price').textContent=fmt(C[C.length-1].c);
-  analyze();startWS();loadNews();
+  $('#price').textContent=fmt(C[C.length-1].c);analyze();startLive();
 }
 
-// ---------- news ----------
-const BULL=['surge','rally','soar','approve','approval','inflow','adoption','record high','all-time high','bullish','gain','upgrade','partnership','accumulate','breakout','rate cut','etf','buy','jump','recover'];
-const BEAR=['crash','hack','exploit','ban','lawsuit','sues','outflow','dump','bearish','plunge','liquidation','fraud','sell-off','selloff','decline','drop','fall','reject','rate hike','probe','collapse','fear','bankrupt'];
-async function loadNews(){
-  const cat={BTCUSDT:'BTC',ETHUSDT:'ETH',SOLUSDT:'SOL',BNBUSDT:'BNB',XRPUSDT:'XRP'}[sym]||'';
-  const get=async c=>{const r=await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN'+(c?'&categories='+c:''));const j=await r.json();return Array.isArray(j.Data)?j.Data:[]};
-  try{NEWS=await get(cat);if(!NEWS.length&&cat)NEWS=await get('');NEWS=NEWS.slice(0,25);}catch(e){NEWS=[]}
-  try{const r=await fetch('https://api.alternative.me/fng/?limit=1');const j=await r.json();FNG={v:+j.data[0].value,l:j.data[0].value_classification};}catch(e){FNG=null}
-  let sum=0;
-  for(const n of NEWS){
-    const t=(n.title+' '+(n.body||'').slice(0,300)).toLowerCase();
-    const b=BULL.filter(k=>t.includes(k)).length,r=BEAR.filter(k=>t.includes(k)).length;
-    n._s=Math.sign(b-r);sum+=n._s;
-  }
-  const hs=NEWS.length?sum/NEWS.length:0;
-  NEWSC=FNG?0.7*hs+0.3*((FNG.v-50)/50):hs;
-  renderNews();if(C.length)analyze();
-}
-function renderNews(){
-  const lab=NEWSC>.15?'<span class="up">เอนเอียงบวก</span>':NEWSC<-.15?'<span class="dn">เอนเอียงลบ</span>':'<span class="ac">กลาง</span>';
-  $('#newsSum').innerHTML=`<div class="row"><span>คะแนนรวม</span><b>${lab} (${NEWSC.toFixed(2)})</b></div>
-  <div class="row"><span>Fear &amp; Greed Index</span><b>${FNG?FNG.v+' – '+esc(FNG.l):'ไม่มีข้อมูล'}</b></div>
-  <div class="mut">คำนวณจากคำสำคัญในหัวข้อข่าว 25 ข่าวล่าสุด (70%) + Fear&amp;Greed (30%) เป็นการประมาณคร่าว ๆ</div>`;
-  $('#newsList').innerHTML=NEWS.length?NEWS.map(n=>`<div><span class="${n._s>0?'up':n._s<0?'dn':'mut'}">${n._s>0?'▲':n._s<0?'▼':'●'}</span>
-   <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
-   <div class="mut" style="border:none;padding:0">${esc(n.source||'')} · ${new Date(n.published_on*1000).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</div></div>`).join(''):'<div class="mut">โหลดข่าวไม่ได้</div>';
-}
+// ---------- calendar & news ----------
 function embed(id,file,cfg){
   const el=$(id);el.innerHTML='';
   const w=document.createElement('div');w.className='tradingview-widget-container';
@@ -490,35 +515,92 @@ function embed(id,file,cfg){
   const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/'+file;s.async=true;s.text=JSON.stringify(cfg);
   w.appendChild(s);el.appendChild(w);
 }
-function newsWidgets(){
-  if(newsWid)return;newsWid=true;
-  embed('#calw','embed-widget-events.js',{colorTheme:'dark',isTransparent:true,width:'100%',height:520,locale:'th_TH',importanceFilter:'0,1',currencyFilter:'USD,EUR,GBP,JPY,CNY'});
-  embed('#tlw','embed-widget-timeline.js',{feedMode:'market',market:'crypto',isTransparent:true,displayMode:'regular',width:'100%',height:520,colorTheme:'dark',locale:'th_TH'});
+async function loadCal(){
+  try{
+    const r=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');if(!r.ok)throw new Error(r.status);
+    CAL=parseCal(await r.json());CALOK=CAL.length>0;
+  }catch(e){CALOK=false;CAL=[];}
+  if(!CALOK){
+    $('#calBox').style.maxHeight='none';
+    embed('#calBox','embed-widget-events.js',{colorTheme:'dark',isTransparent:true,width:'100%',height:420,locale:'th_TH',importanceFilter:'0,1',currencyFilter:'USD,EUR'});
+  }else renderCal();
+  updateBanner();if(C.length)analyze();
+}
+function renderCal(){
+  if(!CALOK)return;
+  const now=Date.now();
+  let a=CAL.filter(e=>e.t>=now-3*3600e3);if(calHigh)a=a.filter(e=>e.imp==='high');
+  a=a.slice(0,14);
+  $('#calBox').innerHTML=a.length?a.map(e=>`<div><div class="row"><span><b class="ac">${bkk(e.t)}</b> <span class="pill low">${e.cur}</span></span><span class="pill ${e.imp==='high'?'high':e.imp==='medium'?'med':'low'}">${e.imp.toUpperCase()}</span></div>
+    <div>${esc(e.title)}</div><div class="mut">คาด ${esc(e.f||'-')} · ก่อนหน้า ${esc(e.p||'-')}${e.t<now?' · <span class="ac">ประกาศแล้ว</span>':''}</div></div>`).join(''):'<div class="mut">ไม่มีรายการในช่วงนี้</div>';
+}
+function updateBanner(){
+  const b=$('#banner');
+  if(!CALOK){b.className='';b.innerHTML='<span class="ac">⚠</span> โหลดปฏิทินข่าวอัตโนมัติไม่ได้ ระบบจึงไม่นำข่าวไปคิดคะแนนอัตโนมัติ — ดูปฏิทิน TradingView ด้านขวาและตรวจข่าวแรงด้วยตัวเองก่อนเทรด';return;}
+  const now=Date.now(),g=newsGate(CAL,now);
+  if(g.block){b.className='hot';b.innerHTML=`<b class="dn">⛔ ใกล้ข่าวแรง ±15 นาที:</b> ${g.ev.cur} ${esc(g.ev.title)} (${bkk(g.ev.t)} เวลาไทย) — ระบบงดให้สัญญาณ`;return;}
+  const nx=CAL.find(e=>e.imp==='high'&&e.t>now);
+  if(!nx){b.className='calm';b.innerHTML='<span class="up">✓</span> ไม่มีข่าว High impact USD/EUR ที่เหลือในสัปดาห์นี้';return;}
+  const m=Math.round((nx.t-now)/6e4),txt=m>=60?Math.floor(m/60)+' ชม. '+(m%60)+' น.':m+' นาที';
+  b.className=m<=60?'':'calm';
+  b.innerHTML=`<b class="${m<=60?'ac':'up'}">ข่าว High ถัดไป:</b> ${nx.cur} ${esc(nx.title)} · อีก ${txt} (${bkk(nx.t)} เวลาไทย)`;
+}
+async function loadNews(){
+  try{
+    const q='(EURUSD OR "euro dollar" OR ECB OR "Federal Reserve" OR "US dollar") sourcelang:english';
+    const r=await fetch('https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(q)+'&mode=artlist&maxrecords=25&sort=datedesc&timespan=1d&format=json');
+    if(!r.ok)throw new Error(r.status);const j=await r.json();
+    NEWS=(j.articles||[]).map(a=>({title:a.title,url:a.url,dom:a.domain,t:a.seendate?Date.parse(a.seendate.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,'$1-$2-$3T$4:$5:$6Z')):NaN,s:headlineScore(a.title)}));
+    NEWSOK=NEWS.length>0;
+  }catch(e){NEWSOK=false;NEWS=[];}
+  if(!NEWSOK){
+    embed('#newsBox','embed-widget-timeline.js',{feedMode:'symbol',symbol:'FX:EURUSD',isTransparent:true,displayMode:'regular',width:'100%',height:420,colorTheme:'dark',locale:'th_TH'});
+    $('#newsBox').style.maxHeight='none';$('#newsSum').textContent='ดึงข่าวอัตโนมัติไม่ได้ — แสดงไทม์ไลน์ TradingView แทน (ไม่ถูกนำไปคิดคะแนน)';
+  }else{
+    const sc=NEWS.filter(n=>n.s!==0);SENT=sc.length?sc.reduce((a,n)=>a+n.s,0)/sc.length:0;
+    $('#newsSum').innerHTML=`พาดหัวที่ตีความได้ ${sc.length}/${NEWS.length} · แนวโน้ม <b class="${SENT>.15?'up':SENT<-.15?'dn':'ac'}">${SENT>.15?'หนุน EUR (EURUSD ขึ้น)':SENT<-.15?'หนุน USD (EURUSD ลง)':'กลาง/ไม่ชัด'}</b> <span class="mut">(keyword หยาบ ๆ)</span>`;
+    $('#newsBox').innerHTML=NEWS.map(n=>`<div><span class="${n.s>0?'up':n.s<0?'dn':'mut'}">${n.s>0?'▲':n.s<0?'▼':'●'}</span> <a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="mut">${esc(n.dom||'')}${isNaN(n.t)?'':' · '+bkk(n.t)}</div></div>`).join('');
+  }
+  if(C.length)analyze();
 }
 
-// ---------- TradingView full ----------
+// ---------- clocks / killzones ----------
+function tick(){
+  const now=Date.now(),d=new Date(now);
+  $('#nyc').textContent=d.toLocaleTimeString('en-GB',{timeZone:'America/New_York'});
+  $('#bkc').textContent=d.toLocaleTimeString('en-GB',{timeZone:'Asia/Bangkok'});
+  const off=nyOffsetH(now),act=kzActive(now).map(z=>z.k),dec=nyDec(now);
+  const hm=h=>{h=((h-off+7)%24+24)%24;const H=Math.floor(h),M=Math.round((h-H)*60);return String(H).padStart(2,'0')+':'+String(M).padStart(2,'0')};
+  $('#kzs').innerHTML=KZ.map(z=>`<div class="kz ${act.includes(z.k)?'on':''}"><div><b>${z.n}</b><div class="mut">NY ${String(Math.floor(z.s)).padStart(2,'0')}:${z.s%1?'30':'00'}–${String(z.e%24).padStart(2,'0')}:${z.e%1?'30':'00'} · ไทย ${hm(z.s)}–${hm(z.e)}</div></div><span class="b">${act.includes(z.k)?'ACTIVE':'—'}</span></div>`).join('');
+  if(CALOK&&Math.floor(now/1000)%20===0){updateBanner();renderCal();}
+}
+
+// ---------- risk calc ----------
+function calc(){
+  const bal=+$('#cb').value||0,rk=+$('#cr').value||0,e=+$('#ce').value||0,sl=+$('#cs').value||0,tp=+$('#ct').value||0;
+  const risk=bal*rk/100,sd=Math.abs(e-sl),td=Math.abs(tp-e);
+  if(!sd){$('#calcOut').innerHTML='<div class="mut">กรอก Entry และ SL</div>';return;}
+  const pips=sd/0.0001,lot=risk/(pips*10),prof=td/0.0001*10*lot;
+  $('#calcOut').innerHTML=`<div class="row"><span>เงินเสี่ยง</span><b class="ac">$${risk.toFixed(2)}</b></div><div class="row"><span>SL</span><b>${pips.toFixed(1)} pips</b></div>
+  <div class="row"><span>ขนาดไม้</span><b class="bl">${lot.toFixed(2)} lot</b></div><div class="row"><span>R:R</span><b class="up">1 : ${(td/sd).toFixed(2)}</b></div><div class="row"><span>กำไรถ้าถึง TP</span><b class="up">$${prof.toFixed(2)}</b></div>
+  <div class="mut">สมมติ 1 pip ของ 1 lot = $10 (คู่ที่ USD เป็น quote) ตรวจกับโบรกเกอร์อีกครั้ง</div>`;
+}
+$$('#cb,#cr,#ce,#cs,#ct').forEach(i=>i.oninput=calc);
+$('#fillPlan').onclick=()=>{if(PLAN&&PLAN.entry){$('#ce').value=PLAN.entry.toFixed(5);$('#cs').value=PLAN.sl.toFixed(5);$('#ct').value=PLAN.tp1.toFixed(5);calc();}};
+
+// ---------- TradingView ----------
 function loadTV(){
-  const key=sym+tf;if(tvKey===key)return;tvKey=key;
-  const mk=()=>{$('#tvc').innerHTML='';new TradingView.widget({autosize:true,symbol:TVS[sym],interval:TVI[tf],timezone:'Asia/Bangkok',theme:'dark',style:'1',locale:'th_TH',toolbar_bg:'#131722',enable_publishing:false,allow_symbol_change:true,container_id:'tvc',withdateranges:true});};
+  const key=tf;if(tvKey===key)return;tvKey=key;
+  const mk=()=>{$('#tvc').innerHTML='';new TradingView.widget({autosize:true,symbol:'FX:EURUSD',interval:TVI[tf],timezone:'Asia/Bangkok',theme:'dark',style:'1',locale:'th_TH',toolbar_bg:'#121824',enable_publishing:false,allow_symbol_change:true,container_id:'tvc',withdateranges:true});};
   if(window.TradingView)mk();else{const s=document.createElement('script');s.src='https://s3.tradingview.com/tv.js';s.onload=mk;document.head.appendChild(s);}
 }
 
 // ---------- backtest ----------
-async function history(s,t,total,prog){
-  let arr=[],end;
-  while(arr.length<total){
-    const b=await kl(s,t,1000,end);if(!b.length)break;
-    arr=b.concat(arr);end=b[0].t-1;prog(arr.length);
-    if(b.length<1000)break;
-  }
-  return arr.slice(-total);
-}
-function cardStats(title,st,rr,fee){
+function cardStats(title,st,rr){
   if(!st)return `<div class="card"><h3>${title}</h3><div class="mut">ไม่มีเทรด</div></div>`;
-  const be=(1+fee/100*0)/(1+rr);
+  const be=1/(1+rr);
   return `<div class="card"><h3>${title}</h3>
-  <div class="row"><span>จำนวนเทรด</span><b>${st.n}</b></div>
-  <div class="row"><span>Win rate</span><b>${(st.wr*100).toFixed(1)}%</b></div>
+  <div class="row"><span>จำนวนเทรด</span><b>${st.n}</b></div><div class="row"><span>Win rate</span><b>${(st.wr*100).toFixed(1)}%</b></div>
   <div class="row"><span>ช่วงเชื่อมั่น 95%</span><b>${(st.ci[0]*100).toFixed(1)}–${(st.ci[1]*100).toFixed(1)}%</b></div>
   <div class="row"><span>Win rate จุดคุ้มทุน (ก่อนค่าธรรมเนียม)</span><b>${(be*100).toFixed(1)}%</b></div>
   <div class="row"><span>Expectancy (R/เทรด)</span><b class="${st.avg>0?'up':'dn'}">${st.avg.toFixed(3)}</b></div>
@@ -530,34 +612,32 @@ $('#btRun').onclick=async()=>{
   const total=+$('#btN').value,o={swing:+$('#btSw').value||5,rr:+$('#btRR').value||2,fee:+$('#btFee').value||0};
   $('#btOut').innerHTML='';$('#btRun').disabled=true;
   try{
-    const h=await history(sym,tf,total,n=>$('#btProg').textContent=`ดึงข้อมูล ${n}/${total} แท่ง...`);
+    const h=await history(total,n=>$('#btProg').textContent=`ดึงข้อมูล ${n}/${total} แท่ง...`);
     $('#btProg').textContent='กำลังคำนวณ...';await new Promise(r=>setTimeout(r,30));
     const r=smc(h,o),tr=r.trades,half=Math.floor(tr.length/2);
-    const from=new Date(h[0].t).toLocaleDateString('th-TH'),to=new Date(h[h.length-1].t).toLocaleDateString('th-TH');
-    $('#btProg').textContent=`${SYMS[sym]} ${tf} · ${h.length} แท่ง (${from} – ${to})`;
-    let html='<div class="cols">'+cardStats('ทั้งหมด',stats(tr),o.rr,o.fee)+cardStats('ครึ่งแรก (In-sample)',stats(tr.slice(0,half)),o.rr,o.fee)+cardStats('ครึ่งหลัง (Out-of-sample)',stats(tr.slice(half)),o.rr,o.fee)+'</div>';
+    $('#btProg').textContent=`EURUSD ${tf} · ${h.length} แท่ง (${new Date(h[0].t).toLocaleDateString('th-TH')} – ${new Date(h[h.length-1].t).toLocaleDateString('th-TH')})`;
+    let html='<div class="cols">'+cardStats('ทั้งหมด',stats(tr),o.rr)+cardStats('ครึ่งแรก (In-sample)',stats(tr.slice(0,half)),o.rr)+cardStats('ครึ่งหลัง (Out-of-sample)',stats(tr.slice(half)),o.rr)+'</div>';
     html+='<div class="card"><h3>Equity curve (หน่วย R)</h3><canvas id="eqc" height="220" style="width:100%"></canvas><div class="mut">เส้นประแนวตั้ง = จุดแบ่ง In/Out-of-sample</div></div>';
-    html+='<div class="card" style="overflow-x:auto"><h3>20 เทรดล่าสุด</h3><table><tr><th>เวลา</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>R</th></tr>'+
-      tr.slice(-20).reverse().map(x=>`<tr><td>${new Date(x.t).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td class="${x.r>0?'up':'dn'}">${x.r.toFixed(2)}</td></tr>`).join('')+'</table></div>';
-    html+='<div class="warn">ผล backtest ไม่รับประกันอนาคต ถ้า Out-of-sample แย่กว่า In-sample มาก แปลว่าอาจ overfit หรือ edge ไม่จริง ลองหลายสินทรัพย์/TF/ช่วงเวลาก่อนสรุป</div>';
+    html+='<div class="card" style="overflow-x:auto"><h3>20 เทรดล่าสุด</h3><table><tr><th>เวลา (ไทย)</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>R</th></tr>'+
+      tr.slice(-20).reverse().map(x=>`<tr><td>${bkk(x.t)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td class="${x.r>0?'up':'dn'}">${x.r.toFixed(2)}</td></tr>`).join('')+'</table></div>';
+    html+='<div class="warn">ผล backtest ไม่รับประกันอนาคต และ backtest นี้ไม่รวมกฎ Killzone/ข่าว ถ้า Out-of-sample แย่กว่า In-sample มาก อาจ overfit หรือ edge ไม่จริง</div>';
     $('#btOut').innerHTML=html;
-    const cv=$('#eqc'),cx=cv.getContext('2d'),W=cv.width=cv.clientWidth*(devicePixelRatio||1),Hh=cv.height=220*(devicePixelRatio||1);
+    const cv=$('#eqc'),cx=cv.getContext('2d'),dpr=devicePixelRatio||1,W=cv.width=cv.clientWidth*dpr,Hh=cv.height=220*dpr;
     let e=0;const pts=[0];for(const x of tr){e+=x.r;pts.push(e)}
     const mn=Math.min(...pts),mx=Math.max(...pts),sx=i=>i/(pts.length-1||1)*(W-10)+5,sy=v=>Hh-10-(v-mn)/((mx-mn)||1)*(Hh-20);
-    cx.strokeStyle='#f0b90b';cx.lineWidth=2;cx.beginPath();pts.forEach((v,i)=>i?cx.lineTo(sx(i),sy(v)):cx.moveTo(sx(i),sy(v)));cx.stroke();
+    cx.strokeStyle='#ffd700';cx.lineWidth=2;cx.beginPath();pts.forEach((v,i)=>i?cx.lineTo(sx(i),sy(v)):cx.moveTo(sx(i),sy(v)));cx.stroke();
     cx.strokeStyle='#555';cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(5,sy(0));cx.lineTo(W-5,sy(0));cx.moveTo(sx(half),0);cx.lineTo(sx(half),Hh);cx.stroke();
   }catch(err){$('#btProg').textContent='ผิดพลาด: '+err.message;}
   $('#btRun').disabled=false;
 };
 
-// ---------- forward-test journal ----------
-const jget=()=>{try{return JSON.parse(localStorage.getItem('smc_journal')||'[]')}catch(e){return[]}};
-const jset=a=>{try{localStorage.setItem('smc_journal',JSON.stringify(a))}catch(e){}};
+// ---------- journal ----------
+const jget=()=>{try{return JSON.parse(localStorage.getItem('smc_eu_journal')||'[]')}catch(e){return[]}};
+const jset=a=>{try{localStorage.setItem('smc_eu_journal',JSON.stringify(a))}catch(e){}};
 $('#saveJ').onclick=()=>{
-  if(!PLAN||!PLAN.entry)return;
-  const a=jget();
-  a.push({id:Date.now(),t:Date.now(),symbol:sym,tf,dir:PLAN.dir,entry:PLAN.entry,sl:PLAN.sl,tp:PLAN.tp1,score:PLAN.score,status:'pending'});
-  jset(a);$('#saveJ').textContent='บันทึกแล้ว ✓';setTimeout(()=>$('#saveJ').textContent='บันทึกสัญญาณนี้เข้า Forward-test journal',1500);
+  if(!PLAN||!PLAN.entry||PLAN.blocked)return;
+  const a=jget();a.push({id:Date.now(),t:Date.now(),src:CFG.src,tf,dir:PLAN.dir,entry:PLAN.entry,sl:PLAN.sl,tp:PLAN.tp1,score:PLAN.score,status:'pending'});
+  jset(a);$('#saveJ').textContent='บันทึกแล้ว ✓';setTimeout(()=>$('#saveJ').textContent='บันทึกสัญญาณเข้า Forward-test journal',1500);
 };
 function judge(j,cs2){
   let filled=j.filled||null;
@@ -567,49 +647,48 @@ function judge(j,cs2){
       if(j.dir===1?b.l<=j.entry:b.h>=j.entry)filled=b.t;
       else{if(b.t-j.t>200*TFMS[j.tf])return{status:'expired'};continue;}
     }
-    if(j.dir===1){if(b.l<=j.sl)return{status:'loss',r:-1,filled};if(b.h>=j.tp)return{status:'win',r:2,filled};}
-    else{if(b.h>=j.sl)return{status:'loss',r:-1,filled};if(b.l<=j.tp)return{status:'win',r:2,filled};}
+    if(j.dir===1){if(b.l<=j.sl)return{status:'loss',filled};if(b.h>=j.tp)return{status:'win',filled};}
+    else{if(b.h>=j.sl)return{status:'loss',filled};if(b.l<=j.tp)return{status:'win',filled};}
   }
   return{status:filled?'open':'pending',filled};
 }
 async function refreshJournal(){
   const a=jget();
   for(const j of a){
-    if(j.status==='win'||j.status==='loss'||j.status==='expired')continue;
-    try{const cs2=await kl(j.symbol,j.tf,1000,undefined,j.t);Object.assign(j,judge(j,cs2));}catch(e){}
+    if(['win','loss','expired'].includes(j.status))continue;
+    if(j.src!==CFG.src)continue;
+    try{const k=await fetchK(j.tf,j.src==='td'?500:1000,{start:j.t});Object.assign(j,judge(j,k));}catch(e){}
   }
   jset(a);renderJournal();
 }
 function renderJournal(){
-  const a=jget(),w=a.filter(x=>x.status==='win').length,l=a.filter(x=>x.status==='loss').length;
-  const tot=w+l,R=w*2-l;
+  const a=jget(),w=a.filter(x=>x.status==='win').length,l=a.filter(x=>x.status==='loss').length,tot=w+l,R=w*2-l;
   $('#jBox').innerHTML=`<div class="warn">Forward-test ของคุณ: ปิดแล้ว ${tot} เทรด · ชนะ ${w} · แพ้ ${l}${tot?` · win rate ${(w/tot*100).toFixed(0)}% · รวม ${R>=0?'+':''}${R}R (ยังไม่หักค่าธรรมเนียม)`:''}${tot<30?'<br>ตัวอย่างยังน้อยเกินกว่าจะสรุปอะไรได้':''}</div>`;
-  $('#jTab').innerHTML=a.length?'<table><tr><th>เวลา</th><th>สินทรัพย์</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>Score</th><th>สถานะ</th></tr>'+
-    a.slice().reverse().map(x=>`<tr><td>${new Date(x.t).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</td><td>${esc(x.symbol)} ${esc(x.tf)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td>${x.score}</td><td class="${x.status==='win'?'up':x.status==='loss'?'dn':'mut'}">${x.status}</td></tr>`).join('')+'</table>':'<div class="mut">ยังไม่มีรายการ — กดปุ่ม "บันทึกสัญญาณ" ในแท็บกราฟ</div>';
+  $('#jTab').innerHTML=a.length?'<table><tr><th>เวลา (ไทย)</th><th>แหล่งข้อมูล</th><th>TF</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>Score</th><th>สถานะ</th></tr>'+
+    a.slice().reverse().map(x=>`<tr><td>${bkk(x.t)}</td><td>${x.src==='td'?'TwelveData':'Binance'}</td><td>${esc(x.tf)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td>${x.score}</td><td class="${x.status==='win'?'up':x.status==='loss'?'dn':'mut'}">${x.status}</td></tr>`).join('')+'</table>':'<div class="mut">ยังไม่มีรายการ — กดปุ่มบันทึกสัญญาณทางซ้าย</div>';
 }
 $('#jRef').onclick=refreshJournal;
 $('#jClr').onclick=()=>{if(confirm('ล้าง journal ทั้งหมด?')){jset([]);renderJournal();}};
 
-// ---------- UI wiring ----------
-$('#sym').innerHTML=Object.entries(SYMS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+// ---------- wiring ----------
 $('#tfs').innerHTML=TFS.map(t=>`<button data-tf="${t}" class="${t===tf?'on':''}">${t}</button>`).join('');
-$('#sym').onchange=e=>{sym=e.target.value;load()};
 $('#tfs').onclick=e=>{const t=e.target.dataset.tf;if(!t)return;tf=t;$$('#tfs button').forEach(b=>b.classList.toggle('on',b.dataset.tf===t));load();if($('#tab-tv').classList.contains('on'))loadTV();};
-$$('[data-l]').forEach(c=>c.onchange=()=>{L[c.dataset.l]=c.checked?1:0});
-$$('[data-l]').forEach(c=>L[c.dataset.l]=c.checked?1:0);
+$('#src').value=CFG.src;
+$('#src').onchange=e=>{CFG.src=e.target.value;try{localStorage.setItem('src',CFG.src)}catch(_){}if(CFG.src==='td'&&!CFG.key)$('#keyDlg').showModal();load();};
+$('#keyBtn').onclick=()=>{$('#keyIn').value=CFG.key;$('#keyDlg').showModal();};
+$('#keyDlg').addEventListener('close',()=>{if($('#keyDlg').returnValue==='ok'){CFG.key=$('#keyIn').value.trim();try{localStorage.setItem('td_key',CFG.key)}catch(_){}if(CFG.src==='td')load();}});
+$$('[data-l]').forEach(c=>{L[c.dataset.l]=c.checked?1:0;c.onchange=()=>{L[c.dataset.l]=c.checked?1:0}});
 $('#swing').onchange=$('#rr').onchange=()=>load();
-$$('.tabs button').forEach(b=>b.onclick=()=>{
-  $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+$('#calAll').onclick=()=>{calHigh=false;$('#calAll').classList.add('on');renderCal()};
+$('#calHigh').onclick=()=>{calHigh=true;renderCal()};
+$$('#tabs button').forEach(b=>b.onclick=()=>{
+  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.tab').forEach(x=>x.classList.toggle('on',x.id==='tab-'+b.dataset.tab));
   const t=b.dataset.tab;
-  if(t==='chart')setTimeout(resize,30);
-  if(t==='tv')loadTV();
-  if(t==='news')newsWidgets();
-  if(t==='proof'){renderJournal();refreshJournal();}
+  if(t==='chart')setTimeout(resize,30);if(t==='tv')loadTV();if(t==='proof'){renderJournal();refreshJournal();}
 });
-$('#sym').addEventListener('change',()=>{tvKey=''});
-resize();load();renderJournal();
-setInterval(loadNews,300000);
+resize();load();loadCal();loadNews();renderJournal();calc();tick();
+setInterval(tick,1000);setInterval(loadCal,15*60e3);setInterval(loadNews,10*60e3);
 </script>
 </body>
 </html>
