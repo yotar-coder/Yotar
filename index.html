@@ -1,851 +1,615 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC / ICT Smart Money Pro Terminal + Macro News Engine</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- TradingView Widget Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0b0e14',
-                        cardBg: '#121824',
-                        cardHeaderBg: '#182030',
-                        borderBg: '#1e293b',
-                        accentGold: '#ffd700',
-                        accentGreen: '#10b981',
-                        accentRed: '#ef4444',
-                        accentBlue: '#38bdf8',
-                        accentPurple: '#a855f7'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0b0e14;
-            color: #e2e8f0;
-            overflow-x: hidden;
-        }
-        
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0b0e14;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
-        }
-
-        .tab-active {
-            border-bottom: 2px solid #ffd700;
-            color: #ffd700;
-            font-weight: 600;
-            background: rgba(255, 215, 0, 0.05);
-        }
-
-        .pulse-active {
-            animation: pulse-glow 2s infinite;
-        }
-
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        .pulse-danger {
-            animation: pulse-red 1.5s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMC Trading Assistant</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--bg:#0b0e14;--panel:#131722;--line:#222836;--tx:#d1d4dc;--mut:#7d8597;--up:#26a69a;--dn:#ef5350;--ac:#f0b90b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.55 system-ui,'Noto Sans Thai','Segoe UI',sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header b{color:var(--ac);font-size:16px}
+select,input,button{background:#1b2030;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:5px 9px;font:inherit}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+.seg button{border-radius:0;margin-left:-1px}.seg button.on{background:var(--ac);color:#000;border-color:var(--ac)}
+.price{font-size:18px;font-weight:700;margin-left:auto}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);display:inline-block}.dot.on{background:var(--up);box-shadow:0 0 6px var(--up)}
+.mut{color:var(--mut);font-size:12px}
+.tabs{display:flex;gap:2px;background:var(--panel);padding:0 10px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 14px;white-space:nowrap;color:var(--mut)}
+.tabs button.on{color:var(--ac);border-color:var(--ac)}
+.tab{display:none;padding:10px}.tab.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 330px;gap:10px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.chartwrap{position:relative;height:calc(100vh - 150px);min-height:440px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+#chart,#ov{position:absolute;inset:0;width:100%;height:100%}#ov{pointer-events:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--ac)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.bar{height:10px;background:#1b2030;border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
+.up{color:var(--up)}.dn{color:var(--dn)}.ac{color:var(--ac)}
+label.ck{display:inline-flex;gap:5px;margin:2px 10px 2px 0;align-items:center;font-size:13px}
+#tvc{height:calc(100vh - 130px);min-height:480px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.big{font-size:22px;font-weight:700}
+.warn{border-left:3px solid var(--ac);padding:8px 12px;background:#1b1a10;border-radius:4px;margin:8px 0}
+a{color:#64b5f6}ul{padding-left:20px;margin:6px 0}
+.news a{color:var(--tx);text-decoration:none}.news a:hover{color:var(--ac)}.news div{padding:6px 0;border-bottom:1px solid var(--line)}
+</style>
 </head>
-<body class="h-screen flex flex-col bg-darkBg text-slate-200 antialiased selection:bg-amber-500 selection:text-black">
+<body>
+<header>
+  <b>◆ SMC Trading Assistant</b>
+  <select id="sym"></select>
+  <div id="tfs" class="seg"></div>
+  <span class="price" id="price">—</span><span class="dot" id="live"></span><span class="mut" id="status"></span>
+</header>
+<nav class="tabs">
+  <button data-tab="chart" class="on">กราฟ SMC เรียลไทม์</button>
+  <button data-tab="tv">TradingView เต็มรูปแบบ</button>
+  <button data-tab="news">ข่าว &amp; ปฏิทินเศรษฐกิจ</button>
+  <button data-tab="bt">Backtest</button>
+  <button data-tab="proof">ความน่าเชื่อถือ &amp; การพิสูจน์</button>
+</nav>
 
-    <!-- TOP NAVIGATION BAR -->
-    <header class="h-14 bg-cardBg border-b border-borderBg flex items-center justify-between px-3 md:px-5 shrink-0 z-30">
-        <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-2 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 px-3 py-1 rounded-lg text-black font-extrabold tracking-wide shadow-lg">
-                <i class="fa-solid fa-chart-line text-lg"></i>
-                <span class="text-xs sm:text-sm uppercase tracking-wider">ICT / SMC PRO TERMINAL</span>
-            </div>
-            <span class="hidden xl:inline-flex items-center space-x-1.5 text-[11px] bg-slate-800/80 text-amber-400 px-2.5 py-1 rounded font-mono border border-amber-500/20">
-                <i class="fa-solid fa-globe"></i>
-                <span>Macro & News Integration Engine</span>
-            </span>
-        </div>
-
-        <!-- Symbol & Timeframe Quick Selector -->
-        <div class="flex items-center space-x-2 font-mono text-xs overflow-x-auto py-1">
-            <div class="flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
-                <button onclick="changeSymbol('FX:EURUSD')" id="sym-EURUSD" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-xs transition">EUR/USD</button>
-                <button onclick="changeSymbol('FX:GBPUSD')" id="sym-GBPUSD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">GBP/USD</button>
-                <button onclick="changeSymbol('TVC:GOLD')" id="sym-GOLD" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">XAU/USD</button>
-                <button onclick="changeSymbol('BINANCE:BTCUSDT')" id="sym-BTCUSDT" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">BTC/USDT</button>
-                <button onclick="changeSymbol('CAPITALCOM:US30')" id="sym-US30" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">US30</button>
-                <button onclick="changeSymbol('CAPITALCOM:NAS100')" id="sym-NAS100" class="px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition">NAS100</button>
-            </div>
-
-            <div class="hidden sm:block h-4 w-[1px] bg-borderBg"></div>
-
-            <div class="hidden sm:flex bg-darkBg border border-borderBg rounded-lg p-1 space-x-1">
-                <button onclick="changeTimeframe('1')" id="tf-1" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1m</button>
-                <button onclick="changeTimeframe('5')" id="tf-5" class="px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition">5m</button>
-                <button onclick="changeTimeframe('15')" id="tf-15" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">15m</button>
-                <button onclick="changeTimeframe('60')" id="tf-60" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1h</button>
-                <button onclick="changeTimeframe('240')" id="tf-240" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">4h</button>
-                <button onclick="changeTimeframe('D')" id="tf-D" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition">1D</button>
-            </div>
-        </div>
-
-        <!-- Clocks Header -->
-        <div class="hidden md:flex items-center space-x-4 font-mono text-xs">
-            <div class="text-right">
-                <div class="text-[10px] text-slate-400 uppercase tracking-widest">New York (EST/EDT)</div>
-                <div id="ny-clock" class="text-amber-400 font-bold">00:00:00 EST</div>
-            </div>
-            <div class="h-6 w-[1px] bg-borderBg"></div>
-            <div class="text-right">
-                <div class="text-[10px] text-slate-400 uppercase tracking-widest">Thailand (BKK)</div>
-                <div id="bkk-clock" class="text-emerald-400 font-bold">00:00:00 ICT</div>
-            </div>
-        </div>
-    </header>
-
-    <!-- LIVE HIGH IMPACT NEWS WARNING BANNER -->
-    <div id="news-volatility-banner" class="bg-amber-950/80 border-b border-amber-500/40 px-4 py-2 flex items-center justify-between text-xs font-mono transition-all">
-        <div class="flex items-center space-x-2.5">
-            <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            <span class="text-amber-300 font-bold uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>HIGH IMPACT MACRO WARNING:</span>
-            <span id="news-banner-text" class="text-slate-200">US Core CPI & Unemployment Claims scheduled at 08:30 EST (19:30 BKK). Expect Liquidity Sweeps & High Volatility.</span>
-        </div>
-        <div class="hidden lg:flex items-center space-x-2">
-            <span class="text-slate-400 text-[11px]">Recommended Rule:</span>
-            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-[10px]">STAND ASIDE OR HUNT JUDAS SWING</span>
-        </div>
+<section id="tab-chart" class="tab on"><div class="grid">
+  <div class="chartwrap"><div id="chart"></div><canvas id="ov"></canvas></div>
+  <aside>
+    <div class="card"><h3>สัญญาณ / แผนเทรด (confluence)</h3><div id="sig" class="mut">กำลังโหลด...</div>
+      <button id="saveJ" style="margin-top:8px;width:100%" disabled>บันทึกสัญญาณนี้เข้า Forward-test journal</button></div>
+    <div class="card"><h3>เลเยอร์บนกราฟ</h3>
+      <label class="ck"><input type="checkbox" data-l="ob" checked>Order Block</label>
+      <label class="ck"><input type="checkbox" data-l="fvg" checked>FVG</label>
+      <label class="ck"><input type="checkbox" data-l="str" checked>BOS/CHoCH</label>
+      <label class="ck"><input type="checkbox" data-l="liq" checked>Liquidity</label>
+      <label class="ck"><input type="checkbox" data-l="pd" checked>Premium/Discount+OTE</label>
+      <label class="ck"><input type="checkbox" data-l="sw">จุด Swing</label>
+      <div style="margin-top:8px">Swing length <input id="swing" type="number" value="5" min="2" max="20" style="width:60px">
+      &nbsp;RR <input id="rr" type="number" value="2" min="1" max="6" step="0.5" style="width:60px"></div>
     </div>
-
-    <!-- MAIN APP LAYOUT GRID -->
-    <div class="flex flex-1 overflow-hidden flex-col lg:flex-row">
-        
-        <!-- LEFT COLUMN: SESSIONS & RISK CALCULATOR & TECHNICAL GAUGE -->
-        <aside class="w-full lg:w-80 bg-cardBg border-r border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[35vh] lg:max-h-full">
-            
-            <!-- Live Killzones Status -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2">
-                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
-                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                        <i class="fa-regular fa-clock"></i>
-                        <span>ICT Sessions & Killzones</span>
-                    </h3>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/30">
-                        Live Tracking
-                    </span>
-                </div>
-
-                <div class="space-y-1.5 text-xs font-mono">
-                    <div id="kz-asian" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
-                        <div>
-                            <div class="font-bold text-slate-300">Asian Range (Accumulation)</div>
-                            <div class="text-[10px] text-slate-500">20:00 - 00:00 EST | 07:00 - 11:00 BKK</div>
-                        </div>
-                        <span id="badge-asian" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
-                    </div>
-
-                    <div id="kz-london" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
-                        <div>
-                            <div class="font-bold text-slate-300">London KZ (Judas Swing)</div>
-                            <div class="text-[10px] text-slate-500">02:00 - 05:00 EST | 13:00 - 16:00 BKK</div>
-                        </div>
-                        <span id="badge-london" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
-                    </div>
-
-                    <div id="kz-nyam" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
-                        <div>
-                            <div class="font-bold text-slate-300">NY AM / Silver Bullet (10-11)</div>
-                            <div class="text-[10px] text-slate-500">08:30 - 11:00 EST | 19:30 - 22:00 BKK</div>
-                        </div>
-                        <span id="badge-nyam" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
-                    </div>
-
-                    <div id="kz-nypm" class="p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition">
-                        <div>
-                            <div class="font-bold text-slate-300">NY PM Killzone</div>
-                            <div class="text-[10px] text-slate-500">13:30 - 16:00 EST | 00:30 - 03:00 BKK</div>
-                        </div>
-                        <span id="badge-nypm" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold">INACTIVE</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Integrated Risk & Position Calculator -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2.5">
-                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2">
-                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                        <i class="fa-solid fa-calculator"></i>
-                        <span>ICT Position Risk Calc</span>
-                    </h3>
-                    <i class="fa-solid fa-shield-halved text-slate-500 text-xs"></i>
-                </div>
-
-                <div class="space-y-2 text-xs">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-slate-400 block mb-1">Asset Type</label>
-                            <select id="calc-asset" onchange="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                                <option value="forex">Forex (Standard Lot)</option>
-                                <option value="gold">Gold (XAU/USD)</option>
-                                <option value="crypto">Crypto / BTC</option>
-                                <option value="indices">Indices (US30/NAS)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">Balance ($)</label>
-                            <input type="number" id="calc-balance" value="10000" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-slate-400 block mb-1">Risk Pct (%)</label>
-                            <input type="number" id="calc-risk" value="1.0" step="0.25" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">Entry Price</label>
-                            <input type="number" id="calc-entry" value="1.08500" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-slate-400 block mb-1">Stop Loss Price</label>
-                            <input type="number" id="calc-sl" value="1.08380" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 block mb-1">Take Profit Price</label>
-                            <input type="number" id="calc-tp" value="1.08860" step="0.0001" oninput="calculatePosition()" class="w-full bg-cardBg border border-borderBg rounded px-2 py-1 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500">
-                        </div>
-                    </div>
-
-                    <!-- Output -->
-                    <div class="p-2.5 bg-cardBg/80 rounded-lg border border-borderBg/70 space-y-1.5 font-mono text-[11px] mt-2">
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Risk Amount:</span>
-                            <span id="res-risk-amt" class="text-amber-400 font-bold">$100.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Position Size:</span>
-                            <span id="res-lot-size" class="text-sky-400 font-bold">0.83 Lots</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Risk-to-Reward (R:R):</span>
-                            <span id="res-rr-ratio" class="text-emerald-400 font-bold">1 : 3.0</span>
-                        </div>
-                        <div class="flex justify-between border-t border-borderBg pt-1">
-                            <span class="text-slate-400">Potential Profit:</span>
-                            <span id="res-tp-profit" class="text-emerald-400 font-bold">$300.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TradingView Sentiment Gauge -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg">
-                <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                    <i class="fa-solid fa-gauge-high"></i>
-                    <span>Market Sentiment Gauge</span>
-                </h3>
-                <div class="tradingview-widget-container" id="tv-gauge-container">
-                    <div class="tradingview-widget-container__widget"></div>
-                </div>
-            </div>
-
-        </aside>
-
-        <!-- CENTER COLUMN: REAL-TIME CHART -->
-        <main class="flex-1 flex flex-col min-w-0 bg-darkBg relative overflow-hidden">
-            <div class="flex-1 w-full h-full relative" id="tradingview-chart-box">
-                <div id="tradingview_advanced_chart" class="w-full h-full"></div>
-            </div>
-
-            <!-- BOTTOM TABBED DASHBOARD: CONFLUENCE EVALUATOR & CHEATSHEET -->
-            <div class="h-64 bg-cardBg border-t border-borderBg flex flex-col shrink-0">
-                <div class="flex border-b border-borderBg bg-darkBg/60 text-xs font-medium px-4 overflow-x-auto">
-                    <button onclick="switchTab('checklist')" id="tab-btn-checklist" class="py-2.5 px-4 tab-active flex items-center space-x-2 transition whitespace-nowrap">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span>AI SMC + Macro Confluence Evaluator</span>
-                    </button>
-                    <button onclick="switchTab('cheatsheet')" id="tab-btn-cheatsheet" class="py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap">
-                        <i class="fa-solid fa-book-bookmark"></i>
-                        <span>ICT Fundamental & Liquidity Knowledge Hub</span>
-                    </button>
-                </div>
-
-                <div class="flex-1 p-3.5 overflow-y-auto">
-                    <!-- TAB 1: NEWS-AWARE EVALUATOR -->
-                    <div id="tab-checklist" class="space-y-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-                            <!-- Technical 1 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-sky-400">1. HTF BIAS</span>
-                                    <input type="checkbox" id="chk-1" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
-                                </div>
-                                <p class="text-xs font-semibold text-slate-200">Draw on Liquidity</p>
-                                <p class="text-[10px] text-slate-400">ราคาวิ่งมุ่งหน้าหา BSL/SSL บน Daily/H4</p>
-                            </div>
-
-                            <!-- Technical 2 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-amber-400">2. SWEEP / RAID</span>
-                                    <input type="checkbox" id="chk-2" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
-                                </div>
-                                <p class="text-xs font-semibold text-slate-200">Judas Liquidity Sweep</p>
-                                <p class="text-[10px] text-slate-400">กวาด High/Low เก่า ในช่วง Killzone</p>
-                            </div>
-
-                            <!-- Technical 3 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-purple-400">3. DISPLACEMENT</span>
-                                    <input type="checkbox" id="chk-3" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
-                                </div>
-                                <p class="text-xs font-semibold text-slate-200">Market Structure Shift</p>
-                                <p class="text-[10px] text-slate-400">เกิดแท่งเปลี่ยนทิศทางรุนแรง (MSS)</p>
-                            </div>
-
-                            <!-- Fundamental 1 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-emerald-400">4. DXY ALIGNMENT</span>
-                                    <input type="checkbox" id="chk-4" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
-                                </div>
-                                <p class="text-xs font-semibold text-slate-200">Dollar Index Divergence</p>
-                                <p class="text-[10px] text-slate-400">DXY วิ่งตรงข้ามกับคู่เงินที่เทรด (SMT)</p>
-                            </div>
-
-                            <!-- Fundamental 2 -->
-                            <div class="bg-darkBg p-2.5 rounded-lg border border-borderBg space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-rose-400">5. NEWS CLEARANCE</span>
-                                    <input type="checkbox" id="chk-5" checked onchange="evaluateTradeSignal()" class="accent-amber-400 rounded cursor-pointer">
-                                </div>
-                                <p class="text-xs font-semibold text-slate-200">No Red Folder Event</p>
-                                <p class="text-[10px] text-slate-400">ไม่อยู่ในช่วงก่อน/หลังข่าวแรง 15 นาที</p>
-                            </div>
-                        </div>
-
-                        <!-- Confluence Score Output -->
-                        <div id="signal-eval-box" class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
-                                    <i class="fa-solid fa-shield-cat text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY SMC + MACRO SETUP CONFIRMED</h4>
-                                    <p class="text-xs text-slate-300">องค์ประกอบทางเทคนิคและปัจจัยข่าวสารหนุนไปทางเดียวกัน! ตั้ง Pending Order ใน FVG ได้อย่างมั่นใจ</p>
-                                </div>
-                            </div>
-                            <div class="text-right font-mono shrink-0 ml-2">
-                                <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                                <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (5/5)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB 2: KNOWLEDGE HUB -->
-                    <div id="tab-cheatsheet" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
-                            <div class="flex items-center space-x-2 text-rose-400 font-bold">
-                                <i class="fa-solid fa-newspaper"></i>
-                                <span>High-Impact News & IPDA</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed text-[11px]">
-                                ข่าวปัจจัยพื้นฐาน (เช่น NFP, CPI, FOMC) ไม่ใช่ผู้กำหนดทิศทางราคา แต่เป็น **"เชื้อเพลิง (Fuel)"** ที่อัลกอริทึม IPDA ใช้กวาด Liquidity เพื่อขับเคลื่อนราคาไปยัง FVG / Order Block ของสถาบัน
-                            </p>
-                        </div>
-
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
-                            <div class="flex items-center space-x-2 text-amber-400 font-bold">
-                                <i class="fa-solid fa-bolt"></i>
-                                <span>Judas Swing News Pattern</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed text-[11px]">
-                                ในช่วง 1-5 นาทีแรกของการประกาศข่าว ราคามักจะทุบหรือพุ่งไปในทิศทางหลอกเพื่อกวาด Buy/Sell Stops (Fakeout) ก่อนจะกลับตัวพุ่งรุนแรงไปยัง True Institutional Target
-                            </p>
-                        </div>
-
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
-                            <div class="flex items-center space-x-2 text-sky-400 font-bold">
-                                <i class="fa-solid fa-chart-line"></i>
-                                <span>DXY SMT Divergence</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed text-[11px]">
-                                การเปรียบเทียบดัชนีดอลลาร์ (DXY) กับ EURUSD/GBPUSD หาก DXY ทำ Higher High แต่ EURUSD ไม่ทำ Lower Low เกิดสัญญาณ **SMT Divergence** บ่งบอกการสะสมออเดอร์ของ Smart Money
-                            </p>
-                        </div>
-
-                        <div class="bg-darkBg p-3 rounded-lg border border-borderBg space-y-1">
-                            <div class="flex items-center space-x-2 text-emerald-400 font-bold">
-                                <i class="fa-solid fa-clock"></i>
-                                <span>Silver Bullet Window</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed text-[11px]">
-                                ช่วงเวลาทองคำ **10:00 - 11:00 EST** (21:00 - 22:00 BKK) เกิดขึ้นหลังข่าวรอบเช้าปรับตัวเสร็จ ตลาดมักจะสร้าง FVG ชัดเจนที่มีอัตรา Win Rate สูงสุดในการเทรดตามเทรนด์
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- RIGHT COLUMN: REAL-TIME ECONOMIC CALENDAR & MACRO NEWS FEED -->
-        <aside class="w-full lg:w-96 bg-cardBg border-l border-borderBg flex flex-col shrink-0 p-3 space-y-3 overflow-y-auto max-h-[40vh] lg:max-h-full">
-            
-            <!-- Real-Time Economic Calendar -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2 flex flex-col h-1/2 min-h-[220px]">
-                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2 shrink-0">
-                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
-                        <i class="fa-solid fa-calendar-days"></i>
-                        <span>Economic Calendar</span>
-                    </h3>
-                    <div class="flex space-x-1">
-                        <button onclick="filterNews('all')" id="btn-news-all" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black">ALL</button>
-                        <button onclick="filterNews('high')" id="btn-news-high" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-rose-400 border border-borderBg hover:border-rose-500/50">HIGH</button>
-                    </div>
-                </div>
-
-                <!-- Calendar Feed Scroll Area -->
-                <div id="econ-calendar-feed" class="space-y-2 overflow-y-auto flex-1 pr-1 font-mono text-xs">
-                    <!-- Dynamic Items Injected Here -->
-                </div>
-            </div>
-
-            <!-- Live Macro News Feed -->
-            <div class="bg-darkBg p-3 rounded-xl border border-borderBg space-y-2 flex flex-col h-1/2 min-h-[220px]">
-                <div class="flex items-center justify-between border-b border-borderBg/60 pb-2 shrink-0">
-                    <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center space-x-1.5">
-                        <i class="fa-solid fa-rss"></i>
-                        <span>Live Macro Breaking Wire</span>
-                    </h3>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-950 text-sky-400 border border-sky-500/30">
-                        REALTIME
-                    </span>
-                </div>
-
-                <div id="macro-news-feed" class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs">
-                    <!-- Dynamic Live News Articles -->
-                </div>
-            </div>
-
-        </aside>
-
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        // --- GLOBAL STATE ---
-        let currentSymbol = 'FX:EURUSD';
-        let currentTimeframe = '5';
-        let newsFilter = 'all';
-        let tvWidget = null;
-
-        // --- MOCK REAL-TIME ECONOMIC CALENDAR DATA ---
-        const calendarEvents = [
-            { time: '08:30 EST', country: 'USD', impact: 'high', name: 'Core CPI (MoM)', forecast: '0.3%', previous: '0.4%', actual: '0.3%' },
-            { time: '08:30 EST', country: 'USD', impact: 'high', name: 'Initial Jobless Claims', forecast: '215K', previous: '211K', actual: '218K' },
-            { time: '10:00 EST', country: 'USD', impact: 'medium', name: 'Existing Home Sales', forecast: '4.10M', previous: '3.98M', actual: '--' },
-            { time: '14:00 EST', country: 'USD', impact: 'high', name: 'FOMC Meeting Minutes', forecast: '--', previous: '--', actual: '--' },
-            { time: '04:30 EST', country: 'GBP', impact: 'high', name: 'UK CPI (YoY)', forecast: '3.1%', previous: '3.4%', actual: '3.2%' },
-            { time: '05:00 EST', country: 'EUR', impact: 'medium', name: 'German ZEW Sentiment', forecast: '17.5', previous: '15.0', actual: '17.8' }
-        ];
-
-        // --- MOCK MACRO NEWS ARTICLES ---
-        const breakingNewsArticles = [
-            { time: '2 mins ago', source: 'FED WIRE', title: 'Fed Chair Powell signals interest rates may remain elevated if inflation persists.', impact: 'high' },
-            { time: '12 mins ago', source: 'BLOOMBERG', title: 'US Dollar Index (DXY) tests 105.20 resistance following higher Treasury yields.', impact: 'medium' },
-            { time: '28 mins ago', source: 'ECB SPEECH', title: 'ECB Lagarde hints at potential June rate cut as Eurozone inflation cools.', impact: 'medium' },
-            { time: '45 mins ago', source: 'REUTERS', title: 'Gold surges past $2,350 as safe-haven demand increases amid geopolitical tensions.', impact: 'high' }
-        ];
-
-        // --- INITIALIZATION ---
-        window.addEventListener('DOMContentLoaded', () => {
-            initTradingViewChart();
-            initTechnicalGaugeWidget();
-            startClocksAndKillzones();
-            renderEconomicCalendar();
-            renderMacroNews();
-            calculatePosition();
-            evaluateTradeSignal();
-        });
-
-        // --- TRADINGVIEW CHART ENGINE ---
-        function initTradingViewChart() {
-            document.getElementById('tradingview_advanced_chart').innerHTML = '';
-
-            tvWidget = new TradingView.widget({
-                "autosize": true,
-                "symbol": currentSymbol,
-                "interval": currentTimeframe,
-                "timezone": "Asia/Bangkok",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#121824",
-                "enable_publishing": false,
-                "hide_side_toolbar": false,
-                "allow_symbol_change": true,
-                "container_id": "tradingview_advanced_chart",
-                "overrides": {
-                    "paneProperties.background": "#0b0e14",
-                    "paneProperties.vertGridProperties.color": "#182030",
-                    "paneProperties.horzGridProperties.color": "#182030",
-                    "symbolWatermarkProperties.transparency": 90,
-                    "scalesProperties.textColor": "#94a3b8"
-                }
-            });
-        }
-
-        // --- TRADINGVIEW TECHNICAL GAUGE ---
-        function initTechnicalGaugeWidget() {
-            const container = document.getElementById('tv-gauge-container');
-            container.innerHTML = '';
-            
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
-            script.async = true;
-            script.innerHTML = JSON.stringify({
-                "interval": currentTimeframe === 'D' ? '1D' : currentTimeframe + 'm',
-                "width": "100%",
-                "isTransparent": true,
-                "height": 210,
-                "symbol": currentSymbol,
-                "showIntervalTabs": false,
-                "displayMode": "single",
-                "locale": "en",
-                "colorTheme": "dark"
-            });
-            container.appendChild(script);
-        }
-
-        // --- ASSET & TIMEFRAME SWITCHERS ---
-        function changeSymbol(symbol) {
-            currentSymbol = symbol;
-            const symKeys = ['EURUSD', 'GBPUSD', 'GOLD', 'BTCUSDT', 'US30', 'NAS100'];
-            symKeys.forEach(k => {
-                const btn = document.getElementById(`sym-${k}`);
-                if (symbol.includes(k) || (k==='GOLD' && symbol.includes('GOLD'))) {
-                    btn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-xs transition";
-                } else {
-                    btn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white text-xs transition";
-                }
-            });
-
-            // Adjust Risk Calculator defaults
-            const entryInput = document.getElementById('calc-entry');
-            const slInput = document.getElementById('calc-sl');
-            const tpInput = document.getElementById('calc-tp');
-            const assetSelect = document.getElementById('calc-asset');
-
-            if (symbol.includes('GOLD')) {
-                assetSelect.value = 'gold';
-                entryInput.value = '2350.00';
-                slInput.value = '2342.00';
-                tpInput.value = '2374.00';
-            } else if (symbol.includes('BTC')) {
-                assetSelect.value = 'crypto';
-                entryInput.value = '65000';
-                slInput.value = '64200';
-                tpInput.value = '67400';
-            } else if (symbol.includes('US30') || symbol.includes('NAS')) {
-                assetSelect.value = 'indices';
-                entryInput.value = '39000';
-                slInput.value = '38850';
-                tpInput.value = '39450';
-            } else {
-                assetSelect.value = 'forex';
-                entryInput.value = '1.08500';
-                slInput.value = '1.08380';
-                tpInput.value = '1.08860';
-            }
-
-            initTradingViewChart();
-            initTechnicalGaugeWidget();
-            calculatePosition();
-        }
-
-        function changeTimeframe(tf) {
-            currentTimeframe = tf;
-            ['1', '5', '15', '60', '240', 'D'].forEach(t => {
-                const btn = document.getElementById(`tf-${t}`);
-                btn.className = t === tf 
-                    ? "px-2 py-1 rounded text-xs bg-amber-500 text-black font-bold transition" 
-                    : "px-2 py-1 rounded text-xs text-slate-400 hover:text-white transition";
-            });
-
-            initTradingViewChart();
-            initTechnicalGaugeWidget();
-        }
-
-        // --- RENDER CALENDAR & NEWS ---
-        function filterNews(type) {
-            newsFilter = type;
-            document.getElementById('btn-news-all').className = type === 'all' 
-                ? "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black" 
-                : "px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-slate-400 border border-borderBg";
-            
-            document.getElementById('btn-news-high').className = type === 'high' 
-                ? "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white" 
-                : "px-2 py-0.5 rounded text-[10px] font-bold bg-cardBg text-rose-400 border border-borderBg hover:border-rose-500/50";
-
-            renderEconomicCalendar();
-        }
-
-        function renderEconomicCalendar() {
-            const container = document.getElementById('econ-calendar-feed');
-            container.innerHTML = '';
-
-            const filtered = newsFilter === 'high' 
-                ? calendarEvents.filter(e => e.impact === 'high') 
-                : calendarEvents;
-
-            filtered.forEach(ev => {
-                const impactBadge = ev.impact === 'high' 
-                    ? '<span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-500/40 text-[9px] font-bold">HIGH</span>'
-                    : '<span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-500/40 text-[9px] font-bold">MED</span>';
-
-                const div = document.createElement('div');
-                div.className = "p-2 rounded-lg bg-cardBg border border-borderBg/80 flex flex-col space-y-1 hover:border-amber-500/30 transition";
-                div.innerHTML = `
-                    <div class="flex items-center justify-between text-[11px]">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="font-bold text-amber-400">${ev.time}</span>
-                            <span class="px-1 rounded bg-slate-800 text-slate-200 font-bold">${ev.country}</span>
-                        </div>
-                        ${impactBadge}
-                    </div>
-                    <div class="text-slate-200 font-sans font-semibold text-xs">${ev.name}</div>
-                    <div class="flex justify-between text-[10px] text-slate-400 pt-0.5 border-t border-borderBg/40">
-                        <span>Act: <b class="text-emerald-400">${ev.actual}</b></span>
-                        <span>Exp: ${ev.forecast}</span>
-                        <span>Prev: ${ev.previous}</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function renderMacroNews() {
-            const container = document.getElementById('macro-news-feed');
-            container.innerHTML = '';
-
-            breakingNewsArticles.forEach(art => {
-                const div = document.createElement('div');
-                div.className = "p-2 rounded-lg bg-cardBg border border-borderBg/80 space-y-1 hover:border-sky-500/30 transition";
-                div.innerHTML = `
-                    <div class="flex items-center justify-between text-[10px]">
-                        <span class="font-bold text-sky-400">${art.source}</span>
-                        <span class="text-slate-500">${art.time}</span>
-                    </div>
-                    <p class="text-slate-300 text-[11px] leading-snug font-sans">${art.title}</p>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // --- REALTIME CLOCKS & KILLZONE TRACKER ---
-        function startClocksAndKillzones() {
-            function update() {
-                const now = new Date();
-                
-                const bkkString = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Bangkok', hour12: false });
-                document.getElementById('bkk-clock').textContent = `${bkkString} ICT`;
-
-                const nyString = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false });
-                document.getElementById('ny-clock').textContent = `${nyString} EST`;
-
-                const nyDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-                const nyHours = nyDate.getHours();
-                const nyMins = nyDate.getMinutes();
-                const nyTimeDec = nyHours + nyMins / 60;
-
-                updateKZState('asian', nyTimeDec >= 20 || nyTimeDec < 0);
-                updateKZState('london', nyTimeDec >= 2 && nyTimeDec < 5);
-                updateKZState('nyam', nyTimeDec >= 8.5 && nyTimeDec < 11);
-                updateKZState('nypm', nyTimeDec >= 13.5 && nyTimeDec < 16);
-            }
-
-            update();
-            setInterval(update, 1000);
-        }
-
-        function updateKZState(kzKey, isActive) {
-            const card = document.getElementById(`kz-${kzKey}`);
-            const badge = document.getElementById(`badge-${kzKey}`);
-
-            if (isActive) {
-                card.className = "p-2 rounded-lg border border-emerald-500/60 bg-emerald-950/30 flex items-center justify-between transition pulse-active";
-                badge.className = "px-2 py-0.5 text-[10px] rounded bg-emerald-500 text-black font-extrabold";
-                badge.textContent = "ACTIVE";
-            } else {
-                card.className = "p-2 rounded-lg border border-borderBg bg-cardBg flex items-center justify-between transition";
-                badge.className = "px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-500 font-bold";
-                badge.textContent = "INACTIVE";
-            }
-        }
-
-        // --- POSITION RISK CALCULATOR ---
-        function calculatePosition() {
-            const asset = document.getElementById('calc-asset').value;
-            const balance = parseFloat(document.getElementById('calc-balance').value) || 0;
-            const riskPct = parseFloat(document.getElementById('calc-risk').value) || 0;
-            const entry = parseFloat(document.getElementById('calc-entry').value) || 0;
-            const sl = parseFloat(document.getElementById('calc-sl').value) || 0;
-            const tp = parseFloat(document.getElementById('calc-tp').value) || 0;
-
-            const riskAmount = balance * (riskPct / 100);
-            const slDistance = Math.abs(entry - sl);
-            const tpDistance = Math.abs(tp - entry);
-
-            let lotSize = 0;
-            let profit = 0;
-
-            if (slDistance > 0) {
-                if (asset === 'forex') {
-                    const pips = slDistance / 0.0001;
-                    lotSize = riskAmount / (pips * 10);
-                    profit = (tpDistance / 0.0001) * 10 * lotSize;
-                } else if (asset === 'gold') {
-                    lotSize = riskAmount / (slDistance * 100);
-                    profit = tpDistance * 100 * lotSize;
-                } else if (asset === 'crypto') {
-                    lotSize = riskAmount / slDistance;
-                    profit = tpDistance * lotSize;
-                } else if (asset === 'indices') {
-                    lotSize = riskAmount / (slDistance * 10);
-                    profit = tpDistance * 10 * lotSize;
-                }
-            }
-
-            const rrRatio = slDistance > 0 ? (tpDistance / slDistance) : 0;
-
-            document.getElementById('res-risk-amt').textContent = `$${riskAmount.toFixed(2)}`;
-            document.getElementById('res-lot-size').textContent = `${lotSize.toFixed(2)} ${asset === 'crypto' ? 'Units' : 'Lots'}`;
-            document.getElementById('res-rr-ratio').textContent = `1 : ${rrRatio.toFixed(2)}`;
-            document.getElementById('res-tp-profit').textContent = `$${profit.toFixed(2)}`;
-        }
-
-        // --- AI CONFLUENCE EVALUATOR ---
-        function evaluateTradeSignal() {
-            const chk1 = document.getElementById('chk-1').checked;
-            const chk2 = document.getElementById('chk-2').checked;
-            const chk3 = document.getElementById('chk-3').checked;
-            const chk4 = document.getElementById('chk-4').checked;
-            const chk5 = document.getElementById('chk-5').checked;
-
-            const count = [chk1, chk2, chk3, chk4, chk5].filter(Boolean).length;
-            const pct = (count / 5) * 100;
-            const box = document.getElementById('signal-eval-box');
-
-            if (count === 5) {
-                box.className = "p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between";
-                box.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-emerald-500/20 rounded-full text-emerald-400 shrink-0">
-                            <i class="fa-solid fa-shield-cat text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">HIGH PROBABILITY SMC + MACRO SETUP CONFIRMED</h4>
-                            <p class="text-xs text-slate-300">องค์ประกอบทางเทคนิคและปัจจัยข่าวสารหนุนไปทางเดียวกัน! ตั้ง Pending Order ใน FVG ได้อย่างมั่นใจ</p>
-                        </div>
-                    </div>
-                    <div class="text-right font-mono shrink-0 ml-2">
-                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-emerald-400">100% (5/5)</span>
-                    </div>
-                `;
-            } else if (count >= 3) {
-                box.className = "p-3 rounded-lg bg-amber-950/50 border border-amber-500/40 flex items-center justify-between";
-                box.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-amber-500/20 rounded-full text-amber-400 shrink-0">
-                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">MODERATE CONFLUENCE - PROCEED WITH CAUTION</h4>
-                            <p class="text-xs text-slate-300">เงื่อนไขยังไม่ครบถ้วน ระวังความผันผวนจากข่าวสารหรือรอให้เกิด Liquidity Sweep ใน M1/M5 ก่อน</p>
-                        </div>
-                    </div>
-                    <div class="text-right font-mono shrink-0 ml-2">
-                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-amber-400">${pct}% (${count}/5)</span>
-                    </div>
-                `;
-            } else {
-                box.className = "p-3 rounded-lg bg-rose-950/50 border border-rose-500/40 flex items-center justify-between";
-                box.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-rose-500/20 rounded-full text-rose-400 shrink-0">
-                            <i class="fa-solid fa-ban text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wide">HIGH RISK / NO TRADE ZONE</h4>
-                            <p class="text-xs text-slate-300">ขัดแย้งกับทิศทางข่าวสารหรือขาดการกวาดสภาพคล่อง ไม่แนะนำให้เปิดออเดอร์ในเวลานี้</p>
-                        </div>
-                    </div>
-                    <div class="text-right font-mono shrink-0 ml-2">
-                        <span class="text-[10px] text-slate-400 block">Confluence Score</span>
-                        <span class="text-base sm:text-lg font-extrabold text-rose-400">${pct}% (${count}/5)</span>
-                    </div>
-                `;
-            }
-        }
-
-        // --- TAB SWITCHER LOGIC ---
-        function switchTab(tabId) {
-            ['checklist', 'cheatsheet'].forEach(id => {
-                const btn = document.getElementById(`tab-btn-${id}`);
-                const content = document.getElementById(`tab-${id}`);
-
-                if (id === tabId) {
-                    btn.className = "py-2.5 px-4 tab-active flex items-center space-x-2 transition whitespace-nowrap";
-                    content.classList.remove('hidden');
-                } else {
-                    btn.className = "py-2.5 px-4 text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap";
-                    content.classList.add('hidden');
-                }
-            });
-        }
-    </script>
+    <div class="card mut">⚠ เครื่องมือช่วยวิเคราะห์เท่านั้น ไม่ใช่คำแนะนำการลงทุน และไม่มีการรับประกันผลลัพธ์ ดูรายละเอียดที่แท็บ "ความน่าเชื่อถือ"</div>
+  </aside></div></section>
+
+<section id="tab-tv" class="tab"><div id="tvc"></div></section>
+
+<section id="tab-news" class="tab">
+  <div class="cols">
+    <div class="card"><h3>Sentiment จากข่าวคริปโต (ประมาณการด้วย keyword)</h3><div id="newsSum" class="mut">กำลังโหลด...</div><div id="newsList" class="news"></div></div>
+    <div class="card"><h3>ปฏิทินเศรษฐกิจ (TradingView)</h3><div id="calw"></div></div>
+    <div class="card"><h3>ไทม์ไลน์ข่าวตลาด (TradingView)</h3><div id="tlw"></div></div>
+  </div>
+</section>
+
+<section id="tab-bt" class="tab">
+  <div class="card"><h3>Backtest กฎ SMC บนข้อมูลย้อนหลังจริงจาก Binance</h3>
+    <div>สินทรัพย์/TF: ใช้ตามที่เลือกด้านบน &nbsp;|&nbsp; จำนวนแท่ง
+      <select id="btN"><option>2000</option><option selected>5000</option><option>10000</option></select>
+      Swing <input id="btSw" type="number" value="5" style="width:55px">
+      RR <input id="btRR" type="number" value="2" step="0.5" style="width:55px">
+      ค่าธรรมเนียมรวมไป-กลับ % <input id="btFee" type="number" value="0.08" step="0.01" style="width:70px">
+      <button id="btRun">รัน Backtest</button> <span id="btProg" class="mut"></span></div>
+    <div class="mut" style="margin-top:6px">กฎ: เทรดตามโครงสร้างล่าสุด เข้าเมื่อราคาย่อกลับแตะ Order Block ที่ยังไม่ถูกเจาะ และอยู่ฝั่ง Discount (ซื้อ) / Premium (ขาย) | SL นอก OB | TP = RR เท่า | ถ้าแท่งเดียวชนทั้ง SL และ TP นับเป็นแพ้ (เข้มงวด)</div></div>
+  <div id="btOut"></div>
+</section>
+
+<section id="tab-proof" class="tab"><div class="cols">
+  <div class="card"><h3>1) กฎมาจากไหน</h3>
+    <p>แนวคิดหลักทั้งหมดมาจากคอร์สสาธารณะของ <b>Michael J. Huddleston (ICT – Inner Circle Trader)</b> ซึ่งเปิดสอนฟรีทางช่อง YouTube "InnerCircleTrader" (เช่นชุด ICT Mentorship 2016 / 2022) ส่วนคำว่า "SMC" เป็นชื่อที่ชุมชนเรียกต่อยอดจาก ICT:</p>
+    <ul>
+      <li><b>Market Structure</b> – swing high/low, BOS (ทะลุตามเทรนด์), CHoCH (ทะลุสวนเทรนด์ ≈ market structure shift)</li>
+      <li><b>Order Block</b> – แท่งสุดท้ายฝั่งตรงข้ามก่อนการเคลื่อนที่ที่ทำให้เกิด BOS/CHoCH</li>
+      <li><b>Fair Value Gap (FVG)</b> – ช่องว่าง 3 แท่งที่ราคามักกลับมาเติม</li>
+      <li><b>Liquidity</b> – Equal highs/lows และการกวาด stop (BSL/SSL)</li>
+      <li><b>Premium/Discount &amp; OTE</b> – แบ่งช่วงราคา 50% และโซน Fib 62–79%</li>
+    </ul>
+    <div class="warn">ข้อควรรู้: ICT เป็นการเทรดแบบ <b>ใช้ดุลยพินิจ (discretionary)</b> โค้ดนี้เป็นเพียง "การตีความเป็นกฎตายตัว" จึงไม่เท่ากับการเทรดแบบ ICT จริง ผู้พัฒนาเขียนจากความเข้าใจแนวคิดเหล่านี้ ไม่ได้ดึงเนื้อหาวิดีโอมาโดยตรง ควรตรวจเทียบกับต้นฉบับด้วยตัวเอง</div></div>
+
+  <div class="card"><h3>2) สิ่งที่ "พิสูจน์ได้" ในเว็บนี้</h3>
+    <ul>
+      <li><b>โค้ดเปิดทั้งหมด</b> – ฟังก์ชัน <code>smc()</code> อ่านและตรวจได้ ไม่มีกล่องดำ</li>
+      <li><b>ข้อมูลจริง</b> – แท่งเทียนจาก Binance public API และ WebSocket โดยตรง</li>
+      <li><b>ไม่มี look-ahead bias</b> – swing ถูกยืนยันหลังผ่านไป N แท่งเท่านั้น และ backtest ตัดสินใจจากข้อมูลถึงแท่งปัจจุบัน</li>
+      <li><b>Backtest รวมค่าธรรมเนียม</b> พร้อมช่วงความเชื่อมั่น 95% ของ win rate (Wilson) และแยก In-sample / Out-of-sample</li>
+      <li><b>Forward-test journal</b> – บันทึกสัญญาณ "ก่อน" รู้ผล แล้วระบบตรวจผลจากแท่งเทียนจริงภายหลัง นี่คือหลักฐานที่ดีกว่า backtest</li>
+    </ul>
+    <div id="jBox"></div></div>
+
+  <div class="card"><h3>3) สิ่งที่ "ยังพิสูจน์ไม่ได้" / ข้อจำกัด</h3>
+    <ul>
+      <li>ยังไม่มีงานวิจัยอิสระที่ผ่านการทบทวนรองรับว่า ICT/SMC มี edge ทางสถิติ หลักฐานส่วนใหญ่เป็นประสบการณ์ส่วนบุคคล</li>
+      <li>Backtest ในอดีตไม่รับประกันอนาคต และผลขึ้นกับสินทรัพย์ ช่วงเวลา และพารามิเตอร์ (เสี่ยง overfit ถ้าปรับจนสวย)</li>
+      <li>ไม่ได้จำลอง slippage, การไม่ถูกเติมออเดอร์ลิมิต และ spread ช่วงข่าวแรง</li>
+      <li>คะแนน confluence <b>ไม่ใช่ความน่าจะเป็นที่จะชนะ</b> เป็นเพียงจำนวนปัจจัยที่สอดคล้องกัน</li>
+      <li>Sentiment ข่าวใช้ keyword แบบง่าย อาจผิดพลาดกับข่าวประชด/กำกวม</li>
+      <li>กราฟ SMC ของเราใช้ข้อมูล Binance (คริปโต และ PAXG แทนทอง) ส่วนฟอเร็กซ์/ทองสปอตดูได้ในแท็บ TradingView แต่ไม่มีเลเยอร์ SMC ของเราซ้อน</li>
+      <li>ยังไม่รวม Kill Zone / session, Breaker Block, IPDA ฯลฯ</li>
+      <li>โบรกเกอร์ CFD ในยุโรปต้องเปิดเผยว่าบัญชีรายย่อยส่วนใหญ่ (ราว 70–90%) ขาดทุน</li>
+    </ul></div>
+
+  <div class="card"><h3>4) แนวทางใช้อย่างรอบคอบ</h3>
+    <ul>
+      <li>ทดสอบบนบัญชีเดโม และสะสมสัญญาณใน journal ให้ได้อย่างน้อยหลายสิบ–ร้อยรายการก่อนเชื่อผล</li>
+      <li>ดู Out-of-sample ก่อน In-sample และดู expectancy (R เฉลี่ย) ไม่ใช่แค่ win rate</li>
+      <li>กำหนดความเสี่ยงต่อไม้ต่ำ ๆ และใช้ SL ทุกครั้ง</li>
+      <li>เว็บนี้ไม่ใช่คำแนะนำการลงทุน ผู้ใช้รับผิดชอบการตัดสินใจเอง</li>
+    </ul></div>
+
+  <div class="card" style="grid-column:1/-1"><h3>Forward-test journal (เก็บในเบราว์เซอร์นี้)</h3>
+    <button id="jRef">ตรวจผลอีกครั้ง</button> <button id="jClr">ล้าง journal</button>
+    <div id="jTab" style="overflow-x:auto;margin-top:8px"></div></div>
+</div></section>
+
+<script>
+/*CORE_START*/
+function wilson(w,n){const z=1.96,p=w/n,d=1+z*z/n,c=p+z*z/(2*n),a=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n));return[(c-a)/d,(c+a)/d];}
+function stats(tr){
+  const n=tr.length;if(!n)return null;
+  let w=0,gp=0,gl=0,eq=0,pk=0,dd=0;
+  for(const x of tr){if(x.r>0){w++;gp+=x.r}else gl-=x.r;eq+=x.r;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq);}
+  return{n,w,wr:w/n,avg:eq/n,total:eq,pf:gl?gp/gl:Infinity,dd,ci:wilson(w,n)};
+}
+function smc(c,o){
+  const n=o.swing,N=c.length,rr=o.rr||2,fee=(o.fee||0)/100;
+  const trs=new Array(N),atr=new Array(N).fill(0);let sm=0;
+  for(let i=0;i<N;i++){
+    trs[i]=i?Math.max(c[i].h-c[i].l,Math.abs(c[i].h-c[i-1].c),Math.abs(c[i].l-c[i-1].c)):c[i].h-c[i].l;
+    sm+=trs[i];if(i>=14)sm-=trs[i-14];atr[i]=sm/Math.min(i+1,14);
+  }
+  let lastH=null,lastL=null,trend=0,open=null;
+  const events=[],obs=[],fvgs=[],sweeps=[],swings=[],liq=[],trades=[],pivH=[],pivL=[];
+  const chk=bb=>{
+    if(open.dir===1){if(bb.l<=open.sl)return -1;if(bb.h>=open.tp)return rr;}
+    else{if(bb.h>=open.sl)return -1;if(bb.l<=open.tp)return rr;}
+    return null;
+  };
+  const closeT=(res,idx)=>{
+    const r=res-fee*open.entry/open.risk;
+    trades.push({i0:open.i0,i1:idx,dir:open.dir,entry:open.entry,sl:open.sl,tp:open.tp,r,t:open.t});
+    open=null;
+  };
+  for(let i=0;i<N;i++){
+    const b=c[i];
+    // 1) ยืนยัน swing (หน่วง n แท่ง = ไม่มี look-ahead)
+    const p=i-n;
+    if(p>=n){
+      let isH=true,isL=true;
+      for(let k=p-n;k<=p+n;k++){
+        if(k===p)continue;
+        if(c[k].h>c[p].h||(k<p&&c[k].h===c[p].h))isH=false;
+        if(c[k].l<c[p].l||(k<p&&c[k].l===c[p].l))isL=false;
+      }
+      if(isH){
+        lastH={i:p,price:c[p].h,crossed:false,swept:false};swings.push({i:p,type:'H',price:c[p].h});
+        const pv=pivH[pivH.length-1];
+        if(pv&&Math.abs(pv.price-c[p].h)<=0.15*atr[p])liq.push({i1:pv.i,i2:p,price:Math.max(pv.price,c[p].h),type:'H',swept:null});
+        pivH.push(lastH);
+      }
+      if(isL){
+        lastL={i:p,price:c[p].l,crossed:false,swept:false};swings.push({i:p,type:'L',price:c[p].l});
+        const pv=pivL[pivL.length-1];
+        if(pv&&Math.abs(pv.price-c[p].l)<=0.15*atr[p])liq.push({i1:pv.i,i2:p,price:Math.min(pv.price,c[p].l),type:'L',swept:null});
+        pivL.push(lastL);
+      }
+    }
+    // 2) จัดการไม้ที่เปิดอยู่
+    if(open){const r=chk(b);if(r!==null)closeT(r,i);}
+    // 3) หาจุดเข้า (OB ที่ยังไม่ถูกเจาะ สร้างก่อนแท่งนี้)
+    if(!open&&trend&&lastH&&lastL){
+      const eq=(lastH.price+lastL.price)/2;
+      for(let k=obs.length-1;k>=0;k--){
+        const ob=obs[k];
+        if(ob.mit!=null||ob.used||ob.i>=i||ob.dir!==trend)continue;
+        let entry=null,sl=null;
+        if(trend===1&&b.l<=ob.top&&b.c>ob.bottom&&ob.top<=eq){entry=Math.min(ob.top,b.o);sl=ob.bottom-0.1*atr[i];}
+        if(trend===-1&&b.h>=ob.bottom&&b.c<ob.top&&ob.bottom>=eq){entry=Math.max(ob.bottom,b.o);sl=ob.top+0.1*atr[i];}
+        if(entry==null)continue;
+        const risk=Math.abs(entry-sl);
+        if(risk<0.3*atr[i])continue;
+        ob.used=true;
+        open={dir:trend,entry,sl,tp:entry+trend*rr*risk,risk,i0:i,t:b.t};
+        const r=chk(b);if(r!==null)closeT(r,i);
+        break;
+      }
+    }
+    // 4) mitigation
+    for(const ob of obs){
+      if(ob.mit!=null||ob.i>=i)continue;
+      if(ob.dir===1&&b.c<ob.bottom)ob.mit=i;
+      if(ob.dir===-1&&b.c>ob.top)ob.mit=i;
+    }
+    for(const f of fvgs){
+      if(f.mit!=null||f.i2>=i)continue;
+      if(f.dir===1&&b.l<=f.bottom)f.mit=i;
+      if(f.dir===-1&&b.h>=f.top)f.mit=i;
+    }
+    // 5) FVG ใหม่
+    if(i>=2){
+      if(c[i].l>c[i-2].h&&c[i].l-c[i-2].h>0.1*atr[i]&&c[i-1].c>c[i-1].o)fvgs.push({i:i-2,i2:i,dir:1,top:c[i].l,bottom:c[i-2].h,mit:null});
+      if(c[i].h<c[i-2].l&&c[i-2].l-c[i].h>0.1*atr[i]&&c[i-1].c<c[i-1].o)fvgs.push({i:i-2,i2:i,dir:-1,top:c[i-2].l,bottom:c[i].h,mit:null});
+    }
+    // 6) BOS / CHoCH + Order Block
+    if(lastH&&!lastH.crossed&&b.c>lastH.price){
+      lastH.crossed=true;const type=trend===-1?'CHoCH':'BOS';trend=1;
+      events.push({i,from:lastH.i,price:lastH.price,type,dir:1});
+      let mi=lastH.i,lo=Infinity;for(let k=lastH.i;k<i;k++)if(c[k].l<lo){lo=c[k].l;mi=k;}
+      obs.push({ci:mi,i,dir:1,top:c[mi].h,bottom:c[mi].l,mit:null,used:false});
+    }
+    if(lastL&&!lastL.crossed&&b.c<lastL.price){
+      lastL.crossed=true;const type=trend===1?'CHoCH':'BOS';trend=-1;
+      events.push({i,from:lastL.i,price:lastL.price,type,dir:-1});
+      let mi=lastL.i,hi=-Infinity;for(let k=lastL.i;k<i;k++)if(c[k].h>hi){hi=c[k].h;mi=k;}
+      obs.push({ci:mi,i,dir:-1,top:c[mi].h,bottom:c[mi].l,mit:null,used:false});
+    }
+    // 7) Liquidity sweep
+    if(lastH&&!lastH.crossed&&!lastH.swept&&b.h>lastH.price&&b.c<lastH.price){lastH.swept=true;sweeps.push({i,dir:-1,price:lastH.price,kind:'BSL'});}
+    if(lastL&&!lastL.crossed&&!lastL.swept&&b.l<lastL.price&&b.c>lastL.price){lastL.swept=true;sweeps.push({i,dir:1,price:lastL.price,kind:'SSL'});}
+    for(const l of liq){
+      if(l.swept!=null||i<=l.i2)continue;
+      if(l.type==='H'&&b.h>l.price){l.swept=i;if(b.c<l.price)sweeps.push({i,dir:-1,price:l.price,kind:'EQH'});}
+      if(l.type==='L'&&b.l<l.price){l.swept=i;if(b.c>l.price)sweeps.push({i,dir:1,price:l.price,kind:'EQL'});}
+    }
+  }
+  return{events,obs,fvgs,sweeps,swings,liq,trades,trend,lastH,lastL,atr,open};
+}
+/*CORE_END*/
+
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const TZ=7*3600;
+const TFS=['1m','5m','15m','1h','4h','1d'];
+const TFMS={'1m':6e4,'5m':3e5,'15m':9e5,'1h':36e5,'4h':144e5,'1d':864e5,'1w':6048e5};
+const SYMS={BTCUSDT:'BTC/USDT',ETHUSDT:'ETH/USDT',SOLUSDT:'SOL/USDT',BNBUSDT:'BNB/USDT',XRPUSDT:'XRP/USDT',PAXGUSDT:'PAXG/USDT (ทองคำ)'};
+const TVS={BTCUSDT:'BINANCE:BTCUSDT',ETHUSDT:'BINANCE:ETHUSDT',SOLUSDT:'BINANCE:SOLUSDT',BNBUSDT:'BINANCE:BNBUSDT',XRPUSDT:'BINANCE:XRPUSDT',PAXGUSDT:'OANDA:XAUUSD'};
+const TVI={'1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'};
+const HTF={'1m':'15m','5m':'1h','15m':'4h','1h':'1d','4h':'1d','1d':'1w'};
+const BASES=['https://api.binance.com','https://data-api.binance.vision'];
+const WSB=['wss://stream.binance.com:9443/ws/','wss://data-stream.binance.vision/ws/'];
+let sym='BTCUSDT',tf='15m',C=[],S=null,HT=0,PLAN=null,NEWS=[],FNG=null,NEWSC=0,ws=null,wsOn=false,wsIdx=0,tvKey='',timer=null,priceLines=[],newsWid=false;
+const L={ob:1,fvg:1,str:1,liq:1,pd:1,sw:0};
+
+async function kl(s,t,limit=500,end,start){
+  let q=`/api/v3/klines?symbol=${s}&interval=${t}&limit=${limit}`;
+  if(end)q+=`&endTime=${end}`;if(start)q+=`&startTime=${start}`;
+  let err;
+  for(const b of BASES){
+    try{const r=await fetch(b+q);if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();
+      return a.map(k=>({t:k[0],time:k[0]/1000+TZ,o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));}
+    catch(e){err=e}
+  }
+  throw err;
+}
+const fmt=x=>x==null?'—':x>=1000?x.toLocaleString('en',{maximumFractionDigits:1}):x>=1?x.toFixed(3):x.toFixed(5);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const P=()=>({swing:+$('#swing').value||5,rr:+$('#rr').value||2,fee:0});
+
+// ---------- chart ----------
+const chart=LightweightCharts.createChart($('#chart'),{
+  layout:{background:{color:'#131722'},textColor:'#b2b5be'},
+  grid:{vertLines:{color:'#1c2230'},horzLines:{color:'#1c2230'}},
+  rightPriceScale:{borderColor:'#2a2e39'},timeScale:{borderColor:'#2a2e39',timeVisible:true,secondsVisible:false},
+  crosshair:{mode:0}
+});
+const cs=chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
+const vs=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
+chart.priceScale('vol').applyOptions({scaleMargins:{top:.82,bottom:0}});
+const ov=$('#ov'),ctx=ov.getContext('2d');
+function resize(){
+  const b=$('#chart'),w=b.clientWidth,h=b.clientHeight,d=window.devicePixelRatio||1;
+  if(!w||!h)return;
+  chart.applyOptions({width:w,height:h});
+  ov.width=w*d;ov.height=h*d;ctx.setTransform(d,0,0,d,0,0);
+}
+new ResizeObserver(resize).observe($('#chartWrapProbe')||$('.chartwrap'));
+
+function rect(x1,x2,a,b,fill,stroke,label){
+  if(a==null||b==null||x2<=x1)return;
+  const y=Math.min(a,b),h=Math.max(1,Math.abs(a-b));
+  ctx.fillStyle=fill;ctx.fillRect(x1,y,x2-x1,h);
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.strokeRect(x1+.5,y+.5,x2-x1,h);}
+  if(label){ctx.fillStyle=stroke||'#ccc';ctx.font='11px system-ui';ctx.fillText(label,x1+4,y+11);}
+}
+function hline(x1,x2,y,col,dash,label){
+  if(y==null)return;
+  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash(dash||[]);
+  ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();ctx.setLineDash([]);
+  if(label){ctx.fillStyle=col;ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(label,(x1+x2)/2,y-3);ctx.textAlign='left';}
+}
+function draw(){
+  const W=$('#chart').clientWidth,H=$('#chart').clientHeight;
+  ctx.clearRect(0,0,W,H);
+  if(!S||!C.length||!$('#tab-chart').classList.contains('on'))return;
+  const ts=chart.timeScale();
+  let pw=60;try{pw=chart.priceScale('right').width()}catch(e){}
+  const R=W-pw;
+  const X=i=>{const v=ts.timeToCoordinate(C[Math.min(Math.max(i,0),C.length-1)].time);return v==null?null:v};
+  const Y=p=>cs.priceToCoordinate(p);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,R,H);ctx.clip();
+  if(L.pd&&S.lastH&&S.lastL){
+    const x1=Math.max(0,X(Math.min(S.lastH.i,S.lastL.i))??0),hi=S.lastH.price,lo=S.lastL.price,eq=(hi+lo)/2;
+    rect(x1,R,Y(hi),Y(eq),'rgba(239,83,80,.06)');
+    rect(x1,R,Y(eq),Y(lo),'rgba(38,166,154,.06)');
+    hline(x1,R,Y(eq),'#9e9e9e',[3,4],'EQ 50%');
+    const r=hi-lo;
+    if(S.trend===1)rect(x1,R,Y(hi-.62*r),Y(hi-.79*r),'rgba(240,185,11,.16)','rgba(240,185,11,.6)','OTE 62–79%');
+    if(S.trend===-1)rect(x1,R,Y(lo+.62*r),Y(lo+.79*r),'rgba(240,185,11,.16)','rgba(240,185,11,.6)','OTE 62–79%');
+  }
+  if(L.fvg){
+    const a=S.fvgs.filter(f=>f.mit==null).slice(-8);
+    for(const f of a)rect(X(f.i)??0,R,Y(f.top),Y(f.bottom),f.dir===1?'rgba(66,165,245,.2)':'rgba(255,167,38,.2)',null,'FVG');
+  }
+  if(L.ob){
+    const a=S.obs.filter(o=>o.mit==null).slice(-8);
+    for(const o of a)rect(X(o.ci)??0,R,Y(o.top),Y(o.bottom),o.dir===1?'rgba(38,166,154,.25)':'rgba(239,83,80,.25)',o.dir===1?'#26a69a':'#ef5350',o.dir===1?'Bull OB':'Bear OB');
+  }
+  if(L.liq){
+    for(const l of S.liq.filter(l=>l.swept==null).slice(-6))hline(X(l.i1)??0,R,Y(l.price),'#cfd8dc',[2,3],l.type==='H'?'EQH':'EQL');
+  }
+  if(L.str){
+    for(const e of S.events.slice(-12)){
+      const x1=X(e.from),x2=X(e.i);if(x1==null||x2==null)continue;
+      hline(x1,x2,Y(e.price),e.type==='CHoCH'?'#f0b90b':(e.dir===1?'#26a69a':'#ef5350'),[5,4],e.type);
+    }
+  }
+  if(L.sw){
+    ctx.fillStyle='#90a4ae';
+    for(const s of S.swings.slice(-24)){const x=X(s.i),y=Y(s.price);if(x==null||y==null)continue;ctx.beginPath();ctx.arc(x,y+(s.type==='H'?-6:6),3,0,7);ctx.fill();}
+  }
+  ctx.restore();
+}
+(function loop(){draw();requestAnimationFrame(loop)})();
+
+// ---------- plan ----------
+function makePlan(){
+  const s=S,c=C,i=c.length-1;if(i<20)return null;
+  const price=c[i].c,atr=s.atr[i]||price*.002,dir=s.trend,o={dir,price,atr,items:[],score:0};
+  if(!dir||!s.lastH||!s.lastL){o.msg='โครงสร้างยังไม่ชัด — รอให้เกิด BOS/CHoCH';return o;}
+  const eq=(s.lastH.price+s.lastL.price)/2;o.zone=price>eq?'premium':'discount';
+  const act=s.obs.filter(x=>x.mit==null&&x.dir===dir);
+  let ob=null;
+  if(dir===1){const a=act.filter(x=>x.bottom<price).sort((a,b)=>b.top-a.top);ob=a[0];}
+  else{const a=act.filter(x=>x.top>price).sort((a,b)=>a.bottom-b.bottom);ob=a[0];}
+  const add=(name,pts,max,note)=>{o.items.push({name,pts,max,note});o.score+=pts;};
+  add('โครงสร้างตลาด (BOS/CHoCH)',25,25,dir===1?'Bullish':'Bearish');
+  add('เทรนด์ TF ใหญ่ ('+HTF[tf]+')',HT===dir?20:HT===0?8:0,20,HT===dir?'ตรงกัน':HT===0?'ไม่ชัด':'สวนทาง');
+  const pdok=(dir===1&&o.zone==='discount')||(dir===-1&&o.zone==='premium');
+  add('ราคาอยู่ฝั่ง '+(dir===1?'Discount':'Premium'),pdok?15:0,15,o.zone==='premium'?'Premium':'Discount');
+  if(ob){
+    const inside=price<=ob.top&&price>=ob.bottom;
+    const dist=dir===1?price-ob.top:ob.bottom-price;
+    o.inZone=inside;o.ob=ob;
+    add('ใกล้/ในโซน Order Block',inside?20:dist<=1.5*atr?10:0,20,inside?'อยู่ในโซน':dist<=1.5*atr?'ใกล้โซน':'ยังห่าง');
+    const entry=inside?price:(dir===1?ob.top:ob.bottom);
+    const sl=dir===1?ob.bottom-.1*atr:ob.top+.1*atr,risk=Math.abs(entry-sl);
+    o.entry=entry;o.sl=sl;o.tp1=entry+dir*2*risk;
+    const tgt=dir===1?s.lastH.price:s.lastL.price;
+    o.tp2=(dir===1?tgt>entry:tgt<entry)?tgt:null;
+  }else add('ใกล้/ในโซน Order Block',0,20,'ไม่มี OB ที่ยังไม่ถูกเจาะ');
+  const sw=s.sweeps.some(x=>x.i>i-40&&x.dir===dir);
+  add('กวาด Liquidity ล่าสุดตรงทิศ',sw?10:0,10,sw?'พบ':'ไม่พบ');
+  const nsc=NEWS.length?NEWSC:0,aligned=dir*nsc;
+  add('ข่าว/Sentiment',aligned>.15?10:aligned>-.15?5:0,10,NEWS.length?(nsc>.15?'บวก':nsc<-.15?'ลบ':'กลาง'):'ไม่มีข้อมูล');
+  return o;
+}
+function renderSignal(){
+  const p=PLAN,el=$('#sig');
+  if(!p){el.textContent='ข้อมูลยังไม่พอ';$('#saveJ').disabled=true;return;}
+  const dn=p.dir===1?'<span class="up">Bullish ▲</span>':p.dir===-1?'<span class="dn">Bearish ▼</span>':'—';
+  let h=`<div class="row"><span>ทิศทางตามโครงสร้าง</span><b>${dn}</b></div>`;
+  if(p.msg){el.innerHTML=h+`<div class="mut">${p.msg}</div>`;$('#saveJ').disabled=true;return;}
+  const col=p.score>=70?'#26a69a':p.score>=50?'#f0b90b':'#ef5350';
+  h+=`<div class="big" style="color:${col}">${p.score}<span class="mut" style="font-size:13px"> / 100 confluence</span></div>
+  <div class="bar"><i style="width:${p.score}%;background:${col}"></i></div>`;
+  h+=p.items.map(x=>`<div class="row"><span>${x.name}</span><span class="${x.pts===x.max?'up':x.pts?'ac':'dn'}">${x.note} (${x.pts}/${x.max})</span></div>`).join('');
+  if(p.entry){
+    h+=`<hr style="border-color:#222836"><div class="row"><span>${p.inZone?'ราคาอยู่ในโซนแล้ว':'รอราคาเข้าโซน'}</span><b>${p.dir===1?'BUY':'SELL'}</b></div>
+    <div class="row"><span>Entry</span><b>${fmt(p.entry)}</b></div>
+    <div class="row"><span>Stop Loss</span><b class="dn">${fmt(p.sl)}</b></div>
+    <div class="row"><span>TP1 (2R)</span><b class="up">${fmt(p.tp1)}</b></div>
+    <div class="row"><span>TP2 (swing ตรงข้าม)</span><b class="up">${fmt(p.tp2)}</b></div>`;
+  }else h+='<div class="mut" style="margin-top:6px">ไม่มีโซนที่ใช้เข้าได้ในตอนนี้ — รอ</div>';
+  h+='<div class="mut" style="margin-top:6px">คะแนนคือจำนวนปัจจัยที่สอดคล้อง ไม่ใช่ความน่าจะเป็นที่จะชนะ</div>';
+  el.innerHTML=h;$('#saveJ').disabled=!p.entry;
+}
+function analyze(){
+  if(C.length<30)return;
+  S=smc(C,P());PLAN=makePlan();renderSignal();
+  const mk=S.sweeps.slice(-15).map(x=>({time:C[x.i].time,position:x.dir===1?'belowBar':'aboveBar',color:x.dir===1?'#26a69a':'#ef5350',shape:x.dir===1?'arrowUp':'arrowDown',text:x.kind}));
+  mk.sort((a,b)=>a.time-b.time);cs.setMarkers(mk);
+  priceLines.forEach(l=>cs.removePriceLine(l));priceLines=[];
+  if(PLAN&&PLAN.entry){
+    const pl=(price,color,title)=>priceLines.push(cs.createPriceLine({price,color,lineWidth:1,lineStyle:2,axisLabelVisible:true,title}));
+    pl(PLAN.entry,'#f0b90b','Entry');pl(PLAN.sl,'#ef5350','SL');pl(PLAN.tp1,'#26a69a','TP1');
+  }
+}
+const sched=()=>{if(timer)return;timer=setTimeout(()=>{timer=null;analyze()},800)};
+
+// ---------- data / websocket ----------
+const setStatus=t=>$('#status').textContent=t;
+function stopWS(){wsOn=false;if(ws){try{ws.close()}catch(e){}ws=null}$('#live').classList.remove('on');}
+function startWS(){
+  wsOn=true;
+  const w=new WebSocket(WSB[wsIdx]+sym.toLowerCase()+'@kline_'+tf);ws=w;
+  w.onopen=()=>{$('#live').classList.add('on');setStatus('เรียลไทม์ (Binance)')};
+  w.onmessage=e=>{
+    const k=JSON.parse(e.data).k;if(!k||!C.length)return;
+    const b={t:k.t,time:k.t/1000+TZ,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v},last=C[C.length-1];
+    if(last.t===b.t)C[C.length-1]=b;else if(b.t>last.t){C.push(b);if(C.length>1500)C.shift();}
+    cs.update({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c});
+    vs.update({time:b.time,value:b.v,color:b.c>=b.o?'#26a69a55':'#ef535055'});
+    const pe=$('#price');pe.textContent=fmt(b.c);pe.className='price '+(b.c>=b.o?'up':'dn');
+    sched();
+  };
+  w.onerror=()=>{wsIdx=1-wsIdx};
+  w.onclose=()=>{$('#live').classList.remove('on');if(wsOn&&ws===w){setStatus('หลุดการเชื่อมต่อ กำลังต่อใหม่...');setTimeout(()=>{if(wsOn&&ws===w)startWS()},2000)}};
+}
+async function load(){
+  stopWS();setStatus('กำลังโหลดข้อมูล...');
+  try{C=await kl(sym,tf,800);}
+  catch(e){setStatus('โหลดข้อมูลไม่ได้ (เครือข่ายอาจบล็อก Binance): '+e.message);return;}
+  cs.setData(C.map(b=>({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c})));
+  vs.setData(C.map(b=>({time:b.time,value:b.v,color:b.c>=b.o?'#26a69a55':'#ef535055'})));
+  try{const h=await kl(sym,HTF[tf],500);HT=smc(h,{swing:P().swing,rr:2}).trend;}catch(e){HT=0}
+  chart.timeScale().setVisibleLogicalRange({from:C.length-120,to:C.length+10});
+  $('#price').textContent=fmt(C[C.length-1].c);
+  analyze();startWS();loadNews();
+}
+
+// ---------- news ----------
+const BULL=['surge','rally','soar','approve','approval','inflow','adoption','record high','all-time high','bullish','gain','upgrade','partnership','accumulate','breakout','rate cut','etf','buy','jump','recover'];
+const BEAR=['crash','hack','exploit','ban','lawsuit','sues','outflow','dump','bearish','plunge','liquidation','fraud','sell-off','selloff','decline','drop','fall','reject','rate hike','probe','collapse','fear','bankrupt'];
+async function loadNews(){
+  const cat={BTCUSDT:'BTC',ETHUSDT:'ETH',SOLUSDT:'SOL',BNBUSDT:'BNB',XRPUSDT:'XRP'}[sym]||'';
+  const get=async c=>{const r=await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN'+(c?'&categories='+c:''));const j=await r.json();return Array.isArray(j.Data)?j.Data:[]};
+  try{NEWS=await get(cat);if(!NEWS.length&&cat)NEWS=await get('');NEWS=NEWS.slice(0,25);}catch(e){NEWS=[]}
+  try{const r=await fetch('https://api.alternative.me/fng/?limit=1');const j=await r.json();FNG={v:+j.data[0].value,l:j.data[0].value_classification};}catch(e){FNG=null}
+  let sum=0;
+  for(const n of NEWS){
+    const t=(n.title+' '+(n.body||'').slice(0,300)).toLowerCase();
+    const b=BULL.filter(k=>t.includes(k)).length,r=BEAR.filter(k=>t.includes(k)).length;
+    n._s=Math.sign(b-r);sum+=n._s;
+  }
+  const hs=NEWS.length?sum/NEWS.length:0;
+  NEWSC=FNG?0.7*hs+0.3*((FNG.v-50)/50):hs;
+  renderNews();if(C.length)analyze();
+}
+function renderNews(){
+  const lab=NEWSC>.15?'<span class="up">เอนเอียงบวก</span>':NEWSC<-.15?'<span class="dn">เอนเอียงลบ</span>':'<span class="ac">กลาง</span>';
+  $('#newsSum').innerHTML=`<div class="row"><span>คะแนนรวม</span><b>${lab} (${NEWSC.toFixed(2)})</b></div>
+  <div class="row"><span>Fear &amp; Greed Index</span><b>${FNG?FNG.v+' – '+esc(FNG.l):'ไม่มีข้อมูล'}</b></div>
+  <div class="mut">คำนวณจากคำสำคัญในหัวข้อข่าว 25 ข่าวล่าสุด (70%) + Fear&amp;Greed (30%) เป็นการประมาณคร่าว ๆ</div>`;
+  $('#newsList').innerHTML=NEWS.length?NEWS.map(n=>`<div><span class="${n._s>0?'up':n._s<0?'dn':'mut'}">${n._s>0?'▲':n._s<0?'▼':'●'}</span>
+   <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
+   <div class="mut" style="border:none;padding:0">${esc(n.source||'')} · ${new Date(n.published_on*1000).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</div></div>`).join(''):'<div class="mut">โหลดข่าวไม่ได้</div>';
+}
+function embed(id,file,cfg){
+  const el=$(id);el.innerHTML='';
+  const w=document.createElement('div');w.className='tradingview-widget-container';
+  const inner=document.createElement('div');inner.className='tradingview-widget-container__widget';w.appendChild(inner);
+  const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/'+file;s.async=true;s.text=JSON.stringify(cfg);
+  w.appendChild(s);el.appendChild(w);
+}
+function newsWidgets(){
+  if(newsWid)return;newsWid=true;
+  embed('#calw','embed-widget-events.js',{colorTheme:'dark',isTransparent:true,width:'100%',height:520,locale:'th_TH',importanceFilter:'0,1',currencyFilter:'USD,EUR,GBP,JPY,CNY'});
+  embed('#tlw','embed-widget-timeline.js',{feedMode:'market',market:'crypto',isTransparent:true,displayMode:'regular',width:'100%',height:520,colorTheme:'dark',locale:'th_TH'});
+}
+
+// ---------- TradingView full ----------
+function loadTV(){
+  const key=sym+tf;if(tvKey===key)return;tvKey=key;
+  const mk=()=>{$('#tvc').innerHTML='';new TradingView.widget({autosize:true,symbol:TVS[sym],interval:TVI[tf],timezone:'Asia/Bangkok',theme:'dark',style:'1',locale:'th_TH',toolbar_bg:'#131722',enable_publishing:false,allow_symbol_change:true,container_id:'tvc',withdateranges:true});};
+  if(window.TradingView)mk();else{const s=document.createElement('script');s.src='https://s3.tradingview.com/tv.js';s.onload=mk;document.head.appendChild(s);}
+}
+
+// ---------- backtest ----------
+async function history(s,t,total,prog){
+  let arr=[],end;
+  while(arr.length<total){
+    const b=await kl(s,t,1000,end);if(!b.length)break;
+    arr=b.concat(arr);end=b[0].t-1;prog(arr.length);
+    if(b.length<1000)break;
+  }
+  return arr.slice(-total);
+}
+function cardStats(title,st,rr,fee){
+  if(!st)return `<div class="card"><h3>${title}</h3><div class="mut">ไม่มีเทรด</div></div>`;
+  const be=(1+fee/100*0)/(1+rr);
+  return `<div class="card"><h3>${title}</h3>
+  <div class="row"><span>จำนวนเทรด</span><b>${st.n}</b></div>
+  <div class="row"><span>Win rate</span><b>${(st.wr*100).toFixed(1)}%</b></div>
+  <div class="row"><span>ช่วงเชื่อมั่น 95%</span><b>${(st.ci[0]*100).toFixed(1)}–${(st.ci[1]*100).toFixed(1)}%</b></div>
+  <div class="row"><span>Win rate จุดคุ้มทุน (ก่อนค่าธรรมเนียม)</span><b>${(be*100).toFixed(1)}%</b></div>
+  <div class="row"><span>Expectancy (R/เทรด)</span><b class="${st.avg>0?'up':'dn'}">${st.avg.toFixed(3)}</b></div>
+  <div class="row"><span>รวม R</span><b class="${st.total>0?'up':'dn'}">${st.total.toFixed(1)}</b></div>
+  <div class="row"><span>Profit factor</span><b>${isFinite(st.pf)?st.pf.toFixed(2):'∞'}</b></div>
+  <div class="row"><span>Max drawdown (R)</span><b class="dn">${st.dd.toFixed(1)}</b></div></div>`;
+}
+$('#btRun').onclick=async()=>{
+  const total=+$('#btN').value,o={swing:+$('#btSw').value||5,rr:+$('#btRR').value||2,fee:+$('#btFee').value||0};
+  $('#btOut').innerHTML='';$('#btRun').disabled=true;
+  try{
+    const h=await history(sym,tf,total,n=>$('#btProg').textContent=`ดึงข้อมูล ${n}/${total} แท่ง...`);
+    $('#btProg').textContent='กำลังคำนวณ...';await new Promise(r=>setTimeout(r,30));
+    const r=smc(h,o),tr=r.trades,half=Math.floor(tr.length/2);
+    const from=new Date(h[0].t).toLocaleDateString('th-TH'),to=new Date(h[h.length-1].t).toLocaleDateString('th-TH');
+    $('#btProg').textContent=`${SYMS[sym]} ${tf} · ${h.length} แท่ง (${from} – ${to})`;
+    let html='<div class="cols">'+cardStats('ทั้งหมด',stats(tr),o.rr,o.fee)+cardStats('ครึ่งแรก (In-sample)',stats(tr.slice(0,half)),o.rr,o.fee)+cardStats('ครึ่งหลัง (Out-of-sample)',stats(tr.slice(half)),o.rr,o.fee)+'</div>';
+    html+='<div class="card"><h3>Equity curve (หน่วย R)</h3><canvas id="eqc" height="220" style="width:100%"></canvas><div class="mut">เส้นประแนวตั้ง = จุดแบ่ง In/Out-of-sample</div></div>';
+    html+='<div class="card" style="overflow-x:auto"><h3>20 เทรดล่าสุด</h3><table><tr><th>เวลา</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>R</th></tr>'+
+      tr.slice(-20).reverse().map(x=>`<tr><td>${new Date(x.t).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td class="${x.r>0?'up':'dn'}">${x.r.toFixed(2)}</td></tr>`).join('')+'</table></div>';
+    html+='<div class="warn">ผล backtest ไม่รับประกันอนาคต ถ้า Out-of-sample แย่กว่า In-sample มาก แปลว่าอาจ overfit หรือ edge ไม่จริง ลองหลายสินทรัพย์/TF/ช่วงเวลาก่อนสรุป</div>';
+    $('#btOut').innerHTML=html;
+    const cv=$('#eqc'),cx=cv.getContext('2d'),W=cv.width=cv.clientWidth*(devicePixelRatio||1),Hh=cv.height=220*(devicePixelRatio||1);
+    let e=0;const pts=[0];for(const x of tr){e+=x.r;pts.push(e)}
+    const mn=Math.min(...pts),mx=Math.max(...pts),sx=i=>i/(pts.length-1||1)*(W-10)+5,sy=v=>Hh-10-(v-mn)/((mx-mn)||1)*(Hh-20);
+    cx.strokeStyle='#f0b90b';cx.lineWidth=2;cx.beginPath();pts.forEach((v,i)=>i?cx.lineTo(sx(i),sy(v)):cx.moveTo(sx(i),sy(v)));cx.stroke();
+    cx.strokeStyle='#555';cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(5,sy(0));cx.lineTo(W-5,sy(0));cx.moveTo(sx(half),0);cx.lineTo(sx(half),Hh);cx.stroke();
+  }catch(err){$('#btProg').textContent='ผิดพลาด: '+err.message;}
+  $('#btRun').disabled=false;
+};
+
+// ---------- forward-test journal ----------
+const jget=()=>{try{return JSON.parse(localStorage.getItem('smc_journal')||'[]')}catch(e){return[]}};
+const jset=a=>{try{localStorage.setItem('smc_journal',JSON.stringify(a))}catch(e){}};
+$('#saveJ').onclick=()=>{
+  if(!PLAN||!PLAN.entry)return;
+  const a=jget();
+  a.push({id:Date.now(),t:Date.now(),symbol:sym,tf,dir:PLAN.dir,entry:PLAN.entry,sl:PLAN.sl,tp:PLAN.tp1,score:PLAN.score,status:'pending'});
+  jset(a);$('#saveJ').textContent='บันทึกแล้ว ✓';setTimeout(()=>$('#saveJ').textContent='บันทึกสัญญาณนี้เข้า Forward-test journal',1500);
+};
+function judge(j,cs2){
+  let filled=j.filled||null;
+  for(const b of cs2){
+    if(b.t<j.t)continue;
+    if(!filled){
+      if(j.dir===1?b.l<=j.entry:b.h>=j.entry)filled=b.t;
+      else{if(b.t-j.t>200*TFMS[j.tf])return{status:'expired'};continue;}
+    }
+    if(j.dir===1){if(b.l<=j.sl)return{status:'loss',r:-1,filled};if(b.h>=j.tp)return{status:'win',r:2,filled};}
+    else{if(b.h>=j.sl)return{status:'loss',r:-1,filled};if(b.l<=j.tp)return{status:'win',r:2,filled};}
+  }
+  return{status:filled?'open':'pending',filled};
+}
+async function refreshJournal(){
+  const a=jget();
+  for(const j of a){
+    if(j.status==='win'||j.status==='loss'||j.status==='expired')continue;
+    try{const cs2=await kl(j.symbol,j.tf,1000,undefined,j.t);Object.assign(j,judge(j,cs2));}catch(e){}
+  }
+  jset(a);renderJournal();
+}
+function renderJournal(){
+  const a=jget(),w=a.filter(x=>x.status==='win').length,l=a.filter(x=>x.status==='loss').length;
+  const tot=w+l,R=w*2-l;
+  $('#jBox').innerHTML=`<div class="warn">Forward-test ของคุณ: ปิดแล้ว ${tot} เทรด · ชนะ ${w} · แพ้ ${l}${tot?` · win rate ${(w/tot*100).toFixed(0)}% · รวม ${R>=0?'+':''}${R}R (ยังไม่หักค่าธรรมเนียม)`:''}${tot<30?'<br>ตัวอย่างยังน้อยเกินกว่าจะสรุปอะไรได้':''}</div>`;
+  $('#jTab').innerHTML=a.length?'<table><tr><th>เวลา</th><th>สินทรัพย์</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>Score</th><th>สถานะ</th></tr>'+
+    a.slice().reverse().map(x=>`<tr><td>${new Date(x.t).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</td><td>${esc(x.symbol)} ${esc(x.tf)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td>${x.score}</td><td class="${x.status==='win'?'up':x.status==='loss'?'dn':'mut'}">${x.status}</td></tr>`).join('')+'</table>':'<div class="mut">ยังไม่มีรายการ — กดปุ่ม "บันทึกสัญญาณ" ในแท็บกราฟ</div>';
+}
+$('#jRef').onclick=refreshJournal;
+$('#jClr').onclick=()=>{if(confirm('ล้าง journal ทั้งหมด?')){jset([]);renderJournal();}};
+
+// ---------- UI wiring ----------
+$('#sym').innerHTML=Object.entries(SYMS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('#tfs').innerHTML=TFS.map(t=>`<button data-tf="${t}" class="${t===tf?'on':''}">${t}</button>`).join('');
+$('#sym').onchange=e=>{sym=e.target.value;load()};
+$('#tfs').onclick=e=>{const t=e.target.dataset.tf;if(!t)return;tf=t;$$('#tfs button').forEach(b=>b.classList.toggle('on',b.dataset.tf===t));load();if($('#tab-tv').classList.contains('on'))loadTV();};
+$$('[data-l]').forEach(c=>c.onchange=()=>{L[c.dataset.l]=c.checked?1:0});
+$$('[data-l]').forEach(c=>L[c.dataset.l]=c.checked?1:0);
+$('#swing').onchange=$('#rr').onchange=()=>load();
+$$('.tabs button').forEach(b=>b.onclick=()=>{
+  $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.tab').forEach(x=>x.classList.toggle('on',x.id==='tab-'+b.dataset.tab));
+  const t=b.dataset.tab;
+  if(t==='chart')setTimeout(resize,30);
+  if(t==='tv')loadTV();
+  if(t==='news')newsWidgets();
+  if(t==='proof'){renderJournal();refreshJournal();}
+});
+$('#sym').addEventListener('change',()=>{tvKey=''});
+resize();load();renderJournal();
+setInterval(loadNews,300000);
+</script>
 </body>
 </html>
