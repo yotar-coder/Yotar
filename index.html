@@ -1,694 +1,438 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EURUSD SMC/ICT Terminal + News Engine</title>
-<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สื่อการเรียนการสอน: ซอฟต์แวร์และฮาร์ดแวร์</title>
 <style>
-:root{--bg:#0b0e14;--panel:#121824;--line:#1e293b;--tx:#d1d4dc;--mut:#7d8597;--up:#10b981;--dn:#ef4444;--ac:#ffd700;--bl:#38bdf8}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,'Noto Sans Thai','Segoe UI',sans-serif}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
-header b{color:var(--ac);font-size:15px}
-select,input,button{background:#182030;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font:inherit;font-size:13px}
-button{cursor:pointer}button:hover{border-color:var(--ac)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.seg button{border-radius:0;margin-left:-1px}.seg button.on{background:var(--ac);color:#000;border-color:var(--ac);font-weight:700}
-.price{font-size:18px;font-weight:700}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);display:inline-block}.dot.on{background:var(--up);box-shadow:0 0 6px var(--up)}
-.mut{color:var(--mut);font-size:12px}
-.clock{font:12px ui-monospace,Consolas,monospace;text-align:right;line-height:1.25}.clock small{color:var(--mut);display:block;font-size:10px}
-#banner{padding:7px 14px;font-size:13px;border-bottom:1px solid var(--line);background:#1b1a10;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#banner.hot{background:#3a1212}#banner.calm{background:#0f1f1a}
-.layout{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:10px;padding:10px}
-@media(max-width:1250px){.layout{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
-.card h3{margin:0 0 8px;font-size:12px;color:var(--ac);text-transform:uppercase;letter-spacing:.05em}
-.row{display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:13px}
-.bar{height:10px;background:#182030;border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
-.up{color:var(--up)}.dn{color:var(--dn)}.ac{color:var(--ac)}.bl{color:var(--bl)}
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:8px;overflow-x:auto}
-.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 14px;white-space:nowrap;color:var(--mut)}
-.tabs button.on{color:var(--ac);border-color:var(--ac)}
-.tab{display:none}.tab.on{display:block}
-.chartwrap{position:relative;height:calc(100vh - 215px);min-height:440px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-#chart,#ov{position:absolute;inset:0;width:100%;height:100%}#ov{pointer-events:none}
-#tvc{height:calc(100vh - 215px);min-height:460px}
-label.ck{display:inline-flex;gap:5px;margin:2px 10px 2px 0;align-items:center;font-size:13px}
-table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
-.big{font-size:22px;font-weight:700}
-.warn{border-left:3px solid var(--ac);padding:8px 12px;background:#1b1a10;border-radius:4px;margin:8px 0}
-.kz{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:12px}
-.kz.on{border-color:#10b98199;background:#0f2a22}.kz .b{padding:1px 8px;border-radius:5px;background:#1e293b;color:var(--mut);font-weight:700;font-size:11px}.kz.on .b{background:var(--up);color:#000}
-.feed>div{padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
-.feed a{color:var(--tx);text-decoration:none}.feed a:hover{color:var(--ac)}
-.pill{padding:1px 7px;border-radius:5px;font-size:10px;font-weight:700}
-.pill.high{background:#3a1212;color:#fca5a5}.pill.med{background:#3a2a0a;color:#fcd34d}.pill.low{background:#1e293b;color:var(--mut)}
-a{color:#64b5f6}ul{padding-left:20px;margin:6px 0}
-dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:10px;max-width:440px}
-dialog::backdrop{background:#0009}
+:root {
+  --bg: #0a192f;
+  --bg2: #112240;
+  --card: rgba(255, 255, 255, 0.06);
+  --accent: #64ffda;
+  --accent2: #1e90ff;
+  --text: #ccd6f6;
+  --heading: #e6f1ff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, var(--bg), var(--bg2));
+  color: var(--text);
+  line-height: 1.6;
+}
+header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  background: linear-gradient(180deg, rgba(30, 144, 255, 0.2), transparent);
+}
+header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: var(--heading);
+  letter-spacing: 1px;
+}
+header p { max-width: 720px; margin: 1rem auto; }
+nav {
+  position: sticky;
+  top: 0;
+  background: rgba(10, 25, 47, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+  z-index: 100;
+}
+nav ul {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+  flex-wrap: wrap;
+}
+nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+nav a:hover { color: var(--accent); background: rgba(100, 255, 218, 0.1); }
+section { max-width: 1100px; margin: auto; padding: 3rem 1rem; }
+h2 {
+  color: var(--heading);
+  font-size: 1.9rem;
+  border-left: 4px solid var(--accent);
+  padding-left: 1rem;
+  margin-top: 0;
+}
+h3 { color: var(--accent2); margin-top: 0; }
+.card {
+  background: var(--card);
+  border: 1px solid rgba(100, 255, 218, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+.diagram { background: rgba(0, 0, 0, 0.15); border-radius: 10px; padding: 1rem; border: 1px solid rgba(30, 144, 255, 0.15); }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+th, td { border: 1px solid rgba(100, 255, 218, 0.15); padding: 0.7rem; text-align: left; }
+th { background: rgba(30, 144, 255, 0.15); color: var(--heading); }
+tr:nth-child(even) { background: rgba(255, 255, 255, 0.03); }
+ul.list { padding-left: 1.2rem; }
+ul.list li { margin-bottom: 0.5rem; }
+.hw-part { cursor: pointer; transition: 0.2s; }
+.hw-part:hover { filter: drop-shadow(0 0 6px var(--accent)); }
+#tooltip {
+  position: absolute;
+  background: rgba(17, 34, 64, 0.96);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  pointer-events: none;
+  display: none;
+  max-width: 280px;
+  font-size: 0.9rem;
+  z-index: 200;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+footer { text-align: center; padding: 2rem; color: #8892b0; font-size: 0.9rem; }
+@media (max-width: 600px) {
+  header h1 { font-size: 1.7rem; }
+  nav ul { gap: 0.5rem; }
+}
 </style>
 </head>
 <body>
+
+<div id="tooltip"></div>
+
 <header>
-  <b>◆ EURUSD · SMC/ICT Terminal</b>
-  <select id="src" title="แหล่งข้อมูลราคา">
-    <option value="bn">Binance EURUSDT (ฟรี · เรียลไทม์ · ตัวแทน EURUSD)</option>
-    <option value="td">Twelve Data EUR/USD (ต้องมี API key)</option>
-  </select>
-  <button id="keyBtn" title="ตั้งค่า API key">🔑 Key</button>
-  <div id="tfs" class="seg"></div>
-  <span class="price" id="price" style="margin-left:auto">—</span><span class="dot" id="live"></span><span class="mut" id="status"></span>
-  <div class="clock"><small>New York</small><span id="nyc">--:--:--</span></div>
-  <div class="clock"><small>Thailand</small><span id="bkc">--:--:--</span></div>
+  <h1>ซอฟต์แวร์และฮาร์ดแวร์</h1>
+  <p>สื่อการเรียนการสอนที่รวมองค์ประกอบของคอมพิวเตอร์ โทรศัพท์ แท็บเล็ต ซีพียู และจีพียู ในรูปแบบภาพประกอบชัดเจน เข้าใจง่าย</p>
 </header>
-<div id="banner"><span class="mut">กำลังโหลดปฏิทินข่าว...</span></div>
 
-<div class="layout">
-  <!-- LEFT -->
-  <aside>
-    <div class="card"><h3>สัญญาณ SMC + ข่าว (คำนวณอัตโนมัติ)</h3><div id="sig" class="mut">กำลังโหลด...</div>
-      <button id="saveJ" style="margin-top:8px;width:100%" disabled>บันทึกสัญญาณเข้า Forward-test journal</button></div>
-    <div class="card"><h3>ICT Sessions &amp; Killzones</h3><div id="kzs"></div><div class="mut">เวลาไทยคำนวณตามฤดูกาล (DST) ของนิวยอร์กโดยอัตโนมัติ</div></div>
-    <div class="card"><h3>คำนวณขนาดไม้ (EURUSD)</h3>
-      <div class="row"><span>ทุน ($)</span><input id="cb" type="number" value="1000" style="width:100px"></div>
-      <div class="row"><span>เสี่ยง (%)</span><input id="cr" type="number" value="1" step="0.25" style="width:100px"></div>
-      <div class="row"><span>Entry</span><input id="ce" type="number" step="0.00001" style="width:100px"></div>
-      <div class="row"><span>Stop Loss</span><input id="cs" type="number" step="0.00001" style="width:100px"></div>
-      <div class="row"><span>Take Profit</span><input id="ct" type="number" step="0.00001" style="width:100px"></div>
-      <button id="fillPlan" style="width:100%;margin:6px 0">ใช้ค่าจากแผนปัจจุบัน</button>
-      <div id="calcOut" style="border-top:1px solid var(--line);padding-top:6px"></div></div>
-  </aside>
+<nav>
+  <ul>
+    <li><a href="#intro">แนะนำ</a></li>
+    <li><a href="#computer">คอมพิวเตอร์</a></li>
+    <li><a href="#cpu-gpu">CPU / GPU</a></li>
+    <li><a href="#mobile">มือถือ / แท็บเล็ต</a></li>
+    <li><a href="#software">ซอฟต์แวร์</a></li>
+    <li><a href="#summary">สรุป</a></li>
+  </ul>
+</nav>
 
-  <!-- CENTER -->
-  <main>
-    <div class="tabs" id="tabs">
-      <button data-tab="chart" class="on">กราฟ SMC</button>
-      <button data-tab="tv">TradingView (FX:EURUSD จริง)</button>
-      <button data-tab="bt">Backtest</button>
-      <button data-tab="proof">ความน่าเชื่อถือ &amp; การพิสูจน์</button>
+<main>
+
+<section id="intro">
+  <h2>ฮาร์ดแวร์กับซอฟต์แวร์คืออะไร?</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>ฮาร์ดแวร์ (Hardware)</h3>
+      <p>ส่วนประกอบทางกายภาพที่จับต้องได้ เช่น ซีพียู จอภาพ แป้นพิมพ์ โทรศัพท์ แท็บเล็ต</p>
     </div>
+    <div class="card">
+      <h3>ซอฟต์แวร์ (Software)</h3>
+      <p>ชุดคำสั่งหรือโปรแกรมที่สั่งให้ฮาร์ดแวร์ทำงาน เช่น ระบบปฏิบัติการ แอปพลิเคชัน ไดรเวอร์</p>
+    </div>
+  </div>
+</section>
 
-    <section id="tab-chart" class="tab on">
-      <div class="chartwrap"><div id="chart"></div><canvas id="ov"></canvas></div>
-      <div class="card" style="margin-top:10px">
-        <label class="ck"><input type="checkbox" data-l="ob" checked>Order Block</label>
-        <label class="ck"><input type="checkbox" data-l="fvg" checked>FVG</label>
-        <label class="ck"><input type="checkbox" data-l="str" checked>BOS/CHoCH</label>
-        <label class="ck"><input type="checkbox" data-l="liq" checked>Liquidity</label>
-        <label class="ck"><input type="checkbox" data-l="pd" checked>Premium/Discount+OTE</label>
-        <label class="ck"><input type="checkbox" data-l="asia" checked>Asian Range</label>
-        <label class="ck"><input type="checkbox" data-l="sw">จุด Swing</label>
-        &nbsp; Swing <input id="swing" type="number" value="5" min="2" max="20" style="width:55px">
-        RR <input id="rr" type="number" value="2" min="1" max="6" step="0.5" style="width:55px">
+<section id="computer">
+  <h2>องค์ประกอบของคอมพิวเตอร์</h2>
+  <p>เลื่อนเมาส์ไปบนแต่ละส่วนในแผนภาพเพื่อดูคำอธิบาย</p>
+  <div class="diagram">
+    <svg viewBox="0 0 640 420" style="width:100%;height:auto;">
+      <rect x="10" y="10" width="620" height="400" rx="12" fill="none" stroke="#64ffda" stroke-width="2" stroke-dasharray="6 4"/>
+      
+      <g class="hw-part" data-title="เมนบอร์ด (Motherboard)" data-desc="แผงวงจรหลักที่เชื่อมต่อซีพียู แรม การ์ดจอ และอุปกรณ์ทั้งหมดเข้าด้วยกัน">
+        <rect x="40" y="40" width="360" height="340" rx="4" fill="#0b3d4c" stroke="#1e90ff" stroke-width="2"/>
+        <text x="70" y="70" fill="#64ffda" font-size="14">Motherboard</text>
+      </g>
+      
+      <g class="hw-part" data-title="ซีพียู (CPU)" data-desc="หน่วยประมวลผลกลาง ทำหน้าที่คิดคำนวณและสั่งการทุกส่วน">
+        <rect x="90" y="110" width="80" height="80" rx="4" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+        <circle cx="130" cy="150" r="24" fill="none" stroke="#64ffda" stroke-width="2"/>
+        <text x="130" y="155" text-anchor="middle" fill="#64ffda" font-size="12">CPU</text>
+      </g>
+      
+      <g class="hw-part" data-title="แรม (RAM)" data-desc="หน่วยความจำชั่วคราว ใช้เก็บข้อมูลขณะเปิดเครื่อง ยิ่งมากยิ่งเปิดโปรแกรมพร้อมกันได้เยอะ">
+        <rect x="210" y="100" width="18" height="120" rx="2" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+        <rect x="240" y="100" width="18" height="120" rx="2" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+        <text x="234" y="240" text-anchor="middle" fill="#64ffda" font-size="12">RAM</text>
+      </g>
+      
+      <g class="hw-part" data-title="การ์ดจอ (GPU)" data-desc="ประมวลผลภาพกราฟิก สำคัญกับเกม งานออกแบบ และ AI">
+        <rect x="90" y="260" width="220" height="50" rx="4" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+        <circle cx="130" cy="285" r="14" fill="none" stroke="#64ffda" stroke-width="2"/>
+        <circle cx="200" cy="285" r="14" fill="none" stroke="#64ffda" stroke-width="2"/>
+        <text x="200" y="330" text-anchor="middle" fill="#64ffda" font-size="12">GPU / Graphics Card</text>
+      </g>
+      
+      <g class="hw-part" data-title="ที่เก็บข้อมูล (Storage)" data-desc="SSD เร็วและเงียบ HDD ความจุสูงราคาถูก ใช้เก็บไฟล์ โปรแกรม และระบบปฏิบัติการ">
+        <rect x="430" y="50" width="120" height="30" rx="2" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+        <text x="490" y="71" text-anchor="middle" fill="#64ffda" font-size="12">SSD / HDD</text>
+      </g>
+      
+      <g class="hw-part" data-title="พาวเวอร์ซัพพลาย (PSU)" data-desc="แปลงไฟฟ้าจากปลั๊กให้เป็นพลังงานที่คอมพิวเตอร์ใช้">
+        <rect x="430" y="300" width="140" height="70" rx="4" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+        <text x="500" y="340" text-anchor="middle" fill="#64ffda" font-size="12">PSU</text>
+      </g>
+      
+      <g class="hw-part" data-title="พัดลมระบายความร้อน" data-desc="ช่วยถ่ายเทอากาศให้ฮาร์ดแวร์เย็นลง ป้องกันความร้อนสูงเกินไป">
+        <circle cx="530" cy="180" r="35" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+        <path d="M530 150 L535 170 L555 175 L535 180 L530 200 L525 180 L505 175 L525 170 Z" fill="#1e90ff"/>
+        <text x="530" y="230" text-anchor="middle" fill="#64ffda" font-size="12">Fan</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="grid" style="margin-top:1.5rem;">
+    <div class="card">
+      <h3>ซีพียู (CPU)</h3>
+      <p>สมองของคอมพิวเตอร์ รับคำสั่งจากซอฟต์แวร์มาประมวลผล</p>
+    </div>
+    <div class="card">
+      <h3>การ์ดจอ (GPU)</h3>
+      <p>ประมวลผลภาพและวิดีโอ ช่วยแสดงผลบนหน้าจอให้ลื่นไหล</p>
+    </div>
+    <div class="card">
+      <h3>แรม (RAM)</h3>
+      <p>หน่วยความจำชั่วคราว ข้อมูลจะหายเมื่อปิดเครื่อง</p>
+    </div>
+    <div class="card">
+      <h3>ที่เก็บข้อมูล</h3>
+      <p>เก็บข้อมูลถาวร เช่น เอกสาร รูปภาพ เกม และระบบปฏิบัติการ</p>
+    </div>
+  </div>
+</section>
+
+<section id="cpu-gpu">
+  <h2>ซีพียู (CPU) กับ จีพียู (GPU)</h2>
+  
+  <div class="card">
+    <h3>โครงสร้างซีพียู</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 640 300" style="width:100%;height:auto;">
+        <g class="hw-part" data-title="แผ่นกระจายความร้อน (IHS)" data-desc="แผ่นโลหะด้านบนช่วยกระจายความร้อนไปยังฮีตซิงก์">
+          <rect x="40" y="50" width="160" height="160" rx="8" fill="#334155" stroke="#94a3b8" stroke-width="3"/>
+          <rect x="60" y="70" width="120" height="120" rx="4" fill="#475569"/>
+          <text x="120" y="135" text-anchor="middle" fill="#e2e8f0" font-size="16">CPU</text>
+        </g>
+        <g class="hw-part" data-title="ขาต่อ / Pads" data-desc="เชื่อมต่อซีพียูกับซอกบนเมนบอร์ด">
+          <rect x="260" y="50" width="160" height="160" rx="8" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+          <pattern id="pins" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2" fill="#64ffda"/></pattern>
+          <rect x="270" y="60" width="140" height="140" fill="url(#pins)"/>
+          <text x="340" y="240" text-anchor="middle" fill="#64ffda" font-size="12">ขาต่อ</text>
+        </g>
+        <g class="hw-part" data-title="โครงสร้างภายในซีพียู" data-desc="ประกอบด้วยคอร์ หน่วยคำนวณ (ALU) หน่วยควบคุม และแคช">
+          <rect x="460" y="40" width="160" height="220" rx="6" fill="#0b3d4c" stroke="#1e90ff" stroke-width="2"/>
+          <rect x="475" y="55" width="55" height="55" rx="3" fill="#1e293b" stroke="#64ffda"/>
+          <text x="502" y="88" text-anchor="middle" fill="#64ffda" font-size="11">Core 1</text>
+          <rect x="545" y="55" width="55" height="55" rx="3" fill="#1e293b" stroke="#64ffda"/>
+          <text x="572" y="88" text-anchor="middle" fill="#64ffda" font-size="11">Core 2</text>
+          <rect x="475" y="125" width="55" height="55" rx="3" fill="#1e293b" stroke="#64ffda"/>
+          <text x="502" y="158" text-anchor="middle" fill="#64ffda" font-size="11">Core 3</text>
+          <rect x="545" y="125" width="55" height="55" rx="3" fill="#1e293b" stroke="#64ffda"/>
+          <text x="572" y="158" text-anchor="middle" fill="#64ffda" font-size="11">Core 4</text>
+          <rect x="475" y="195" width="125" height="45" rx="3" fill="#1e293b" stroke="#1e90ff"/>
+          <text x="537" y="223" text-anchor="middle" fill="#64ffda" font-size="11">Cache L3 / Control Unit</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>โครงสร้างจีพียู</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 640 260" style="width:100%;height:auto;">
+        <g class="hw-part" data-title="การ์ดจอ (Graphics Card)" data-desc="บอร์ดวงจรที่มีชิปกราฟิก หน่วยความจำ VRAM และชุดระบายความร้อน">
+          <rect x="30" y="80" width="400" height="100" rx="6" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+          <rect x="60" y="105" width="90" height="50" rx="4" fill="#0b3d4c" stroke="#64ffda" stroke-width="2"/>
+          <text x="105" y="135" text-anchor="middle" fill="#64ffda" font-size="12">GPU Chip</text>
+          <rect x="170" y="95" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <rect x="220" y="95" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <rect x="270" y="95" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <rect x="170" y="135" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <rect x="220" y="135" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <rect x="270" y="135" width="40" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+          <text x="245" y="185" text-anchor="middle" fill="#64ffda" font-size="11">VRAM</text>
+          <circle cx="360" cy="130" r="32" fill="#0f172a" stroke="#64ffda" stroke-width="2"/>
+          <path d="M360 105 L365 125 L385 130 L365 135 L360 155 L355 135 L335 130 L355 125 Z" fill="#1e90ff"/>
+        </g>
+        <g class="hw-part" data-title="ชิปกราฟิกภายใน" data-desc="ประกอบด้วยคอร์กราฟิกจำนวนมาก ทำงานแบบขนานเพื่อแสดงผลภาพ">
+          <rect x="470" y="40" width="150" height="180" rx="6" fill="#0b3d4c" stroke="#1e90ff" stroke-width="2"/>
+          <text x="545" y="65" text-anchor="middle" fill="#64ffda" font-size="12">GPU Die</text>
+          <g fill="#1e293b" stroke="#64ffda" stroke-width="0.5">
+            <rect x="485" y="80" width="18" height="18"/><rect x="508" y="80" width="18" height="18"/><rect x="531" y="80" width="18" height="18"/><rect x="554" y="80" width="18" height="18"/><rect x="577" y="80" width="18" height="18"/>
+            <rect x="485" y="103" width="18" height="18"/><rect x="508" y="103" width="18" height="18"/><rect x="531" y="103" width="18" height="18"/><rect x="554" y="103" width="18" height="18"/><rect x="577" y="103" width="18" height="18"/>
+            <rect x="485" y="126" width="18" height="18"/><rect x="508" y="126" width="18" height="18"/><rect x="531" y="126" width="18" height="18"/><rect x="554" y="126" width="18" height="18"/><rect x="577" y="126" width="18" height="18"/>
+            <rect x="485" y="149" width="18" height="18"/><rect x="508" y="149" width="18" height="18"/><rect x="531" y="149" width="18" height="18"/><rect x="554" y="149" width="18" height="18"/><rect x="577" y="149" width="18" height="18"/>
+          </g>
+          <text x="545" y="190" text-anchor="middle" fill="#64ffda" font-size="11">Stream / CUDA Cores</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>เปรียบเทียบ CPU กับ GPU</h3>
+    <table>
+      <tr><th>คุณสมบัติ</th><th>CPU</th><th>GPU</th></tr>
+      <tr><td>หน้าที่</td><td>ประมวลผลคำสั่งทั่วไป</td><td>ประมวลผลกราฟิกแบบขนาน</td></tr>
+      <tr><td>โครงสร้าง</td><td>คอร์น้อยแต่ทำงานได้ซับซ้อน</td><td>คอร์จำนวนมากแต่ง่ายกว่า</td></tr>
+      <tr><td>เหมาะกับ</td><td>งานทั่วไป คำนวณหนัก</td><td>เกม เรนเดอร์ AI</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="mobile">
+  <h2>โทรศัพท์และแท็บเล็ต</h2>
+  
+  <div class="grid">
+    <div class="card">
+      <h3>องค์ประกอบของโทรศัพท์มือถือ</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 340 540" style="width:100%;height:auto;max-width:260px;display:block;margin:auto;">
+          <rect x="20" y="20" width="300" height="500" rx="36" fill="none" stroke="#64ffda" stroke-width="3"/>
+          <g class="hw-part" data-title="หน้าจอสัมผัส" data-desc="แสดงผลและรับคำสั่งจากการสัมผัส">
+            <rect x="35" y="45" width="270" height="450" rx="20" fill="#0b3d4c" stroke="#1e90ff" stroke-width="1"/>
+          </g>
+          <g class="hw-part" data-title="SoC (System on Chip)" data-desc="รวมซีพียู จีพียู แรม และโมเด็มไว้ในชิปเดียว">
+            <rect x="60" y="280" width="90" height="60" rx="4" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+            <text x="105" y="315" text-anchor="middle" fill="#64ffda" font-size="11">SoC</text>
+          </g>
+          <g class="hw-part" data-title="แบตเตอรี่" data-desc="จ่ายพลังงานให้ทุกส่วนของโทรศัพท์">
+            <rect x="60" y="360" width="220" height="110" rx="8" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+            <text x="170" y="420" text-anchor="middle" fill="#64ffda" font-size="14">Battery</text>
+          </g>
+          <g class="hw-part" data-title="กล้อง" data-desc="รับแสงและบันทึกภาพหรือวิดีโอ">
+            <circle cx="90" cy="90" r="22" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+            <circle cx="90" cy="90" r="10" fill="#0f172a" stroke="#64ffda"/>
+          </g>
+          <g class="hw-part" data-title="หน่วยเก็บข้อมูล" data-desc="เก็บแอป รูปภาพ วิดีโอ และระบบปฏิบัติการ">
+            <rect x="200" y="300" width="70" height="30" rx="2" fill="#334155" stroke="#1e90ff"/>
+            <text x="235" y="320" text-anchor="middle" fill="#64ffda" font-size="10">Storage</text>
+          </g>
+          <g class="hw-part" data-title="ลำโพง" data-desc="แปลงสัญญาณไฟฟ้าให้เป็นเสียง">
+            <rect x="130" y="490" width="80" height="14" rx="4" fill="#1e293b" stroke="#64ffda"/>
+          </g>
+        </svg>
       </div>
-    </section>
+    </div>
+    <div class="card">
+      <h3>องค์ประกอบของแท็บเล็ต</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 540 360" style="width:100%;height:auto;max-width:460px;display:block;margin:auto;">
+          <rect x="20" y="20" width="500" height="320" rx="24" fill="none" stroke="#64ffda" stroke-width="3"/>
+          <g class="hw-part" data-title="หน้าจอแท็บเล็ต" data-desc="หน้าจอใหญ่เหมาะกับการอ่าน วาดรูป และดูวิดีโอ">
+            <rect x="35" y="35" width="470" height="290" rx="14" fill="#0b3d4c" stroke="#1e90ff" stroke-width="1"/>
+          </g>
+          <g class="hw-part" data-title="SoC แท็บเล็ต" data-desc="ชิปรวมหน่วยประมวลผลและกราฟิก">
+            <rect x="60" y="220" width="80" height="55" rx="4" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+            <text x="100" y="252" text-anchor="middle" fill="#64ffda" font-size="11">SoC</text>
+          </g>
+          <g class="hw-part" data-title="แบตเตอรี่ขนาดใหญ่" data-desc="ให้พลังงานทนทานตลอดวัน">
+            <rect x="170" y="240" width="300" height="60" rx="8" fill="#1e293b" stroke="#1e90ff" stroke-width="2"/>
+            <text x="320" y="278" text-anchor="middle" fill="#64ffda" font-size="14">Battery</text>
+          </g>
+          <g class="hw-part" data-title="กล้องหน้าและหลัง" data-desc="ถ่ายภาพและทำวิดีโอคอล">
+            <circle cx="80" cy="70" r="16" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+            <circle cx="450" cy="70" r="16" fill="#1e293b" stroke="#64ffda" stroke-width="2"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
 
-    <section id="tab-tv" class="tab"><div id="tvc"></div></section>
+  <div class="card">
+    <h3>ความแตกต่างระหว่างโทรศัพท์กับแท็บเล็ต</h3>
+    <table>
+      <tr><th>คุณสมบัติ</th><th>โทรศัพท์</th><th>แท็บเล็ต</th></tr>
+      <tr><td>ขนาดหน้าจอ</td><td>เล็ก พกพาสะดวก</td><td>ใหญ่กว่า เหมาะกับการอ่าน/ดูหนัง</td></tr>
+      <tr><td>การเชื่อมต่อ</td><td>มีโมเด็มมือถือโดยตรง</td><td>บางรุ่นใช้ Wi-Fi อย่างเดียว</td></tr>
+      <tr><td>แบตเตอรี่</td><td>เล็กกว่า ชาร์จเร็ว</td><td>ใหญ่กว่า ใช้งานได้นาน</td></tr>
+    </table>
+  </div>
+</section>
 
-    <section id="tab-bt" class="tab">
-      <div class="card"><h3>Backtest กฎ SMC บนข้อมูลย้อนหลัง (แหล่งข้อมูลตามที่เลือกด้านบน)</h3>
-        จำนวนแท่ง <select id="btN"><option>2000</option><option selected>5000</option><option>10000</option></select>
-        Swing <input id="btSw" type="number" value="5" style="width:55px">
-        RR <input id="btRR" type="number" value="2" step="0.5" style="width:55px">
-        ค่าธรรมเนียม/สเปรดรวม % <input id="btFee" type="number" value="0.01" step="0.005" style="width:70px">
-        <button id="btRun">รัน Backtest</button> <span id="btProg" class="mut"></span>
-        <div class="mut" style="margin-top:6px">กฎ: เทรดตามโครงสร้างล่าสุด เข้าเมื่อราคาย่อกลับแตะ Order Block ที่ยังไม่ถูกเจาะ ฝั่ง Discount (ซื้อ)/Premium (ขาย) | SL นอก OB | TP = RR เท่า | แท่งเดียวชนทั้ง SL/TP นับเป็นแพ้ | Twelve Data ดึงได้สูงสุด 5000 แท่ง</div></div>
-      <div id="btOut"></div>
-    </section>
+<section id="software">
+  <h2>ซอฟต์แวร์</h2>
+  <div class="card">
+    <h3>ประเภทของซอฟต์แวร์</h3>
+    <table>
+      <tr><th>ประเภท</th><th>ตัวอย่าง</th><th>หน้าที่</th></tr>
+      <tr><td>ระบบปฏิบัติการ (OS)</td><td>Windows, macOS, Linux, Android, iOS</td><td>ควบคุมฮาร์ดแวร์และเป็นตัวกลางให้ผู้ใช้ใช้งาน</td></tr>
+      <tr><td>แอปพลิเคชัน (Application)</td><td>Chrome, Microsoft Word, TikTok, Zoom</td><td>ทำงานเฉพาะทางตามความต้องการผู้ใช้</td></tr>
+      <tr><td>ไดรเวอร์ (Driver)</td><td>ไดรเวอร์การ์ดจอ, ไดรเวอร์เครื่องพิมพ์</td><td>ให้ระบบปฏิบัติการสื่อสารกับฮาร์ดแวร์ได้</td></tr>
+      <tr><td>เฟิร์มแวร์ (Firmware)</td><td>BIOS / UEFI</td><td>ซอฟต์แวร์ฝังในฮาร์ดแวร์ควบคุมการทำงานพื้นฐาน</td></tr>
+    </table>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>ระบบปฏิบัติการ</h3>
+      <p>เป็นซอฟต์แวร์หลักที่จัดการทรัพยากรเครื่อง ให้ผู้ใช้และแอปต่าง ๆ ทำงานได้</p>
+    </div>
+    <div class="card">
+      <h3>แอปพลิเคชัน</h3>
+      <p>โปรแกรมที่ผู้ใช้เปิดใช้งานโดยตรง เช่น เว็บเบราว์เซอร์ เกม โปรแกรมตัดต่อ</p>
+    </div>
+    <div class="card">
+      <h3>ไดรเวอร์</h3>
+      <p>ทำหน้าที่แปลภาษาระหว่างฮาร์ดแวร์กับระบบปฏิบัติการ</p>
+    </div>
+    <div class="card">
+      <h3>เฟิร์มแวร์</h3>
+      <p>ซอฟต์แวร์ที่บันทึกลงในชิปความจำของอุปกรณ์ เช่น BIOS ที่ช่วยเปิดเครื่อง</p>
+    </div>
+  </div>
+</section>
 
-    <section id="tab-proof" class="tab"><div class="cols">
-      <div class="card"><h3>1) กฎมาจากไหน</h3>
-        <p>แนวคิดมาจากคอร์สสาธารณะของ <b>Michael J. Huddleston (ICT)</b> บนช่อง YouTube "InnerCircleTrader" (เช่น ICT Mentorship 2016/2022) ส่วน "SMC" เป็นชื่อที่ชุมชนเรียกต่อยอด</p>
-        <ul><li>Market Structure: BOS / CHoCH (≈ MSS)</li><li>Order Block, Fair Value Gap</li><li>Liquidity: Equal H/L, การกวาด stop, Asian Range high/low</li><li>Premium/Discount และ OTE 62–79%</li><li>Killzones: London, NY AM / Silver Bullet, NY PM</li></ul>
-        <div class="warn">ICT เป็นการเทรดแบบใช้ดุลยพินิจ โค้ดนี้เป็นการตีความเป็นกฎตายตัว ไม่เท่ากับ ICT จริง ผมเขียนจากความเข้าใจแนวคิด ไม่ได้ดึงเนื้อหาวิดีโอมาโดยตรง โปรดเทียบกับต้นฉบับ</div></div>
-      <div class="card"><h3>2) สิ่งที่พิสูจน์ได้ในเว็บนี้</h3>
-        <ul><li>โค้ดเปิดทั้งหมด ฟังก์ชัน <code>smc()</code> ตรวจสอบได้</li>
-        <li>ข่าว ปฏิทิน และคะแนน confluence <b>คำนวณจากข้อมูลจริง</b> ไม่ใช่ตัวเลขตายตัวหรือช่องติ๊กมือ</li>
-        <li>ไม่มี look-ahead: swing ยืนยันหลังผ่านไป N แท่ง</li>
-        <li>Backtest มีค่าธรรมเนียม ช่วงเชื่อมั่น 95% และแยก In/Out-of-sample</li>
-        <li>Forward-test journal บันทึกสัญญาณก่อนรู้ผล แล้วตรวจจากแท่งเทียนจริง</li></ul>
-        <div id="jBox"></div></div>
-      <div class="card"><h3>3) ข้อจำกัดที่ต้องรู้</h3>
-        <ul><li>ยังไม่มีงานวิจัยอิสระยืนยัน edge ของ ICT/SMC ผลในอดีตไม่รับประกันอนาคต</li>
-        <li>โหมดฟรีใช้ Binance <b>EURUSDT</b> ซึ่งเป็นคู่ EUR/stablecoin เทรด 24/7 ราคาใกล้ EURUSD แต่ไม่ใช่ตลาดฟอเร็กซ์จริง (มีวันเสาร์-อาทิตย์ และอาจต่างเล็กน้อย) ถ้าต้องการ EUR/USD จริงให้ใส่ Twelve Data key หรือดูแท็บ TradingView</li>
-        <li>Twelve Data แผนฟรีอัปเดตทุก ~2 นาที (จำกัดเครดิต/วัน) ไม่ใช่ tick-by-tick</li>
-        <li>ปฏิทินข่าว/ข่าวพาดหัวดึงจากบริการสาธารณะ ถ้าเบราว์เซอร์หรือบริการบล็อก ระบบจะสลับไปใช้วิดเจ็ต TradingView (แสดงผลได้ แต่ไม่ถูกนำไปคิดคะแนน)</li>
-        <li>Sentiment ข่าวใช้ keyword อย่างง่าย อาจผิดพลาดได้ ไม่ใช่การอ่านข่าวแบบมนุษย์</li>
-        <li>คะแนน confluence ไม่ใช่ความน่าจะเป็นที่จะชนะ</li>
-        <li>เว็บนี้ไม่ใช่คำแนะนำการลงทุน</li></ul></div>
-      <div class="card" style="grid-column:1/-1"><h3>Forward-test journal (เก็บในเบราว์เซอร์นี้)</h3>
-        <button id="jRef">ตรวจผลอีกครั้ง</button> <button id="jClr">ล้าง journal</button>
-        <div id="jTab" style="overflow-x:auto;margin-top:8px"></div></div>
-    </div></section>
-  </main>
+<section id="summary">
+  <h2>สรุป</h2>
+  <div class="card">
+    <ul class="list">
+      <li><strong>ฮาร์ดแวร์</strong> คือส่วนประกอบทางกายภาพ เช่น CPU, GPU, RAM, หน้าจอ, แบตเตอรี่</li>
+      <li><strong>ซอฟต์แวร์</strong> คือชุดคำสั่งที่สั่งให้ฮาร์ดแวร์ทำงาน เช่น OS, แอป, ไดรเวอร์</li>
+      <li>อุปกรณ์พกพา เช่น โทรศัพท์และแท็บเล็ต รวมหน่วยประมวลผลหลักไว้ใน <strong>SoC</strong> ชิปเดียว</li>
+      <li>ฮาร์ดแวร์และซอฟต์แวร์ทำงานร่วมกันเป็นระบบ รับข้อมูล ประมวลผล แสดงผล และจัดเก็บ</li>
+    </ul>
+  </div>
+</section>
 
-  <!-- RIGHT -->
-  <aside>
-    <div class="card"><h3>ปฏิทินเศรษฐกิจ USD/EUR <span class="mut" style="text-transform:none">(เวลาไทย)</span></h3>
-      <div style="margin-bottom:6px"><button id="calAll" class="on">ทั้งหมด</button> <button id="calHigh">เฉพาะ High</button></div>
-      <div id="calBox" class="feed" style="max-height:380px;overflow:auto"><div class="mut">กำลังโหลด...</div></div></div>
-    <div class="card"><h3>ข่าวที่เกี่ยวข้อง EUR/USD</h3>
-      <div id="newsSum" class="mut"></div>
-      <div id="newsBox" class="feed" style="max-height:420px;overflow:auto"><div class="mut">กำลังโหลด...</div></div></div>
-  </aside>
-</div>
+</main>
 
-<dialog id="keyDlg"><form method="dialog">
-  <p><b>Twelve Data API key</b></p>
-  <p class="mut">สมัครฟรีที่ twelvedata.com แล้ววาง key ที่นี่ จะถูกเก็บในเบราว์เซอร์ของคุณเท่านั้น (localStorage) ห้ามนำเว็บที่ใส่ key แล้วไปแชร์หรือใช้บนเครื่องสาธารณะ</p>
-  <input id="keyIn" type="password" style="width:100%" placeholder="API key">
-  <p style="text-align:right"><button value="cancel">ยกเลิก</button> <button id="keySave" value="ok">บันทึก</button></p>
-</form></dialog>
+<footer>
+  สื่อการเรียนการสอน: ซอฟต์แวร์และฮาร์ดแวร์ | ออกแบบด้วยโทนสีน้ำเงินเทคโนโลยี
+</footer>
 
 <script>
-/*CORE_START*/
-function wilson(w,n){const z=1.96,p=w/n,d=1+z*z/n,c=p+z*z/(2*n),a=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n));return[(c-a)/d,(c+a)/d];}
-function stats(tr){
-  const n=tr.length;if(!n)return null;
-  let w=0,gp=0,gl=0,eq=0,pk=0,dd=0;
-  for(const x of tr){if(x.r>0){w++;gp+=x.r}else gl-=x.r;eq+=x.r;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq);}
-  return{n,w,wr:w/n,avg:eq/n,total:eq,pf:gl?gp/gl:Infinity,dd,ci:wilson(w,n)};
-}
-function smc(c,o){
-  const n=o.swing,N=c.length,rr=o.rr||2,fee=(o.fee||0)/100;
-  const trs=new Array(N),atr=new Array(N).fill(0);let sm=0;
-  for(let i=0;i<N;i++){
-    trs[i]=i?Math.max(c[i].h-c[i].l,Math.abs(c[i].h-c[i-1].c),Math.abs(c[i].l-c[i-1].c)):c[i].h-c[i].l;
-    sm+=trs[i];if(i>=14)sm-=trs[i-14];atr[i]=sm/Math.min(i+1,14);
-  }
-  let lastH=null,lastL=null,trend=0,open=null;
-  const events=[],obs=[],fvgs=[],sweeps=[],swings=[],liq=[],trades=[],pivH=[],pivL=[];
-  const chk=bb=>{
-    if(open.dir===1){if(bb.l<=open.sl)return -1;if(bb.h>=open.tp)return rr;}
-    else{if(bb.h>=open.sl)return -1;if(bb.l<=open.tp)return rr;}
-    return null;
-  };
-  const closeT=(res,idx)=>{
-    const r=res-fee*open.entry/open.risk;
-    trades.push({i0:open.i0,i1:idx,dir:open.dir,entry:open.entry,sl:open.sl,tp:open.tp,r,t:open.t});
-    open=null;
-  };
-  for(let i=0;i<N;i++){
-    const b=c[i];
-    const p=i-n;
-    if(p>=n){
-      let isH=true,isL=true;
-      for(let k=p-n;k<=p+n;k++){
-        if(k===p)continue;
-        if(c[k].h>c[p].h||(k<p&&c[k].h===c[p].h))isH=false;
-        if(c[k].l<c[p].l||(k<p&&c[k].l===c[p].l))isL=false;
-      }
-      if(isH){
-        lastH={i:p,price:c[p].h,crossed:false,swept:false};swings.push({i:p,type:'H',price:c[p].h});
-        const pv=pivH[pivH.length-1];
-        if(pv&&Math.abs(pv.price-c[p].h)<=0.15*atr[p])liq.push({i1:pv.i,i2:p,price:Math.max(pv.price,c[p].h),type:'H',swept:null});
-        pivH.push(lastH);
-      }
-      if(isL){
-        lastL={i:p,price:c[p].l,crossed:false,swept:false};swings.push({i:p,type:'L',price:c[p].l});
-        const pv=pivL[pivL.length-1];
-        if(pv&&Math.abs(pv.price-c[p].l)<=0.15*atr[p])liq.push({i1:pv.i,i2:p,price:Math.min(pv.price,c[p].l),type:'L',swept:null});
-        pivL.push(lastL);
-      }
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('.hw-part').forEach(part => {
+  part.addEventListener('mouseenter', () => {
+    const title = part.getAttribute('data-title');
+    const desc = part.getAttribute('data-desc');
+    if (title) {
+      tooltip.innerHTML = '<strong>' + title + '</strong><br>' + desc;
+      tooltip.style.display = 'block';
     }
-    if(open){const r=chk(b);if(r!==null)closeT(r,i);}
-    if(!open&&trend&&lastH&&lastL){
-      const eq=(lastH.price+lastL.price)/2;
-      for(let k=obs.length-1;k>=0;k--){
-        const ob=obs[k];
-        if(ob.mit!=null||ob.used||ob.i>=i||ob.dir!==trend)continue;
-        let entry=null,sl=null;
-        if(trend===1&&b.l<=ob.top&&b.c>ob.bottom&&ob.top<=eq){entry=Math.min(ob.top,b.o);sl=ob.bottom-0.1*atr[i];}
-        if(trend===-1&&b.h>=ob.bottom&&b.c<ob.top&&ob.bottom>=eq){entry=Math.max(ob.bottom,b.o);sl=ob.top+0.1*atr[i];}
-        if(entry==null)continue;
-        const risk=Math.abs(entry-sl);
-        if(risk<0.3*atr[i])continue;
-        ob.used=true;
-        open={dir:trend,entry,sl,tp:entry+trend*rr*risk,risk,i0:i,t:b.t};
-        const r=chk(b);if(r!==null)closeT(r,i);
-        break;
-      }
-    }
-    for(const ob of obs){
-      if(ob.mit!=null||ob.i>=i)continue;
-      if(ob.dir===1&&b.c<ob.bottom)ob.mit=i;
-      if(ob.dir===-1&&b.c>ob.top)ob.mit=i;
-    }
-    for(const f of fvgs){
-      if(f.mit!=null||f.i2>=i)continue;
-      if(f.dir===1&&b.l<=f.bottom)f.mit=i;
-      if(f.dir===-1&&b.h>=f.top)f.mit=i;
-    }
-    if(i>=2){
-      if(c[i].l>c[i-2].h&&c[i].l-c[i-2].h>0.1*atr[i]&&c[i-1].c>c[i-1].o)fvgs.push({i:i-2,i2:i,dir:1,top:c[i].l,bottom:c[i-2].h,mit:null});
-      if(c[i].h<c[i-2].l&&c[i-2].l-c[i].h>0.1*atr[i]&&c[i-1].c<c[i-1].o)fvgs.push({i:i-2,i2:i,dir:-1,top:c[i-2].l,bottom:c[i].h,mit:null});
-    }
-    if(lastH&&!lastH.crossed&&b.c>lastH.price){
-      lastH.crossed=true;const type=trend===-1?'CHoCH':'BOS';trend=1;
-      events.push({i,from:lastH.i,price:lastH.price,type,dir:1});
-      let mi=lastH.i,lo=Infinity;for(let k=lastH.i;k<i;k++)if(c[k].l<lo){lo=c[k].l;mi=k;}
-      obs.push({ci:mi,i,dir:1,top:c[mi].h,bottom:c[mi].l,mit:null,used:false});
-    }
-    if(lastL&&!lastL.crossed&&b.c<lastL.price){
-      lastL.crossed=true;const type=trend===1?'CHoCH':'BOS';trend=-1;
-      events.push({i,from:lastL.i,price:lastL.price,type,dir:-1});
-      let mi=lastL.i,hi=-Infinity;for(let k=lastL.i;k<i;k++)if(c[k].h>hi){hi=c[k].h;mi=k;}
-      obs.push({ci:mi,i,dir:-1,top:c[mi].h,bottom:c[mi].l,mit:null,used:false});
-    }
-    if(lastH&&!lastH.crossed&&!lastH.swept&&b.h>lastH.price&&b.c<lastH.price){lastH.swept=true;sweeps.push({i,dir:-1,price:lastH.price,kind:'BSL'});}
-    if(lastL&&!lastL.crossed&&!lastL.swept&&b.l<lastL.price&&b.c>lastL.price){lastL.swept=true;sweeps.push({i,dir:1,price:lastL.price,kind:'SSL'});}
-    for(const l of liq){
-      if(l.swept!=null||i<=l.i2)continue;
-      if(l.type==='H'&&b.h>l.price){l.swept=i;if(b.c<l.price)sweeps.push({i,dir:-1,price:l.price,kind:'EQH'});}
-      if(l.type==='L'&&b.l<l.price){l.swept=i;if(b.c>l.price)sweeps.push({i,dir:1,price:l.price,kind:'EQL'});}
-    }
-  }
-  return{events,obs,fvgs,sweeps,swings,liq,trades,trend,lastH,lastL,atr,open};
-}
-/*CORE_END*/
-
-/*HELP_START*/
-const nyFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-function nyParts(ms){const o={};for(const p of nyFmt.formatToParts(new Date(ms)))if(p.type!=='literal')o[p.type]=+p.value;o.hour=o.hour%24;return o;}
-function nyDec(ms){const p=nyParts(ms);return p.hour+p.minute/60;}
-function nyOffsetH(ms){const p=nyParts(ms);return Math.round((Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second)-Math.floor(ms/1000)*1000)/3600000);}
-const KZ=[{k:'asian',n:'Asian Range (สะสม)',s:20,e:24},{k:'london',n:'London KZ (Judas Swing)',s:2,e:5},{k:'nyam',n:'NY AM / Silver Bullet',s:8.5,e:11},{k:'nypm',n:'NY PM',s:13.5,e:16}];
-function kzActive(ms){const d=nyDec(ms);return KZ.filter(z=>d>=z.s&&d<z.e);}
-function asianRange(c){
-  let end=-1;
-  for(let i=c.length-1;i>=0&&i>c.length-400;i--){if(nyDec(c[i].t)>=20){end=i;break;}}
-  if(end<0)return null;
-  let st=end;while(st>0&&nyDec(c[st-1].t)>=20&&c[end].t-c[st-1].t<5*3600e3)st--;
-  let hi=-Infinity,lo=Infinity;for(let i=st;i<=end;i++){hi=Math.max(hi,c[i].h);lo=Math.min(lo,c[i].l);}
-  return{i1:st,i2:end,hi,lo};
-}
-const EUR_UP=['dollar falls','dollar weakens','dollar slips','dollar drops','dollar retreats','dollar dips','weaker dollar','fed cut','fed cuts','dovish fed','fed dovish','ecb hike','ecb hawkish','hawkish ecb','euro rises','euro gains','euro rallies','euro climbs','euro jumps','dxy falls','dxy drops','dollar index falls'];
-const EUR_DN=['dollar rises','dollar strengthens','dollar gains','dollar climbs','dollar jumps','dollar rallies','stronger dollar','fed hike','fed hikes','fed hawkish','hawkish fed','higher for longer','ecb cut','ecb cuts','ecb dovish','dovish ecb','euro falls','euro slips','euro drops','euro weakens','euro slides','euro tumbles','dxy rises','dxy climbs','dollar index rises','eurozone recession'];
-function headlineScore(t){t=String(t).toLowerCase();let s=0;for(const k of EUR_UP)if(t.includes(k))s++;for(const k of EUR_DN)if(t.includes(k))s--;return Math.sign(s);}
-function parseCal(arr){
-  return (Array.isArray(arr)?arr:[]).filter(e=>e&&['USD','EUR'].includes(e.country)).map(e=>({t:Date.parse(e.date),cur:e.country,imp:String(e.impact||'').toLowerCase(),title:e.title,f:e.forecast,p:e.previous})).filter(e=>!isNaN(e.t)&&e.imp!=='holiday').sort((a,b)=>a.t-b.t);
-}
-function newsGate(cal,now){
-  for(const e of cal)if(e.imp==='high'&&now>=e.t-15*6e4&&now<=e.t+15*6e4)return{block:true,ev:e};
-  return{block:false};
-}
-/*HELP_END*/
-
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const TZ=7*3600,TFS=['1m','5m','15m','1h','4h','1d'];
-const TFMS={'1m':6e4,'5m':3e5,'15m':9e5,'1h':36e5,'4h':144e5,'1d':864e5,'1w':6048e5};
-const TVI={'1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'};
-const HTF={'1m':'15m','5m':'1h','15m':'4h','1h':'1d','4h':'1d','1d':'1w'};
-const TDI={'1m':'1min','5m':'5min','15m':'15min','1h':'1h','4h':'4h','1d':'1day','1w':'1week'};
-const BASES=['https://api.binance.com','https://data-api.binance.vision'],WSB=['wss://stream.binance.com:9443/ws/','wss://data-stream.binance.vision/ws/'];
-const CFG={src:'bn',key:''};
-try{CFG.key=localStorage.getItem('td_key')||'';CFG.src=localStorage.getItem('src')||'bn';}catch(e){}
-let tf='15m',C=[],S=null,HT=0,PLAN=null,CAL=[],CALOK=false,NEWS=[],NEWSOK=false,SENT=0,ws=null,wsOn=false,wsIdx=0,pollT=null,tvKey='',timer=null,priceLines=[],calHigh=false,GATE={block:false};
-const L={ob:1,fvg:1,str:1,liq:1,pd:1,asia:1,sw:0};
-const fmt=x=>x==null?'—':x.toFixed(5);
-const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const P=()=>({swing:+$('#swing').value||5,rr:+$('#rr').value||2,fee:0});
-const bkk=ms=>new Date(ms).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
-
-// ---------- data sources ----------
-async function bnK(t,limit,o={}){
-  let q=`/api/v3/klines?symbol=EURUSDT&interval=${t}&limit=${Math.min(limit,1000)}`;
-  if(o.end)q+=`&endTime=${o.end}`;if(o.start)q+=`&startTime=${o.start}`;
-  let err;
-  for(const b of BASES){
-    try{const r=await fetch(b+q);if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();
-      return a.map(k=>({t:k[0],time:k[0]/1000+TZ,o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));}catch(e){err=e}
-  }
-  throw err;
-}
-const tdDate=ms=>new Date(ms).toISOString().slice(0,19).replace('T',' ');
-async function tdK(t,limit,o={}){
-  if(!CFG.key)throw new Error('ยังไม่ได้ใส่ Twelve Data API key (กดปุ่ม 🔑 Key)');
-  let q=`https://api.twelvedata.com/time_series?symbol=EUR/USD&interval=${TDI[t]}&outputsize=${Math.min(limit,5000)}&timezone=UTC&order=ASC&apikey=${encodeURIComponent(CFG.key)}`;
-  if(o.start)q+=`&start_date=${encodeURIComponent(tdDate(o.start))}`;
-  const r=await fetch(q);const j=await r.json();
-  if(j.status==='error'||!Array.isArray(j.values))throw new Error(j.message||'Twelve Data error');
-  return j.values.map(v=>{const d=v.datetime.length<=10?v.datetime+'T00:00:00Z':v.datetime.replace(' ','T')+'Z';const ms=Date.parse(d);
-    return{t:ms,time:ms/1000+TZ,o:+v.open,h:+v.high,l:+v.low,c:+v.close,v:0};});
-}
-const fetchK=(t,limit,o)=>CFG.src==='td'?tdK(t,limit,o):bnK(t,limit,o);
-async function history(total,prog){
-  if(CFG.src==='td'){const a=await tdK(tf,total);prog(a.length);return a.slice(-total);}
-  let arr=[],end;
-  while(arr.length<total){
-    const b=await bnK(tf,1000,{end});if(!b.length)break;
-    arr=b.concat(arr);end=b[0].t-1;prog(arr.length);if(b.length<1000)break;
-  }
-  return arr.slice(-total);
-}
-
-// ---------- chart ----------
-const chart=LightweightCharts.createChart($('#chart'),{
-  layout:{background:{color:'#121824'},textColor:'#b2b5be'},
-  grid:{vertLines:{color:'#182030'},horzLines:{color:'#182030'}},
-  rightPriceScale:{borderColor:'#2a2e39'},timeScale:{borderColor:'#2a2e39',timeVisible:true,secondsVisible:false},crosshair:{mode:0}
+  });
+  part.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.pageX + 12) + 'px';
+    tooltip.style.top = (e.pageY + 12) + 'px';
+  });
+  part.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
 });
-const cs=chart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderVisible:false,wickUpColor:'#10b981',wickDownColor:'#ef4444',priceFormat:{type:'price',precision:5,minMove:0.00001}});
-const vs=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
-chart.priceScale('vol').applyOptions({scaleMargins:{top:.85,bottom:0}});
-const ov=$('#ov'),ctx=ov.getContext('2d');
-function resize(){
-  const b=$('#chart'),w=b.clientWidth,h=b.clientHeight,d=window.devicePixelRatio||1;
-  if(!w||!h)return;chart.applyOptions({width:w,height:h});ov.width=w*d;ov.height=h*d;ctx.setTransform(d,0,0,d,0,0);
-}
-new ResizeObserver(resize).observe($('.chartwrap'));
-function rect(x1,x2,a,b,fill,stroke,label){
-  if(a==null||b==null||x2<=x1)return;
-  const y=Math.min(a,b),h=Math.max(1,Math.abs(a-b));
-  ctx.fillStyle=fill;ctx.fillRect(x1,y,x2-x1,h);
-  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.strokeRect(x1+.5,y+.5,x2-x1,h);}
-  if(label){ctx.fillStyle=stroke||'#ccc';ctx.font='11px system-ui';ctx.fillText(label,x1+4,y+11);}
-}
-function hline(x1,x2,y,col,dash,label){
-  if(y==null)return;
-  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash(dash||[]);ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();ctx.setLineDash([]);
-  if(label){ctx.fillStyle=col;ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(label,(x1+x2)/2,y-3);ctx.textAlign='left';}
-}
-function draw(){
-  const W=$('#chart').clientWidth,H=$('#chart').clientHeight;ctx.clearRect(0,0,W,H);
-  if(!S||!C.length||!$('#tab-chart').classList.contains('on'))return;
-  const ts=chart.timeScale();let pw=60;try{pw=chart.priceScale('right').width()}catch(e){}
-  const R=W-pw;
-  const X=i=>{const v=ts.timeToCoordinate(C[Math.min(Math.max(i,0),C.length-1)].time);return v==null?null:v};
-  const Y=p=>cs.priceToCoordinate(p);
-  ctx.save();ctx.beginPath();ctx.rect(0,0,R,H);ctx.clip();
-  if(L.pd&&S.lastH&&S.lastL){
-    const x1=Math.max(0,X(Math.min(S.lastH.i,S.lastL.i))??0),hi=S.lastH.price,lo=S.lastL.price,eq=(hi+lo)/2,r=hi-lo;
-    rect(x1,R,Y(hi),Y(eq),'rgba(239,68,68,.06)');rect(x1,R,Y(eq),Y(lo),'rgba(16,185,129,.06)');
-    hline(x1,R,Y(eq),'#9e9e9e',[3,4],'EQ 50%');
-    if(S.trend===1)rect(x1,R,Y(hi-.62*r),Y(hi-.79*r),'rgba(255,215,0,.15)','rgba(255,215,0,.6)','OTE 62–79%');
-    if(S.trend===-1)rect(x1,R,Y(lo+.62*r),Y(lo+.79*r),'rgba(255,215,0,.15)','rgba(255,215,0,.6)','OTE 62–79%');
-  }
-  if(L.asia&&S.asian){
-    const a=S.asian,x1=X(a.i1)??0;
-    rect(x1,R,Y(a.hi),Y(a.lo),'rgba(56,189,248,.07)');
-    hline(x1,R,Y(a.hi),'#38bdf8',[6,3],'Asian High');hline(x1,R,Y(a.lo),'#38bdf8',[6,3],'Asian Low');
-  }
-  if(L.fvg)for(const f of S.fvgs.filter(f=>f.mit==null).slice(-8))rect(X(f.i)??0,R,Y(f.top),Y(f.bottom),f.dir===1?'rgba(66,165,245,.2)':'rgba(255,167,38,.2)',null,'FVG');
-  if(L.ob)for(const o of S.obs.filter(o=>o.mit==null).slice(-8))rect(X(o.ci)??0,R,Y(o.top),Y(o.bottom),o.dir===1?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)',o.dir===1?'#10b981':'#ef4444',o.dir===1?'Bull OB':'Bear OB');
-  if(L.liq)for(const l of S.liq.filter(l=>l.swept==null).slice(-6))hline(X(l.i1)??0,R,Y(l.price),'#cfd8dc',[2,3],l.type==='H'?'EQH':'EQL');
-  if(L.str)for(const e of S.events.slice(-12)){
-    const x1=X(e.from),x2=X(e.i);if(x1==null||x2==null)continue;
-    hline(x1,x2,Y(e.price),e.type==='CHoCH'?'#ffd700':(e.dir===1?'#10b981':'#ef4444'),[5,4],e.type);
-  }
-  if(L.sw){ctx.fillStyle='#90a4ae';for(const s of S.swings.slice(-24)){const x=X(s.i),y=Y(s.price);if(x==null||y==null)continue;ctx.beginPath();ctx.arc(x,y+(s.type==='H'?-6:6),3,0,7);ctx.fill();}}
-  ctx.restore();
-}
-(function loop(){draw();requestAnimationFrame(loop)})();
-
-// ---------- plan / confluence ----------
-function makePlan(){
-  const s=S,c=C,i=c.length-1;if(i<20)return null;
-  const price=c[i].c,atr=s.atr[i]||price*.0005,dir=s.trend,o={dir,price,atr,items:[],score:0};
-  if(!dir||!s.lastH||!s.lastL){o.msg='โครงสร้างยังไม่ชัด — รอ BOS/CHoCH';return o;}
-  const eq=(s.lastH.price+s.lastL.price)/2;o.zone=price>eq?'premium':'discount';
-  const act=s.obs.filter(x=>x.mit==null&&x.dir===dir);
-  let ob=null;
-  if(dir===1)ob=act.filter(x=>x.bottom<price).sort((a,b)=>b.top-a.top)[0];
-  else ob=act.filter(x=>x.top>price).sort((a,b)=>a.bottom-b.bottom)[0];
-  const add=(name,pts,max,note)=>{o.items.push({name,pts,max,note});o.score+=pts;};
-  const lastEv=s.events[s.events.length-1],recent=lastEv&&i-lastEv.i<=60;
-  add(`โครงสร้าง (${lastEv?lastEv.type:'-'})`,recent?15:8,15,recent?'ล่าสุด':'เก่า');
-  add('เทรนด์ TF ใหญ่ ('+HTF[tf]+')',HT===dir?20:HT===0?8:0,20,HT===dir?'ตรงกัน':HT===0?'ไม่ชัด':'สวนทาง');
-  const pdok=(dir===1&&o.zone==='discount')||(dir===-1&&o.zone==='premium');
-  add(dir===1?'อยู่ฝั่ง Discount':'อยู่ฝั่ง Premium',pdok?10:0,10,o.zone==='premium'?'Premium':'Discount');
-  if(ob){
-    const inside=price<=ob.top&&price>=ob.bottom,dist=dir===1?price-ob.top:ob.bottom-price;
-    o.inZone=inside;o.ob=ob;
-    add('ใกล้/ในโซน Order Block',inside?20:dist<=1.5*atr?10:0,20,inside?'อยู่ในโซน':dist<=1.5*atr?'ใกล้โซน':'ยังห่าง');
-    const entry=inside?price:(dir===1?ob.top:ob.bottom),sl=dir===1?ob.bottom-.1*atr:ob.top+.1*atr,risk=Math.abs(entry-sl);
-    o.entry=entry;o.sl=sl;o.tp1=entry+dir*2*risk;
-    const tgt=dir===1?s.lastH.price:s.lastL.price;o.tp2=(dir===1?tgt>entry:tgt<entry)?tgt:null;
-  }else add('ใกล้/ในโซน Order Block',0,20,'ไม่มี OB ที่ยังไม่ถูกเจาะ');
-  let sw=s.sweeps.some(x=>x.i>i-40&&x.dir===dir),swNote=sw?'พบ':'ไม่พบ';
-  if(!sw&&s.asian){
-    const a=s.asian,from=Math.max(a.i2+1,i-60);
-    for(let k=from;k<=i;k++){if(dir===1&&c[k].l<a.lo){sw=true;swNote='กวาด Asian Low';break;}if(dir===-1&&c[k].h>a.hi){sw=true;swNote='กวาด Asian High';break;}}
-  }
-  add('กวาด Liquidity ตรงทิศ',sw?10:0,10,swNote);
-  const kz=kzActive(Date.now()).filter(z=>z.k!=='asian');
-  add('อยู่ใน Killzone',kz.length?10:0,10,kz.length?kz.map(z=>z.n.split(' ')[0]+' '+z.n.split(' ')[1]).join(', '):'นอก Killzone');
-  GATE=CALOK?newsGate(CAL,Date.now()):{block:false};
-  o.blocked=GATE.block;
-  add('ไม่ชนข่าวแรง ±15 นาที',GATE.block?0:CALOK?10:5,10,GATE.block?'ใกล้ข่าว: '+GATE.ev.title:CALOK?'ปลอดข่าว':'ไม่ทราบ (โหลดปฏิทินไม่ได้)');
-  const al=dir*SENT;
-  add('Sentiment ข่าวพาดหัว',!NEWSOK?3:al>.15?5:al>-.15?3:0,5,!NEWSOK?'ไม่มีข้อมูล':SENT>.15?'หนุน EUR':SENT<-.15?'หนุน USD':'กลาง');
-  return o;
-}
-function renderSignal(){
-  const p=PLAN,el=$('#sig');
-  if(!p){el.textContent='ข้อมูลยังไม่พอ';$('#saveJ').disabled=true;return;}
-  const dn=p.dir===1?'<span class="up">Bullish ▲</span>':p.dir===-1?'<span class="dn">Bearish ▼</span>':'—';
-  let h=`<div class="row"><span>ทิศทางตามโครงสร้าง</span><b>${dn}</b></div>`;
-  if(p.msg){el.innerHTML=h+`<div class="mut">${p.msg}</div>`;$('#saveJ').disabled=true;return;}
-  const col=p.blocked?'#ef4444':p.score>=75?'#10b981':p.score>=55?'#ffd700':'#ef4444';
-  const verdict=p.blocked?'งดเทรด: ใกล้ข่าวแรง':p.score>=75?'confluence สูง':p.score>=55?'confluence ปานกลาง':'confluence ต่ำ';
-  h+=`<div class="big" style="color:${col}">${p.score}<span class="mut" style="font-size:13px"> / 100 · ${verdict}</span></div><div class="bar"><i style="width:${p.score}%;background:${col}"></i></div>`;
-  h+=p.items.map(x=>`<div class="row"><span>${esc(x.name)}</span><span class="${x.pts===x.max?'up':x.pts?'ac':'dn'}">${esc(x.note)} (${x.pts}/${x.max})</span></div>`).join('');
-  if(p.entry){
-    h+=`<hr style="border-color:#1e293b"><div class="row"><span>${p.inZone?'ราคาอยู่ในโซนแล้ว':'รอราคาเข้าโซน'}</span><b>${p.dir===1?'BUY':'SELL'}</b></div>
-    <div class="row"><span>Entry</span><b>${fmt(p.entry)}</b></div><div class="row"><span>Stop Loss</span><b class="dn">${fmt(p.sl)}</b></div>
-    <div class="row"><span>TP1 (2R)</span><b class="up">${fmt(p.tp1)}</b></div><div class="row"><span>TP2 (swing ตรงข้าม)</span><b class="up">${fmt(p.tp2)}</b></div>`;
-  }else h+='<div class="mut" style="margin-top:6px">ไม่มีโซนที่ใช้เข้าได้ — รอ</div>';
-  h+='<div class="mut" style="margin-top:6px">คะแนนคือจำนวนปัจจัยที่สอดคล้อง ไม่ใช่ความน่าจะเป็นที่จะชนะ</div>';
-  el.innerHTML=h;$('#saveJ').disabled=!p.entry||p.blocked;
-}
-function analyze(){
-  if(C.length<30)return;
-  S=smc(C,P());S.asian=(tf==='4h'||tf==='1d')?null:asianRange(C);
-  PLAN=makePlan();renderSignal();
-  const mk=S.sweeps.slice(-15).map(x=>({time:C[x.i].time,position:x.dir===1?'belowBar':'aboveBar',color:x.dir===1?'#10b981':'#ef4444',shape:x.dir===1?'arrowUp':'arrowDown',text:x.kind}));
-  mk.sort((a,b)=>a.time-b.time);cs.setMarkers(mk);
-  priceLines.forEach(l=>cs.removePriceLine(l));priceLines=[];
-  if(PLAN&&PLAN.entry){
-    const pl=(price,color,title)=>priceLines.push(cs.createPriceLine({price,color,lineWidth:1,lineStyle:2,axisLabelVisible:true,title}));
-    pl(PLAN.entry,'#ffd700','Entry');pl(PLAN.sl,'#ef4444','SL');pl(PLAN.tp1,'#10b981','TP1');
-  }
-}
-const sched=()=>{if(timer)return;timer=setTimeout(()=>{timer=null;analyze()},800)};
-
-// ---------- live ----------
-const setStatus=t=>$('#status').textContent=t;
-function stopLive(){wsOn=false;if(ws){try{ws.close()}catch(e){}ws=null}if(pollT){clearInterval(pollT);pollT=null}$('#live').classList.remove('on');}
-function applyCandle(b){
-  const last=C[C.length-1];
-  if(last.t===b.t)C[C.length-1]=b;else if(b.t>last.t){C.push(b);if(C.length>1500)C.shift();}else return;
-  cs.update({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c});
-  if(b.v)vs.update({time:b.time,value:b.v,color:b.c>=b.o?'#10b98155':'#ef444455'});
-  const pe=$('#price');pe.textContent=fmt(b.c);pe.className='price '+(b.c>=b.o?'up':'dn');sched();
-}
-function startLive(){
-  if(CFG.src==='td'){
-    setStatus('Twelve Data · อัปเดตทุก 2 นาที');$('#live').classList.add('on');
-    pollT=setInterval(async()=>{try{const a=await tdK(tf,3);a.forEach(applyCandle);}catch(e){setStatus('อัปเดตไม่ได้: '+e.message)}},120000);return;
-  }
-  wsOn=true;
-  const w=new WebSocket(WSB[wsIdx]+'eurusdt@kline_'+tf);ws=w;
-  w.onopen=()=>{$('#live').classList.add('on');setStatus('เรียลไทม์ · Binance EURUSDT')};
-  w.onmessage=e=>{const k=JSON.parse(e.data).k;if(!k||!C.length)return;applyCandle({t:k.t,time:k.t/1000+TZ,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v});};
-  w.onerror=()=>{wsIdx=1-wsIdx};
-  w.onclose=()=>{$('#live').classList.remove('on');if(wsOn&&ws===w){setStatus('หลุดการเชื่อมต่อ กำลังต่อใหม่...');setTimeout(()=>{if(wsOn&&ws===w)startLive()},2000)}};
-}
-async function load(){
-  stopLive();setStatus('กำลังโหลดข้อมูล...');
-  try{C=await fetchK(tf,800);}catch(e){setStatus('โหลดข้อมูลไม่ได้: '+e.message);return;}
-  cs.setData(C.map(b=>({time:b.time,open:b.o,high:b.h,low:b.l,close:b.c})));
-  vs.setData(CFG.src==='td'?[]:C.map(b=>({time:b.time,value:b.v,color:b.c>=b.o?'#10b98155':'#ef444455'})));
-  try{const h=await fetchK(HTF[tf],500);HT=smc(h,{swing:P().swing,rr:2}).trend;}catch(e){HT=0}
-  chart.timeScale().setVisibleLogicalRange({from:C.length-120,to:C.length+10});
-  $('#price').textContent=fmt(C[C.length-1].c);analyze();startLive();
-}
-
-// ---------- calendar & news ----------
-function embed(id,file,cfg){
-  const el=$(id);el.innerHTML='';
-  const w=document.createElement('div');w.className='tradingview-widget-container';
-  const inner=document.createElement('div');inner.className='tradingview-widget-container__widget';w.appendChild(inner);
-  const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/'+file;s.async=true;s.text=JSON.stringify(cfg);
-  w.appendChild(s);el.appendChild(w);
-}
-async function loadCal(){
-  try{
-    const r=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');if(!r.ok)throw new Error(r.status);
-    CAL=parseCal(await r.json());CALOK=CAL.length>0;
-  }catch(e){CALOK=false;CAL=[];}
-  if(!CALOK){
-    $('#calBox').style.maxHeight='none';
-    embed('#calBox','embed-widget-events.js',{colorTheme:'dark',isTransparent:true,width:'100%',height:420,locale:'th_TH',importanceFilter:'0,1',currencyFilter:'USD,EUR'});
-  }else renderCal();
-  updateBanner();if(C.length)analyze();
-}
-function renderCal(){
-  if(!CALOK)return;
-  const now=Date.now();
-  let a=CAL.filter(e=>e.t>=now-3*3600e3);if(calHigh)a=a.filter(e=>e.imp==='high');
-  a=a.slice(0,14);
-  $('#calBox').innerHTML=a.length?a.map(e=>`<div><div class="row"><span><b class="ac">${bkk(e.t)}</b> <span class="pill low">${e.cur}</span></span><span class="pill ${e.imp==='high'?'high':e.imp==='medium'?'med':'low'}">${e.imp.toUpperCase()}</span></div>
-    <div>${esc(e.title)}</div><div class="mut">คาด ${esc(e.f||'-')} · ก่อนหน้า ${esc(e.p||'-')}${e.t<now?' · <span class="ac">ประกาศแล้ว</span>':''}</div></div>`).join(''):'<div class="mut">ไม่มีรายการในช่วงนี้</div>';
-}
-function updateBanner(){
-  const b=$('#banner');
-  if(!CALOK){b.className='';b.innerHTML='<span class="ac">⚠</span> โหลดปฏิทินข่าวอัตโนมัติไม่ได้ ระบบจึงไม่นำข่าวไปคิดคะแนนอัตโนมัติ — ดูปฏิทิน TradingView ด้านขวาและตรวจข่าวแรงด้วยตัวเองก่อนเทรด';return;}
-  const now=Date.now(),g=newsGate(CAL,now);
-  if(g.block){b.className='hot';b.innerHTML=`<b class="dn">⛔ ใกล้ข่าวแรง ±15 นาที:</b> ${g.ev.cur} ${esc(g.ev.title)} (${bkk(g.ev.t)} เวลาไทย) — ระบบงดให้สัญญาณ`;return;}
-  const nx=CAL.find(e=>e.imp==='high'&&e.t>now);
-  if(!nx){b.className='calm';b.innerHTML='<span class="up">✓</span> ไม่มีข่าว High impact USD/EUR ที่เหลือในสัปดาห์นี้';return;}
-  const m=Math.round((nx.t-now)/6e4),txt=m>=60?Math.floor(m/60)+' ชม. '+(m%60)+' น.':m+' นาที';
-  b.className=m<=60?'':'calm';
-  b.innerHTML=`<b class="${m<=60?'ac':'up'}">ข่าว High ถัดไป:</b> ${nx.cur} ${esc(nx.title)} · อีก ${txt} (${bkk(nx.t)} เวลาไทย)`;
-}
-async function loadNews(){
-  try{
-    const q='(EURUSD OR "euro dollar" OR ECB OR "Federal Reserve" OR "US dollar") sourcelang:english';
-    const r=await fetch('https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(q)+'&mode=artlist&maxrecords=25&sort=datedesc&timespan=1d&format=json');
-    if(!r.ok)throw new Error(r.status);const j=await r.json();
-    NEWS=(j.articles||[]).map(a=>({title:a.title,url:a.url,dom:a.domain,t:a.seendate?Date.parse(a.seendate.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,'$1-$2-$3T$4:$5:$6Z')):NaN,s:headlineScore(a.title)}));
-    NEWSOK=NEWS.length>0;
-  }catch(e){NEWSOK=false;NEWS=[];}
-  if(!NEWSOK){
-    embed('#newsBox','embed-widget-timeline.js',{feedMode:'symbol',symbol:'FX:EURUSD',isTransparent:true,displayMode:'regular',width:'100%',height:420,colorTheme:'dark',locale:'th_TH'});
-    $('#newsBox').style.maxHeight='none';$('#newsSum').textContent='ดึงข่าวอัตโนมัติไม่ได้ — แสดงไทม์ไลน์ TradingView แทน (ไม่ถูกนำไปคิดคะแนน)';
-  }else{
-    const sc=NEWS.filter(n=>n.s!==0);SENT=sc.length?sc.reduce((a,n)=>a+n.s,0)/sc.length:0;
-    $('#newsSum').innerHTML=`พาดหัวที่ตีความได้ ${sc.length}/${NEWS.length} · แนวโน้ม <b class="${SENT>.15?'up':SENT<-.15?'dn':'ac'}">${SENT>.15?'หนุน EUR (EURUSD ขึ้น)':SENT<-.15?'หนุน USD (EURUSD ลง)':'กลาง/ไม่ชัด'}</b> <span class="mut">(keyword หยาบ ๆ)</span>`;
-    $('#newsBox').innerHTML=NEWS.map(n=>`<div><span class="${n.s>0?'up':n.s<0?'dn':'mut'}">${n.s>0?'▲':n.s<0?'▼':'●'}</span> <a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="mut">${esc(n.dom||'')}${isNaN(n.t)?'':' · '+bkk(n.t)}</div></div>`).join('');
-  }
-  if(C.length)analyze();
-}
-
-// ---------- clocks / killzones ----------
-function tick(){
-  const now=Date.now(),d=new Date(now);
-  $('#nyc').textContent=d.toLocaleTimeString('en-GB',{timeZone:'America/New_York'});
-  $('#bkc').textContent=d.toLocaleTimeString('en-GB',{timeZone:'Asia/Bangkok'});
-  const off=nyOffsetH(now),act=kzActive(now).map(z=>z.k),dec=nyDec(now);
-  const hm=h=>{h=((h-off+7)%24+24)%24;const H=Math.floor(h),M=Math.round((h-H)*60);return String(H).padStart(2,'0')+':'+String(M).padStart(2,'0')};
-  $('#kzs').innerHTML=KZ.map(z=>`<div class="kz ${act.includes(z.k)?'on':''}"><div><b>${z.n}</b><div class="mut">NY ${String(Math.floor(z.s)).padStart(2,'0')}:${z.s%1?'30':'00'}–${String(z.e%24).padStart(2,'0')}:${z.e%1?'30':'00'} · ไทย ${hm(z.s)}–${hm(z.e)}</div></div><span class="b">${act.includes(z.k)?'ACTIVE':'—'}</span></div>`).join('');
-  if(CALOK&&Math.floor(now/1000)%20===0){updateBanner();renderCal();}
-}
-
-// ---------- risk calc ----------
-function calc(){
-  const bal=+$('#cb').value||0,rk=+$('#cr').value||0,e=+$('#ce').value||0,sl=+$('#cs').value||0,tp=+$('#ct').value||0;
-  const risk=bal*rk/100,sd=Math.abs(e-sl),td=Math.abs(tp-e);
-  if(!sd){$('#calcOut').innerHTML='<div class="mut">กรอก Entry และ SL</div>';return;}
-  const pips=sd/0.0001,lot=risk/(pips*10),prof=td/0.0001*10*lot;
-  $('#calcOut').innerHTML=`<div class="row"><span>เงินเสี่ยง</span><b class="ac">$${risk.toFixed(2)}</b></div><div class="row"><span>SL</span><b>${pips.toFixed(1)} pips</b></div>
-  <div class="row"><span>ขนาดไม้</span><b class="bl">${lot.toFixed(2)} lot</b></div><div class="row"><span>R:R</span><b class="up">1 : ${(td/sd).toFixed(2)}</b></div><div class="row"><span>กำไรถ้าถึง TP</span><b class="up">$${prof.toFixed(2)}</b></div>
-  <div class="mut">สมมติ 1 pip ของ 1 lot = $10 (คู่ที่ USD เป็น quote) ตรวจกับโบรกเกอร์อีกครั้ง</div>`;
-}
-$$('#cb,#cr,#ce,#cs,#ct').forEach(i=>i.oninput=calc);
-$('#fillPlan').onclick=()=>{if(PLAN&&PLAN.entry){$('#ce').value=PLAN.entry.toFixed(5);$('#cs').value=PLAN.sl.toFixed(5);$('#ct').value=PLAN.tp1.toFixed(5);calc();}};
-
-// ---------- TradingView ----------
-function loadTV(){
-  const key=tf;if(tvKey===key)return;tvKey=key;
-  const mk=()=>{$('#tvc').innerHTML='';new TradingView.widget({autosize:true,symbol:'FX:EURUSD',interval:TVI[tf],timezone:'Asia/Bangkok',theme:'dark',style:'1',locale:'th_TH',toolbar_bg:'#121824',enable_publishing:false,allow_symbol_change:true,container_id:'tvc',withdateranges:true});};
-  if(window.TradingView)mk();else{const s=document.createElement('script');s.src='https://s3.tradingview.com/tv.js';s.onload=mk;document.head.appendChild(s);}
-}
-
-// ---------- backtest ----------
-function cardStats(title,st,rr){
-  if(!st)return `<div class="card"><h3>${title}</h3><div class="mut">ไม่มีเทรด</div></div>`;
-  const be=1/(1+rr);
-  return `<div class="card"><h3>${title}</h3>
-  <div class="row"><span>จำนวนเทรด</span><b>${st.n}</b></div><div class="row"><span>Win rate</span><b>${(st.wr*100).toFixed(1)}%</b></div>
-  <div class="row"><span>ช่วงเชื่อมั่น 95%</span><b>${(st.ci[0]*100).toFixed(1)}–${(st.ci[1]*100).toFixed(1)}%</b></div>
-  <div class="row"><span>Win rate จุดคุ้มทุน (ก่อนค่าธรรมเนียม)</span><b>${(be*100).toFixed(1)}%</b></div>
-  <div class="row"><span>Expectancy (R/เทรด)</span><b class="${st.avg>0?'up':'dn'}">${st.avg.toFixed(3)}</b></div>
-  <div class="row"><span>รวม R</span><b class="${st.total>0?'up':'dn'}">${st.total.toFixed(1)}</b></div>
-  <div class="row"><span>Profit factor</span><b>${isFinite(st.pf)?st.pf.toFixed(2):'∞'}</b></div>
-  <div class="row"><span>Max drawdown (R)</span><b class="dn">${st.dd.toFixed(1)}</b></div></div>`;
-}
-$('#btRun').onclick=async()=>{
-  const total=+$('#btN').value,o={swing:+$('#btSw').value||5,rr:+$('#btRR').value||2,fee:+$('#btFee').value||0};
-  $('#btOut').innerHTML='';$('#btRun').disabled=true;
-  try{
-    const h=await history(total,n=>$('#btProg').textContent=`ดึงข้อมูล ${n}/${total} แท่ง...`);
-    $('#btProg').textContent='กำลังคำนวณ...';await new Promise(r=>setTimeout(r,30));
-    const r=smc(h,o),tr=r.trades,half=Math.floor(tr.length/2);
-    $('#btProg').textContent=`EURUSD ${tf} · ${h.length} แท่ง (${new Date(h[0].t).toLocaleDateString('th-TH')} – ${new Date(h[h.length-1].t).toLocaleDateString('th-TH')})`;
-    let html='<div class="cols">'+cardStats('ทั้งหมด',stats(tr),o.rr)+cardStats('ครึ่งแรก (In-sample)',stats(tr.slice(0,half)),o.rr)+cardStats('ครึ่งหลัง (Out-of-sample)',stats(tr.slice(half)),o.rr)+'</div>';
-    html+='<div class="card"><h3>Equity curve (หน่วย R)</h3><canvas id="eqc" height="220" style="width:100%"></canvas><div class="mut">เส้นประแนวตั้ง = จุดแบ่ง In/Out-of-sample</div></div>';
-    html+='<div class="card" style="overflow-x:auto"><h3>20 เทรดล่าสุด</h3><table><tr><th>เวลา (ไทย)</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>R</th></tr>'+
-      tr.slice(-20).reverse().map(x=>`<tr><td>${bkk(x.t)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td class="${x.r>0?'up':'dn'}">${x.r.toFixed(2)}</td></tr>`).join('')+'</table></div>';
-    html+='<div class="warn">ผล backtest ไม่รับประกันอนาคต และ backtest นี้ไม่รวมกฎ Killzone/ข่าว ถ้า Out-of-sample แย่กว่า In-sample มาก อาจ overfit หรือ edge ไม่จริง</div>';
-    $('#btOut').innerHTML=html;
-    const cv=$('#eqc'),cx=cv.getContext('2d'),dpr=devicePixelRatio||1,W=cv.width=cv.clientWidth*dpr,Hh=cv.height=220*dpr;
-    let e=0;const pts=[0];for(const x of tr){e+=x.r;pts.push(e)}
-    const mn=Math.min(...pts),mx=Math.max(...pts),sx=i=>i/(pts.length-1||1)*(W-10)+5,sy=v=>Hh-10-(v-mn)/((mx-mn)||1)*(Hh-20);
-    cx.strokeStyle='#ffd700';cx.lineWidth=2;cx.beginPath();pts.forEach((v,i)=>i?cx.lineTo(sx(i),sy(v)):cx.moveTo(sx(i),sy(v)));cx.stroke();
-    cx.strokeStyle='#555';cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(5,sy(0));cx.lineTo(W-5,sy(0));cx.moveTo(sx(half),0);cx.lineTo(sx(half),Hh);cx.stroke();
-  }catch(err){$('#btProg').textContent='ผิดพลาด: '+err.message;}
-  $('#btRun').disabled=false;
-};
-
-// ---------- journal ----------
-const jget=()=>{try{return JSON.parse(localStorage.getItem('smc_eu_journal')||'[]')}catch(e){return[]}};
-const jset=a=>{try{localStorage.setItem('smc_eu_journal',JSON.stringify(a))}catch(e){}};
-$('#saveJ').onclick=()=>{
-  if(!PLAN||!PLAN.entry||PLAN.blocked)return;
-  const a=jget();a.push({id:Date.now(),t:Date.now(),src:CFG.src,tf,dir:PLAN.dir,entry:PLAN.entry,sl:PLAN.sl,tp:PLAN.tp1,score:PLAN.score,status:'pending'});
-  jset(a);$('#saveJ').textContent='บันทึกแล้ว ✓';setTimeout(()=>$('#saveJ').textContent='บันทึกสัญญาณเข้า Forward-test journal',1500);
-};
-function judge(j,cs2){
-  let filled=j.filled||null;
-  for(const b of cs2){
-    if(b.t<j.t)continue;
-    if(!filled){
-      if(j.dir===1?b.l<=j.entry:b.h>=j.entry)filled=b.t;
-      else{if(b.t-j.t>200*TFMS[j.tf])return{status:'expired'};continue;}
-    }
-    if(j.dir===1){if(b.l<=j.sl)return{status:'loss',filled};if(b.h>=j.tp)return{status:'win',filled};}
-    else{if(b.h>=j.sl)return{status:'loss',filled};if(b.l<=j.tp)return{status:'win',filled};}
-  }
-  return{status:filled?'open':'pending',filled};
-}
-async function refreshJournal(){
-  const a=jget();
-  for(const j of a){
-    if(['win','loss','expired'].includes(j.status))continue;
-    if(j.src!==CFG.src)continue;
-    try{const k=await fetchK(j.tf,j.src==='td'?500:1000,{start:j.t});Object.assign(j,judge(j,k));}catch(e){}
-  }
-  jset(a);renderJournal();
-}
-function renderJournal(){
-  const a=jget(),w=a.filter(x=>x.status==='win').length,l=a.filter(x=>x.status==='loss').length,tot=w+l,R=w*2-l;
-  $('#jBox').innerHTML=`<div class="warn">Forward-test ของคุณ: ปิดแล้ว ${tot} เทรด · ชนะ ${w} · แพ้ ${l}${tot?` · win rate ${(w/tot*100).toFixed(0)}% · รวม ${R>=0?'+':''}${R}R (ยังไม่หักค่าธรรมเนียม)`:''}${tot<30?'<br>ตัวอย่างยังน้อยเกินกว่าจะสรุปอะไรได้':''}</div>`;
-  $('#jTab').innerHTML=a.length?'<table><tr><th>เวลา (ไทย)</th><th>แหล่งข้อมูล</th><th>TF</th><th>ทิศ</th><th>Entry</th><th>SL</th><th>TP</th><th>Score</th><th>สถานะ</th></tr>'+
-    a.slice().reverse().map(x=>`<tr><td>${bkk(x.t)}</td><td>${x.src==='td'?'TwelveData':'Binance'}</td><td>${esc(x.tf)}</td><td>${x.dir===1?'BUY':'SELL'}</td><td>${fmt(x.entry)}</td><td>${fmt(x.sl)}</td><td>${fmt(x.tp)}</td><td>${x.score}</td><td class="${x.status==='win'?'up':x.status==='loss'?'dn':'mut'}">${x.status}</td></tr>`).join('')+'</table>':'<div class="mut">ยังไม่มีรายการ — กดปุ่มบันทึกสัญญาณทางซ้าย</div>';
-}
-$('#jRef').onclick=refreshJournal;
-$('#jClr').onclick=()=>{if(confirm('ล้าง journal ทั้งหมด?')){jset([]);renderJournal();}};
-
-// ---------- wiring ----------
-$('#tfs').innerHTML=TFS.map(t=>`<button data-tf="${t}" class="${t===tf?'on':''}">${t}</button>`).join('');
-$('#tfs').onclick=e=>{const t=e.target.dataset.tf;if(!t)return;tf=t;$$('#tfs button').forEach(b=>b.classList.toggle('on',b.dataset.tf===t));load();if($('#tab-tv').classList.contains('on'))loadTV();};
-$('#src').value=CFG.src;
-$('#src').onchange=e=>{CFG.src=e.target.value;try{localStorage.setItem('src',CFG.src)}catch(_){}if(CFG.src==='td'&&!CFG.key)$('#keyDlg').showModal();load();};
-$('#keyBtn').onclick=()=>{$('#keyIn').value=CFG.key;$('#keyDlg').showModal();};
-$('#keyDlg').addEventListener('close',()=>{if($('#keyDlg').returnValue==='ok'){CFG.key=$('#keyIn').value.trim();try{localStorage.setItem('td_key',CFG.key)}catch(_){}if(CFG.src==='td')load();}});
-$$('[data-l]').forEach(c=>{L[c.dataset.l]=c.checked?1:0;c.onchange=()=>{L[c.dataset.l]=c.checked?1:0}});
-$('#swing').onchange=$('#rr').onchange=()=>load();
-$('#calAll').onclick=()=>{calHigh=false;$('#calAll').classList.add('on');renderCal()};
-$('#calHigh').onclick=()=>{calHigh=true;renderCal()};
-$$('#tabs button').forEach(b=>b.onclick=()=>{
-  $$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
-  $$('.tab').forEach(x=>x.classList.toggle('on',x.id==='tab-'+b.dataset.tab));
-  const t=b.dataset.tab;
-  if(t==='chart')setTimeout(resize,30);if(t==='tv')loadTV();if(t==='proof'){renderJournal();refreshJournal();}
-});
-resize();load();loadCal();loadNews();renderJournal();calc();tick();
-setInterval(tick,1000);setInterval(loadCal,15*60e3);setInterval(loadNews,10*60e3);
 </script>
+
 </body>
 </html>
