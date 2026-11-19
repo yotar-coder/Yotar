@@ -128,4 +128,339 @@
             <input type="range" id="lSl" min="0" max="150" value="100">
           </div>
           <div class="ctrl">
-            <div class="ctrl-top"><span>ความเร็ว
+            <div class="ctrl-top"><span>ความเร็วการหมุนก๊าซ</span><span class="val" id="sVal">1.0×</span></div>
+            <input type="range" id="sSl" min="0" max="2.5" step="0.1" value="1.0">
+          </div>
+          <div class="seg" id="palGroup">
+            <button class="active" data-p="0">ส้มทองพลาสมา</button>
+            <button data-p="1">ฟ้าพลังงานสูง</button>
+            <button data-p="2">แดงอินฟราเรด</button>
+          </div>
+          <div class="toggles">
+            <label><span>แสดงจานพอกพูนมวล</span><input type="checkbox" id="tDisk" checked></label>
+            <label><span>ปรากฏการณ์ดอปเพลอร์</span><input type="checkbox" id="tDop" checked></label>
+            <label><span>เส้นอ้างอิงขอบฟ้าเหตุการณ์ & ISCO</span><input type="checkbox" id="tGrid"></label>
+          </div>
+          <div class="actions">
+            <button class="btn btn-pri" id="probeBtn">ปล่อยวัตถุทดสอบวงโคจร 3 มิติ</button>
+            <button class="btn" id="clrBtn">ล้าง</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>ค่าทางฟิสิกส์ (Schwarzschild Metric)</h2>
+          <div class="metric"><span>รัศมีชวาร์ซชิลด์ (rₛ)</span><span id="rRs">44.30 km</span></div>
+          <div class="metric"><span>ทรงกลมโฟตอน (1.5 rₛ)</span><span id="rPh">66.45 km</span></div>
+          <div class="metric"><span>รัศมีเงาปรากฏ (2.60 rₛ)</span><span id="rSh">115.09 km</span></div>
+          <div class="metric"><span>วงโคจรเสถียรในสุด ISCO (3 rₛ)</span><span id="rIs">132.90 km</span></div>
+          <div class="metric"><span>อัตราเวลา ณ ตำแหน่งกล้อง (dτ/dt)</span><span id="rTd">0.953×</span></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+  (function () {
+    const glCanvas = document.getElementById('glCanvas');
+    const hudCanvas = document.getElementById('hudCanvas');
+    const ctx2d = hudCanvas.getContext('2d');
+    const S = {
+      mass: 15, lens: 1.0, speed: 1.0, pal: 0, disk: true, dop: true, grid: false,
+      auto: true, yaw: 0.65, pitch: 0.25, tYaw: 0.65, tPitch: 0.25, dist: 11, tDist: 11, fov: 0.82,
+      probes: []
+    };
+
+    function rsScene() {
+      return 0.7 + 0.85 * ((Math.log(S.mass) - Math.log(3)) / (Math.log(100) - Math.log(3)));
+    }
+
+    function updateTelemetry() {
+      const rsKm = (2 * 6.6743e-11 * S.mass * 1.98847e30) / (299792458 * 299792458 * 1000);
+      const dRs = Math.max(1.05, S.dist / rsScene());
+      document.getElementById('mVal').textContent = S.mass + ' M☉';
+      document.getElementById('lVal').textContent = Math.round(S.lens * 100) + '%';
+      document.getElementById('sVal').textContent = S.speed.toFixed(1) + '×';
+      document.getElementById('rRs').textContent = rsKm.toFixed(2) + ' km';
+      document.getElementById('rPh').textContent = (1.5 * rsKm).toFixed(2) + ' km';
+      document.getElementById('rSh').textContent = (2.598 * rsKm).toFixed(2) + ' km';
+      document.getElementById('rIs').textContent = (3.0 * rsKm).toFixed(2) + ' km';
+      document.getElementById('rTd').textContent = Math.sqrt(Math.max(0, 1 - 1 / dRs)).toFixed(3) + '×';
+      const deg = Math.round(S.pitch * 180 / Math.PI);
+      document.getElementById('camInfo').textContent =
+        'ระยะผู้สังเกต: ' + dRs.toFixed(1) + ' rₛ • มุมเอียง: ' + (deg >= 0 ? '+' : '') + deg + '°';
+    }
+
+    function camBasis() {
+      const cp = Math.cos(S.pitch), sp = Math.sin(S.pitch), cy = Math.cos(S.yaw), sy = Math.sin(S.yaw);
+      const pos = [S.dist * cp * sy, S.dist * sp, S.dist * cp * cy];
+      const l = Math.hypot(pos[0], pos[1], pos[2]) || 1;
+      const fwd = [-pos[0] / l, -pos[1] / l, -pos[2] / l];
+      const rl = Math.hypot(-fwd[2], fwd[0]) || 1;
+      const right = [-fwd[2] / rl, 0, fwd[0] / rl];
+      const up = [
+        right[1] * fwd[2] - right[2] * fwd[1],
+        right[2] * fwd[0] - right[0] * fwd[2],
+        right[0] * fwd[1] - right[1] * fwd[0]
+      ];
+      return { pos, fwd, right, up };
+    }
+
+    // WebGL Setup with mobile precision fallback
+    const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+    let prog = null, U = {};
+    if (gl) {
+      const vs = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+      const fsBody = `
+        uniform vec2 u_res;
+        uniform float u_t, u_fov, u_rs, u_lens, u_spd, u_dop, u_disk, u_pal;
+        uniform vec3 u_pos, u_r, u_u, u_f;
+        float h21(vec2 p){p=fract(p*vec2(234.34,435.35));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+        float n2(vec2 p){
+          vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+          return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y);
+        }
+        float fbm(vec2 p){
+          float v=0.,a=.5;mat2 m=mat2(.8,-.6,.6,.8);
+          for(int i=0;i<4;i++){v+=a*n2(p);p=m*p*2.02;a*=.5;}return v;
+        }
+        vec3 pal(float t){
+          t=clamp(t,0.,2.);
+          if(u_pal<.5){
+            vec3 c=mix(vec3(.45,.07,.01),vec3(.98,.48,.08),smoothstep(0.,.5,t));
+            return mix(c,vec3(1.,.93,.78),smoothstep(.45,1.2,t));
+          }else if(u_pal<1.5){
+            vec3 c=mix(vec3(.03,.12,.4),vec3(.14,.6,.98),smoothstep(0.,.55,t));
+            return mix(c,vec3(.8,.96,1.),smoothstep(.55,1.3,t));
+          }
+          vec3 c=mix(vec3(.3,.02,.05),vec3(.92,.16,.12),smoothstep(0.,.55,t));
+          return mix(c,vec3(1.,.78,.55),smoothstep(.55,1.3,t));
+        }
+        vec3 stars(vec3 d){
+          d=normalize(d);
+          vec2 uv=vec2(atan(d.z,d.x),asin(clamp(d.y,-1.,1.)));
+          float band=exp(-pow((d.y*.85+d.x*.3)*3.4,2.));
+          vec3 bg=vec3(.012,.018,.032)+band*fbm(uv*4.)*vec3(.04,.055,.09);
+          vec2 g=floor(uv*95.),f=fract(uv*95.)-.5;
+          float h=h21(g);
+          if(h>.975) bg+=vec3(1.,.92,.82)*exp(-dot(f,f)*36.)*2.1;
+          return bg;
+        }
+        vec4 diskCol(vec3 p, vec3 v){
+          float r=length(p.xz), rIn=2.6*u_rs, rOut=10.5*u_rs;
+          if(r<rIn||r>rOut) return vec4(0.);
+          float u=(r-rIn)/(rOut-rIn);
+          float rad=smoothstep(0.,.09,u)*pow(1.-u,1.6);
+          float ang=atan(p.z,p.x)-u_t*u_spd*1.6/pow(max(r/u_rs,1.2),1.35);
+          float sp=ang+3.6*log(r/u_rs);
+          float tex=.55+.45*sin(r/u_rs*8.5-fbm(vec2(cos(sp),sin(sp))*2.5)*4.);
+          float dens=rad*mix(.5,1.3,tex);
+          vec3 gd=normalize(vec3(-p.z,0.,p.x));
+          float beta=clamp(sqrt(.5*u_rs/max(r-u_rs,.35*u_rs)),0.,.6)*clamp(u_spd,0.,1.6);
+          float df=mix(1.,sqrt(1.-beta*beta)/max(.28,1.-beta*dot(gd,-normalize(v))),u_dop);
+          float temp=(.38+.85*pow(1.-u,1.2))*mix(1.,df,.85);
+          return vec4(pal(temp)*dens*pow(df,2.5)*1.85, clamp(dens*.88,0.,.95));
+        }
+        void main(){
+          vec2 uv=(gl_FragCoord.xy-.5*u_res)/u_res.y;
+          vec3 p=u_pos, v=normalize(u_f+uv.x*u_fov*2.*u_r+uv.y*u_fov*2.*u_u);
+          vec3 hv=cross(p,v); float h2=dot(hv,hv), rsE=u_rs*u_lens;
+          vec3 col=vec3(0.); float tr=1., minR=999.; bool hitBH=false;
+          for(int i=0;i<115;i++){
+            float r2=dot(p,p), r=sqrt(r2); minR=min(minR,r);
+            if(r<=u_rs){hitBH=true;break;}
+            if(r>34.&&dot(p,v)>0.) break;
+            float dt=clamp(.08*(r-.8*u_rs),.024,.55);
+            vec3 acc=(-1.5*rsE*h2/(r2*r2*r))*p;
+            vec3 nv=v+acc*dt, np=p+.5*(v+nv)*dt;
+            if(u_disk>.5 && p.y*np.y<=0.){
+              float fr=abs(p.y)/(abs(p.y)+abs(np.y)+1e-5);
+              vec4 dc=diskCol(mix(p,np,fr),nv);
+              col+=tr*dc.rgb; tr*=(1.-dc.a);
+            }
+            p=np; v=nv; if(tr<.02) break;
+          }
+          col+=tr*pal(1.2)*exp(-pow((minR-1.48*u_rs)/(.12*u_rs),2.))*.3*u_lens;
+          if(!hitBH) col+=tr*stars(v);
+          vec3 m=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
+          gl_FragColor=vec4(pow(clamp(m,0.,1.),vec3(1./2.2)),1.);
+        }`;
+      function mkShader(tp, src) {
+        const s = gl.createShader(tp); gl.shaderSource(s, src); gl.compileShader(s);
+        return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+      }
+      const vShader = mkShader(gl.VERTEX_SHADER, vs);
+      const fShader = mkShader(gl.FRAGMENT_SHADER, '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n' + fsBody);
+      if (vShader && fShader) {
+        prog = gl.createProgram();
+        gl.attachShader(prog, vShader); gl.attachShader(prog, fShader); gl.linkProgram(prog);
+        if (gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+          gl.useProgram(prog);
+          const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+          const loc = gl.getAttribLocation(prog, 'a');
+          gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+          ['res','t','fov','rs','lens','spd','dop','disk','pal','pos','r','u','f'].forEach(k => {
+            U[k] = gl.getUniformLocation(prog, 'u_' + k);
+          });
+        } else { prog = null; }
+      }
+    }
+
+    function proj(pt, cam, w, h) {
+      const dx = pt[0] - cam.pos[0], dy = pt[1] - cam.pos[1], dz = pt[2] - cam.pos[2];
+      const z = dx * cam.fwd[0] + dy * cam.fwd[1] + dz * cam.fwd[2];
+      if (z <= 0.2) return null;
+      const x = dx * cam.right[0] + dy * cam.right[1] + dz * cam.right[2];
+      const y = dx * cam.up[0] + dy * cam.up[1] + dz * cam.up[2];
+      const asp = w / Math.max(1, h);
+      return { x: ((x / (z * S.fov * asp)) * 0.5 + 0.5) * w, y: (-(y / (z * S.fov)) * 0.5 + 0.5) * h };
+    }
+
+    function drawFallback2D(w, h, t) {
+      ctx2d.fillStyle = '#050811'; ctx2d.fillRect(0, 0, w, h);
+      const cx = w * 0.5, cy = h * 0.5, r = Math.min(w, h) * 0.16 * rsScene();
+      if (S.disk) {
+        ctx2d.save(); ctx2d.translate(cx, cy); ctx2d.scale(1, Math.max(0.15, Math.abs(Math.sin(S.pitch))));
+        const g = ctx2d.createRadialGradient(0, 0, r * 1.4, 0, 0, r * 4.2);
+        g.addColorStop(0, 'rgba(255,230,170,0.95)');
+        g.addColorStop(0.45, S.pal === 1 ? 'rgba(56,189,248,0.75)' : S.pal === 2 ? 'rgba(239,68,68,0.75)' : 'rgba(245,158,11,0.8)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx2d.fillStyle = g; ctx2d.beginPath(); ctx2d.arc(0, 0, r * 4.2, 0, Math.PI * 2); ctx2d.fill();
+        ctx2d.restore();
+      }
+      ctx2d.beginPath(); ctx2d.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
+      ctx2d.fillStyle = '#000'; ctx2d.shadowColor = '#f59e0b'; ctx2d.shadowBlur = 18; ctx2d.fill(); ctx2d.shadowBlur = 0;
+    }
+
+    function drawHud(cam, t) {
+      const w = hudCanvas.width, h = hudCanvas.height, rs = rsScene();
+      ctx2d.clearRect(0, 0, w, h);
+      if (!prog) drawFallback2D(w, h, t);
+      if (S.grid) {
+        [[rs, '#f87171', 'Event Horizon'], [1.5 * rs, '#fbbf24', 'Photon Sphere'], [3 * rs, '#38bdf8', 'ISCO']].forEach(g => {
+          ctx2d.strokeStyle = g[1]; ctx2d.lineWidth = 1.5; ctx2d.beginPath();
+          let ok = false, lp = null;
+          for (let i = 0; i <= 64; i++) {
+            const a = (i / 64) * Math.PI * 2;
+            const p = proj([g[0] * Math.cos(a), 0, g[0] * Math.sin(a)], cam, w, h);
+            if (!p) { ok = false; continue; }
+            if (!ok) { ctx2d.moveTo(p.x, p.y); ok = true; } else ctx2d.lineTo(p.x, p.y);
+            if (i === 16) lp = p;
+          }
+          ctx2d.stroke();
+          if (lp) { ctx2d.fillStyle = g[1]; ctx2d.font = '12px sans-serif'; ctx2d.fillText(g[2], lp.x + 6, lp.y - 6); }
+        });
+      }
+      S.probes.forEach(pr => {
+        if (pr.trail.length < 2) return;
+        ctx2d.strokeStyle = pr.col; ctx2d.lineWidth = 2; ctx2d.beginPath();
+        let started = false;
+        pr.trail.forEach(pt => {
+          const p = proj(pt, cam, w, h);
+          if (p) { if (!started) { ctx2d.moveTo(p.x, p.y); started = true; } else ctx2d.lineTo(p.x, p.y); }
+        });
+        ctx2d.stroke();
+        const head = proj(pr.p, cam, w, h);
+        if (head) { ctx2d.fillStyle = '#fff'; ctx2d.beginPath(); ctx2d.arc(head.x, head.y, 4, 0, Math.PI * 2); ctx2d.fill(); }
+      });
+    }
+
+    // Controls & Touch
+    const pts = new Map(); let pinch = null;
+    const stage = document.getElementById('stage');
+    stage.addEventListener('pointerdown', e => {
+      stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { const a = [...pts.values()]; pinch = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+    });
+    stage.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return;
+      const pv = pts.get(e.pointerId), cu = { x: e.clientX, y: e.clientY }; pts.set(e.pointerId, cu);
+      if (pts.size === 1) {
+        S.tYaw -= (cu.x - pv.x) * 0.0075;
+        S.tPitch = Math.max(-1.46, Math.min(1.46, S.tPitch + (cu.y - pv.y) * 0.0065));
+        S.auto = false; document.getElementById('autoBtn').classList.remove('active');
+      } else if (pts.size === 2 && pinch > 0) {
+        const a = [...pts.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        S.tDist = Math.max(4.2, Math.min(26, S.tDist * (pinch / Math.max(10, d)))); pinch = d;
+      }
+    });
+    const endPt = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; };
+    stage.addEventListener('pointerup', endPt); stage.addEventListener('pointercancel', endPt);
+    stage.addEventListener('wheel', e => { e.preventDefault(); S.tDist = Math.max(4.2, Math.min(26, S.tDist + e.deltaY * 0.01)); }, { passive: false });
+
+    document.getElementById('vInc').onclick = () => { S.tPitch = 0.25; S.tDist = 11; };
+    document.getElementById('vEdge').onclick = () => { S.tPitch = 0.03; S.tDist = 10.5; };
+    document.getElementById('vTop').onclick = () => { S.tPitch = 1.44; S.tDist = 13; };
+    document.getElementById('autoBtn').onclick = function () { S.auto = !S.auto; this.classList.toggle('active', S.auto); };
+    document.getElementById('zIn').onclick = () => { S.tDist = Math.max(4.2, S.tDist - 1.8); };
+    document.getElementById('zOut').onclick = () => { S.tDist = Math.min(26, S.tDist + 1.8); };
+    document.getElementById('zReset').onclick = () => { S.tYaw = 0.65; S.tPitch = 0.25; S.tDist = 11; S.auto = true; document.getElementById('autoBtn').classList.add('active'); };
+
+    document.getElementById('mSl').oninput = e => { S.mass = +e.target.value; updateTelemetry(); };
+    document.getElementById('lSl').oninput = e => { S.lens = +e.target.value / 100; updateTelemetry(); };
+    document.getElementById('sSl').oninput = e => { S.speed = +e.target.value; updateTelemetry(); };
+    document.getElementById('tDisk').onchange = e => { S.disk = e.target.checked; };
+    document.getElementById('tDop').onchange = e => { S.dop = e.target.checked; };
+    document.getElementById('tGrid').onchange = e => { S.grid = e.target.checked; };
+    document.querySelectorAll('#palGroup button').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#palGroup button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); S.pal = +b.dataset.p;
+      };
+    });
+
+    const cols = ['#38bdf8', '#a78bfa', '#34d399', '#fb7185']; let ci = 0;
+    document.getElementById('probeBtn').onclick = () => {
+      const rs = rsScene(), r0 = rs * (4.2 + Math.random() * 2.2), a = Math.random() * 6.28;
+      const v = Math.sqrt((0.5 * rs) / (r0 - 1.5 * rs)) * 0.92;
+      const p = [r0 * Math.cos(a), (Math.random() - 0.5) * rs, r0 * Math.sin(a)];
+      S.probes.push({ p: [...p], v: [-Math.sin(a) * v, 0.12 * v, Math.cos(a) * v], trail: [p], col: cols[ci++ % 4] });
+      if (S.probes.length > 5) S.probes.shift();
+    };
+    document.getElementById('clrBtn').onclick = () => { S.probes = []; };
+
+    let last = performance.now(), simT = 0;
+    function loop(now) {
+      const dt = Math.min(0.05, Math.max(0.001, (now - last) * 0.001)); last = now; simT += dt;
+      const rect = stage.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.max(2, Math.floor(rect.width * dpr)), h = Math.max(2, Math.floor(rect.height * dpr));
+      if (glCanvas.width !== w || glCanvas.height !== h) {
+        glCanvas.width = hudCanvas.width = w; glCanvas.height = hudCanvas.height = h;
+        if (prog) gl.viewport(0, 0, w, h);
+      }
+      if (S.auto && pts.size === 0) S.tYaw += dt * 0.2;
+      const k = 1 - Math.exp(-dt * 10);
+      S.yaw += (S.tYaw - S.yaw) * k; S.pitch += (S.tPitch - S.pitch) * k; S.dist += (S.tDist - S.dist) * k;
+
+      const rs = rsScene();
+      for (let i = S.probes.length - 1; i >= 0; i--) {
+        const pr = S.probes[i], hs = dt * 0.65;
+        for (let s = 0; s < 4; s++) {
+          const x = pr.p[0], y = pr.p[1], z = pr.p[2], r2 = x * x + y * y + z * z, r = Math.sqrt(r2);
+          if (r <= rs * 1.05 || r > 35) { S.probes.splice(i, 1); break; }
+          const ac = -((0.5 * rs) / (r2 * r));
+          pr.v[0] += x * ac * hs; pr.v[1] += y * ac * hs; pr.v[2] += z * ac * hs;
+          pr.p[0] += pr.v[0] * hs; pr.p[1] += pr.v[1] * hs; pr.p[2] += pr.v[2] * hs;
+        }
+        if (S.probes[i]) { pr.trail.push([...pr.p]); if (pr.trail.length > 90) pr.trail.shift(); }
+      }
+
+      updateTelemetry();
+      const cam = camBasis();
+      if (prog) {
+        gl.useProgram(prog);
+        gl.uniform2f(U.res, w, h); gl.uniform1f(U.t, simT); gl.uniform1f(U.fov, S.fov);
+        gl.uniform1f(U.rs, rs); gl.uniform1f(U.lens, S.lens); gl.uniform1f(U.spd, S.speed);
+        gl.uniform1f(U.dop, S.dop ? 1 : 0); gl.uniform1f(U.disk, S.disk ? 1 : 0); gl.uniform1f(U.pal, S.pal);
+        gl.uniform3fv(U.pos, cam.pos); gl.uniform3fv(U.r, cam.right); gl.uniform3fv(U.u, cam.up); gl.uniform3fv(U.f, cam.fwd);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+      drawHud(cam, simT);
+      requestAnimationFrame(loop);
+    }
+    updateTelemetry();
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>
