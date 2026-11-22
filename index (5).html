@@ -1,0 +1,2302 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>J.A.R.V.I.S. / F.R.I.D.A.Y. — AI Vision & Companion HUD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- TensorFlow.js + COCO-SSD + MobileNet + MediaPipe FaceMesh -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js"></script>
+  <style>
+    :root {
+      --bg: #060b14;
+      --bg-grid: rgba(56, 189, 248, 0.04);
+      --surface: #0c1524;
+      --surface-2: #111e33;
+      --surface-3: #172842;
+      --border: rgba(56, 189, 248, 0.22);
+      --border-strong: rgba(56, 189, 248, 0.48);
+      --ink: #ecf2f8;
+      --muted: #8fa3bf;
+      --brand: #0ea5e9;
+      --brand-glow: rgba(14, 165, 233, 0.35);
+      --brand-soft: rgba(14, 165, 233, 0.14);
+      --brand-ink: #03111c;
+      --ok: #10b981;
+      --ok-soft: rgba(16, 185, 129, 0.15);
+      --warn: #f59e0b;
+      --warn-soft: rgba(245, 158, 11, 0.16);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.18);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --font: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    body[data-persona="friday"] {
+      --border: rgba(251, 146, 60, 0.24);
+      --border-strong: rgba(251, 146, 60, 0.52);
+      --brand: #f97316;
+      --brand-glow: rgba(249, 115, 22, 0.35);
+      --brand-soft: rgba(249, 115, 22, 0.14);
+      --brand-ink: #1c0a02;
+      --bg-grid: rgba(251, 146, 60, 0.035);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
+      background-size: 32px 32px;
+      color: var(--ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top HUD Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(6, 11, 20, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Animated AI Core Orb */
+    .ai-orb {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--brand) 0%, transparent 72%);
+      border: 1.5px solid var(--border-strong);
+      box-shadow: 0 0 18px var(--brand-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .ai-orb::before,
+    .ai-orb::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1.5px dashed var(--brand);
+      opacity: 0.75;
+      animation: spinSlow 9s linear infinite;
+    }
+
+    .ai-orb::after {
+      inset: 10px;
+      border-style: solid;
+      border-top-color: transparent;
+      border-bottom-color: transparent;
+      animation: spinReverse 4.5s linear infinite;
+    }
+
+    .ai-orb.speaking {
+      transform: scale(1.08);
+      box-shadow: 0 0 28px var(--brand), 0 0 52px var(--brand-glow);
+      animation: orbPulse 0.9s ease-in-out infinite alternate;
+    }
+
+    .ai-orb.listening {
+      border-color: var(--ok);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.55);
+    }
+
+    @keyframes spinSlow {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinReverse {
+      to { transform: rotate(-360deg); }
+    }
+    @keyframes orbPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.12); }
+    }
+
+    .brand-titles h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-sub {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .model-pill {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+
+    .status-dot.ready {
+      background: var(--ok);
+      box-shadow: 0 0 8px var(--ok);
+    }
+
+    .persona-switch {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+    }
+
+    .persona-btn {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .persona-btn.active {
+      background: var(--brand);
+      color: var(--brand-ink);
+      box-shadow: 0 0 12px var(--brand-glow);
+    }
+
+    /* Main Grid */
+    .main-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 980px) {
+      .main-container {
+        grid-template-columns: 1.25fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(17, 30, 51, 0.55);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+    }
+
+    .panel-body {
+      padding: 16px 18px;
+    }
+
+    /* Buttons & Inputs */
+    .btn {
+      font-family: var(--font);
+      font-size: 0.86rem;
+      font-weight: 500;
+      padding: 9px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.18s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      background: var(--surface-3);
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: var(--brand-ink);
+      border-color: transparent;
+      font-weight: 600;
+      box-shadow: 0 0 16px var(--brand-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.08);
+      background: var(--brand);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .select-input {
+      font-family: var(--font);
+      font-size: 0.84rem;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--ink);
+      max-width: 210px;
+    }
+
+    /* Camera Viewport HUD */
+    .viewport-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #03070e;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #cameraVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #cameraVideo.mirrored {
+      transform: scaleX(-1);
+    }
+
+    #hudCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Alert Banner inside HUD when drowsy or stressed */
+    .hud-alert-banner {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      max-width: 92%;
+    }
+
+    .hud-alert-banner.warn {
+      display: inline-flex;
+      background: rgba(245, 158, 11, 0.92);
+      color: #1c1002;
+    }
+
+    .hud-alert-banner.danger {
+      display: inline-flex;
+      background: rgba(239, 68, 68, 0.92);
+      color: #ffffff;
+      animation: alertPulse 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes alertPulse {
+      from { transform: translateX(-50%) scale(1); }
+      to { transform: translateX(-50%) scale(1.04); }
+    }
+
+    .camera-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background: radial-gradient(circle at center, rgba(14, 165, 233, 0.08), rgba(3, 7, 14, 0.95));
+      z-index: 5;
+    }
+
+    .camera-placeholder.hidden {
+      display: none;
+    }
+
+    .camera-placeholder h3 {
+      margin: 12px 0 6px;
+      font-size: 1.08rem;
+      font-weight: 600;
+    }
+
+    .camera-placeholder p {
+      margin: 0 0 16px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      max-width: 420px;
+    }
+
+    .camera-toolbar {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Detected Objects Section */
+    .sub-section {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sub-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .detected-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 36px;
+      align-items: center;
+    }
+
+    .obj-chip {
+      font-size: 0.84rem;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      border: 1px solid var(--border-strong);
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .obj-chip small {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      color: var(--brand);
+    }
+
+    .empty-inline {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    /* Biometric Wellness Gauges */
+    .wellness-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 560px) {
+      .wellness-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .metric-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      margin-bottom: 8px;
+    }
+
+    .metric-val {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: var(--ok);
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+
+    .wellness-state-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .wellness-state-badge.ok {
+      background: var(--ok-soft);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .wellness-state-badge.warn {
+      background: var(--warn-soft);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.45);
+    }
+
+    .wellness-state-badge.danger {
+      background: var(--danger-soft);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    /* Right Column: Daily Care + Assistant Conversation */
+    .right-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .care-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .care-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .care-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .care-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .care-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .care-toggle {
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-3);
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.18s ease;
+    }
+
+    .care-toggle.done {
+      background: var(--ok-soft);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.45);
+    }
+
+    /* Chat Conversation Panel */
+    .chat-log {
+      height: 330px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 4px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+    }
+
+    .msg.ai.alert-msg {
+      border-color: rgba(245, 158, 11, 0.65);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: var(--brand);
+      color: var(--brand-ink);
+      font-weight: 500;
+      border-top-right-radius: 4px;
+    }
+
+    .msg-sender {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      opacity: 0.78;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .prompt-chip {
+      font-family: var(--font);
+      font-size: 0.78rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .prompt-chip:hover {
+      color: var(--ink);
+      border-color: var(--border-strong);
+      background: var(--surface-3);
+    }
+
+    .voice-live-bar {
+      margin-top: 10px;
+      min-height: 22px;
+      font-size: 0.8rem;
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-composer {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--ink);
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px var(--brand-soft);
+    }
+
+    .btn-mic {
+      padding: 10px 13px;
+      flex-shrink: 0;
+    }
+
+    .btn-mic.active {
+      background: var(--ok-soft);
+      border-color: var(--ok);
+      color: #34d399;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .error-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--danger-soft);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fecaca;
+      font-size: 0.83rem;
+      display: none;
+    }
+  </style>
+</head>
+<body data-persona="jarvis">
+
+  <!-- Top HUD Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="ai-orb" id="aiOrb" aria-hidden="true"></div>
+        <div class="brand-titles">
+          <h1>
+            <span id="personaTitle">J.A.R.V.I.S.</span>
+            <span style="font-weight:400; font-size:0.84rem; color:var(--brand);">AI VISION COMPANION</span>
+          </h1>
+          <p class="brand-sub">ระบบผู้ช่วย AI ตรวจจับวัตถุ วิเคราะห์ความเครียด/ความง่วง และพูดคุยดูแลประจำวัน</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="model-pill" id="modelStatusPill">
+          <span class="status-dot" id="modelStatusDot"></span>
+          <span id="modelStatusText">กำลังโหลดโมเดล AI...</span>
+        </div>
+
+        <div class="persona-switch" role="group" aria-label="เลือกผู้ช่วย AI">
+          <button type="button" class="persona-btn active" id="btnPersonaJarvis">J.A.R.V.I.S.</button>
+          <button type="button" class="persona-btn" id="btnPersonaFriday">F.R.I.D.A.Y.</button>
+        </div>
+
+        <button type="button" class="btn" id="btnToggleTts" title="เปิด/ปิดเสียงพูด AI">
+          <span id="ttsIcon">🔊</span>
+          <span id="ttsLabel">เสียงพูด: เปิด</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="main-container">
+
+    <!-- Left Column: Camera Vision & Biometric State -->
+    <section class="panel" aria-labelledby="visionHeading">
+      <div class="panel-header">
+        <h2 class="panel-title" id="visionHeading">ระบบกล้องตรวจจับวัตถุและวิเคราะห์ใบหน้า (Front / Rear HUD)</h2>
+        <span class="wellness-state-badge" id="cameraFacingBadge">กล้อง: รอเปิดใช้งาน</span>
+      </div>
+
+      <div class="panel-body">
+        <div class="viewport-wrap">
+          <div class="hud-alert-banner" id="hudAlertBanner" role="status" aria-live="polite"></div>
+
+          <video id="cameraVideo" class="mirrored" playsinline autoplay muted></video>
+          <canvas id="hudCanvas"></canvas>
+
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <div class="ai-orb" style="width:56px;height:56px;"></div>
+            <h3>พร้อมเริ่มต้นระบบผู้ช่วย AI และการตรวจจับผ่านกล้อง</h3>
+            <p>กดปุ่มด้านล่างเพื่อเปิดกล้องและให้ AI ทักทายพูดคุย ตรวจจับสิ่งของรอบตัว (คน ต้นไม้ ขวดน้ำ โทรศัพท์ รถยนต์ เครื่องบิน ยาดม กระเป๋า ปากกา ฯลฯ) พร้อมดูแลความง่วงและความเครียดแบบเรียลไทม์</p>
+            <button type="button" class="btn btn-primary" id="btnHeroStart">เริ่มต้นระบบและเปิดกล้อง</button>
+          </div>
+        </div>
+
+        <div class="error-note" id="cameraErrorBox"></div>
+
+        <div class="camera-toolbar">
+          <button type="button" class="btn btn-primary" id="btnToggleCamera">เปิดกล้อง</button>
+          <button type="button" class="btn" id="btnSwitchFacing" disabled>สลับกล้องหน้า / หลัง</button>
+          <select id="cameraSelect" class="select-input" aria-label="เลือกอุปกรณ์กล้อง" style="display:none;"></select>
+        </div>
+
+        <!-- Live Detected Objects -->
+        <div class="sub-section">
+          <div class="sub-label">
+            <span>สิ่งที่ตรวจพบในกล้องขณะนี้</span>
+            <span id="fpsLabel" style="font-family:var(--mono); font-size:0.74rem;">STANDBY</span>
+          </div>
+          <div class="detected-chips" id="detectedChips">
+            <span class="empty-inline">ยังไม่มีรายการตรวจจับ — เปิดกล้องเพื่อสแกนสิ่งของรอบตัว</span>
+          </div>
+        </div>
+
+        <!-- User Biometric State (Stress & Drowsiness) -->
+        <div class="sub-section">
+          <div class="sub-label">
+            <span>การวิเคราะห์อาการผู้ใช้งานจากใบหน้า</span>
+            <span class="wellness-state-badge" id="wellnessBadge">รอตรวจจับใบหน้า</span>
+          </div>
+
+          <div class="wellness-grid">
+            <div class="metric-card">
+              <div class="metric-top">
+                <span>ระดับความง่วง / ตาปรือ</span>
+                <span class="metric-val" id="drowsyVal">0%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" id="drowsyBar"></div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-top">
+                <span>ระดับความเครียดทางสีหน้า</span>
+                <span class="metric-val" id="stressVal">0%</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" id="stressBar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Daily Care Check-in & Natural Conversation -->
+    <div class="right-stack">
+
+      <!-- Daily Care Check-in -->
+      <section class="panel" aria-labelledby="careHeading">
+        <div class="panel-header">
+          <h2 class="panel-title" id="careHeading">การวิเคราะห์และเตือนความจำประจำวัน</h2>
+          <button type="button" class="btn" id="btnCheckInNow" style="padding:5px 11px; font-size:0.78rem;">ให้ AI เช็กสถานะ</button>
+        </div>
+        <div class="panel-body">
+          <div class="care-list">
+            <div class="care-item">
+              <div class="care-info">
+                <span class="care-title">ดื่มน้ำวันนี้หรือยัง?</span>
+                <span class="care-desc" id="waterDesc">ยังไม่ได้ยืนยัน (ถือขวดน้ำหน้ากล้องหรือบอก AI ได้เลย)</span>
+              </div>
+              <button type="button" class="care-toggle" id="btnWaterToggle">ยังไม่ได้ดื่ม</button>
+            </div>
+
+            <div class="care-item">
+              <div class="care-info">
+                <span class="care-title">ลืมทำการบ้านหรือเปล่า?</span>
+                <span class="care-desc" id="homeworkDesc">ยังไม่ได้เช็กการบ้านของวันนี้</span>
+              </div>
+              <button type="button" class="care-toggle" id="btnHomeworkToggle">ยังไม่เสร็จ</button>
+            </div>
+
+            <div class="care-item">
+              <div class="care-info">
+                <span class="care-title">วันนี้ทำอะไรมาบ้าง?</span>
+                <span class="care-desc" id="activityDesc">เล่าให้ผู้ช่วยฟังผ่านไมค์หรือพิมพ์บอกด้านล่างได้เลย</span>
+              </div>
+              <span class="wellness-state-badge" id="activityBadge">รอพูดคุย</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Natural AI Chat & Voice Interface -->
+      <section class="panel" aria-labelledby="chatHeading">
+        <div class="panel-header">
+          <h2 class="panel-title" id="chatHeading">พูดคุยโต้ตอบกับผู้ช่วย AI</h2>
+          <span style="font-size:0.78rem; color:var(--muted);" id="voiceStatusHint">รองรับทั้งเสียงพูดภาษาไทยและพิมพ์แชท</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+
+          <div class="quick-prompts">
+            <button type="button" class="prompt-chip" data-msg="สวัสดี ทักทายกันหน่อย">สวัสดี ทักทายกันหน่อย</button>
+            <button type="button" class="prompt-chip" data-msg="ตอนนี้เห็นอะไรในกล้องบ้าง?">เห็นอะไรในกล้องบ้าง?</button>
+            <button type="button" class="prompt-chip" data-msg="ดื่มน้ำเรียบร้อยแล้วนะ">ดื่มน้ำแล้ว</button>
+            <button type="button" class="prompt-chip" data-msg="ทำการบ้านเสร็จแล้ว">ทำการบ้านเสร็จแล้ว</button>
+            <button type="button" class="prompt-chip" data-msg="วันนี้เรียนและทำโปรเจกต์มาทั้งวัน เหนื่อยมาก">เล่าเรื่องวันนี้</button>
+          </div>
+
+          <div class="voice-live-bar" id="voiceLiveBar"></div>
+
+          <form class="chat-composer" id="chatForm">
+            <button type="button" class="btn btn-mic" id="btnMic" title="กดเพื่อพูดคุยด้วยเสียง (ภาษาไทย)">
+              🎤 <span id="micBtnLabel">พูดคุย</span>
+            </button>
+            <input
+              type="text"
+              id="chatInput"
+              class="chat-input"
+              placeholder="พูดผ่านไมค์ หรือพิมพ์คุยกับ AI เหมือนเพื่อนได้เลย..."
+              autocomplete="off"
+            >
+            <button type="submit" class="btn btn-primary">ส่ง</button>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Hidden offscreen canvas for fine-grained MobileNet item classification -->
+  <canvas id="cropCanvas" width="224" height="224" style="display:none;"></canvas>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==========================================
+      // 1. PERSONA DEFINITIONS (J.A.R.V.I.S. / F.R.I.D.A.Y.)
+      // ==========================================
+      const PERSONAS = {
+        jarvis: {
+          id: 'jarvis',
+          name: 'J.A.R.V.I.S.',
+          thaiName: 'จาร์วิส',
+          selfPronoun: 'ผม',
+          polite: 'ครับ',
+          userTitle: 'เจ้านาย',
+          pitch: 0.92,
+          rate: 1.03,
+          preferFemale: false
+        },
+        friday: {
+          id: 'friday',
+          name: 'F.R.I.D.A.Y.',
+          thaiName: 'ฟรายเดย์',
+          selfPronoun: 'ฟรายเดย์',
+          polite: 'ค่ะ',
+          userTitle: 'บอส',
+          pitch: 1.12,
+          rate: 1.06,
+          preferFemale: true
+        }
+      };
+
+      // ==========================================
+      // 2. OBJECT TRANSLATION & FINE-GRAINED MAPPING
+      // ==========================================
+      const COCO_THAI_MAP = {
+        'person': 'คน',
+        'potted plant': 'ต้นไม้',
+        'bottle': 'ขวดน้ำ',
+        'cup': 'แก้วน้ำ / น้ำดื่ม',
+        'wine glass': 'แก้วน้ำ',
+        'cell phone': 'โทรศัพท์มือถือ',
+        'car': 'รถยนต์',
+        'truck': 'รถบรรทุก / รถยนต์',
+        'bus': 'รถโดยสาร',
+        'motorcycle': 'รถมอเตอร์ไซค์',
+        'bicycle': 'จักรยาน',
+        'airplane': 'เครื่องบิน',
+        'backpack': 'กระเป๋าสะพาย',
+        'handbag': 'กระเป๋าถือ',
+        'suitcase': 'กระเป๋าเดินทาง',
+        'book': 'หนังสือ / สมุดการบ้าน',
+        'laptop': 'โน้ตบุ๊ก',
+        'keyboard': 'คีย์บอร์ด',
+        'mouse': 'เมาส์',
+        'remote': 'รีโมท',
+        'scissors': 'กรรไกร',
+        'toothbrush': 'แปรงสีฟัน',
+        'clock': 'นาฬิกา',
+        'chair': 'เก้าอี้',
+        'couch': 'โซฟา',
+        'tv': 'หน้าจอ / ทีวี',
+        'cat': 'แมว',
+        'dog': 'สุนัข',
+        'bird': 'นก',
+        'umbrella': 'ร่ม',
+        'tie': 'เนกไท',
+        'bowl': 'ชาม',
+        'spoon': 'ช้อน',
+        'fork': 'ส้อม',
+        'banana': 'กล้วย',
+        'apple': 'แอปเปิล',
+        'orange': 'ส้ม'
+      };
+
+      // Fine-grained MobileNet keyword mapping to catch items outside COCO-80 (ปากกา, ยาดม, น้ำ, ต้นไม้, ฯลฯ)
+      const MOBILENET_RULES = [
+        { keywords: ['ballpoint', 'fountain pen', 'quill', 'pencil', 'crayon', 'paintbrush', 'letter opener', 'rule, ruler'], thai: 'ปากกา / เครื่องเขียน', minProb: 0.14 },
+        { keywords: ['pill bottle', 'lipstick', 'vial', 'perfume', 'lighter', 'whistle', 'syringe', 'saltshaker'], thai: 'ยาดม', minProb: 0.14 },
+        { keywords: ['water bottle', 'water jug', 'pop bottle', 'pitcher', 'beaker', 'coffee mug', 'espresso', 'cup', 'goblet'], thai: 'ขวดน้ำ / น้ำดื่ม', minProb: 0.18 },
+        { keywords: ['cellular telephone', 'hand-held computer', 'ipod', 'dial telephone', 'remote control'], thai: 'โทรศัพท์มือถือ', minProb: 0.20 },
+        { keywords: ['pot, flowerpot', 'vase', 'greenhouse', 'tree frog', 'daisy', 'bonsai'], thai: 'ต้นไม้', minProb: 0.18 },
+        { keywords: ['airliner', 'warplane', 'wing', 'space shuttle'], thai: 'เครื่องบิน', minProb: 0.20 },
+        { keywords: ['sports car', 'convertible', 'minivan', 'cab, hack', 'limousine', 'jeep', 'pickup', 'beach wagon', 'racer'], thai: 'รถยนต์', minProb: 0.20 },
+        { keywords: ['backpack', 'mailbag', 'purse', 'wallet', 'pencil box', 'plastic bag', 'shopping basket'], thai: 'กระเป๋า', minProb: 0.18 },
+        { keywords: ['notebook', 'binder', 'envelope', 'comic book'], thai: 'สมุด / การบ้าน', minProb: 0.20 }
+      ];
+
+      // ==========================================
+      // 3. APPLICATION STATE
+      // ==========================================
+      const state = {
+        persona: 'jarvis',
+        ttsEnabled: true,
+        hasGreeted: false,
+        awaitingActivityReply: false,
+
+        // Models
+        cocoModel: null,
+        mobilenetModel: null,
+        faceMesh: null,
+        faceBusy: false,
+        baselineBrowGap: null,
+        baselineBrowEye: null,
+        calibSamples: 0,
+        modelsReady: false,
+
+        // Camera
+        cameraActive: false,
+        facingMode: 'user', // 'user' (front) or 'environment' (back)
+        selectedDeviceId: '',
+        stream: null,
+        rafId: null,
+        lastDetectTs: 0,
+        lastMobileNetTs: 0,
+        lastFaceTs: 0,
+
+        // Live Vision Data
+        activeObjects: [], // [{ label: 'คน', score: 0.95, bbox: [x,y,w,h] }]
+        fineObject: null,  // { label: 'ปากกา / เครื่องเขียน', score: 0.42, ts: ... }
+
+        // Biometrics (0 - 100 smoothed)
+        faceDetected: false,
+        drowsyScore: 0,
+        stressScore: 0,
+        drowsySustainedSince: 0,
+        stressSustainedSince: 0,
+        lastDrowsyAlertAt: 0,
+        lastStressAlertAt: 0,
+        lastWaterCameraPraiseAt: 0,
+        lastHomeworkBookPraiseAt: 0,
+        lastProactiveCareAt: Date.now(),
+
+        // Daily Care State
+        care: {
+          waterDone: false,
+          homeworkDone: false,
+          todayActivity: ''
+        },
+
+        // Speech Recognition
+        recognition: null,
+        micActive: false,
+        isSpeaking: false,
+        resumeMicAfterSpeak: false
+      };
+
+      // ==========================================
+      // 4. DOM ELEMENTS
+      // ==========================================
+      const el = {
+        aiOrb: document.getElementById('aiOrb'),
+        personaTitle: document.getElementById('personaTitle'),
+        modelStatusDot: document.getElementById('modelStatusDot'),
+        modelStatusText: document.getElementById('modelStatusText'),
+        btnPersonaJarvis: document.getElementById('btnPersonaJarvis'),
+        btnPersonaFriday: document.getElementById('btnPersonaFriday'),
+        btnToggleTts: document.getElementById('btnToggleTts'),
+        ttsIcon: document.getElementById('ttsIcon'),
+        ttsLabel: document.getElementById('ttsLabel'),
+
+        cameraFacingBadge: document.getElementById('cameraFacingBadge'),
+        hudAlertBanner: document.getElementById('hudAlertBanner'),
+        cameraVideo: document.getElementById('cameraVideo'),
+        hudCanvas: document.getElementById('hudCanvas'),
+        cameraPlaceholder: document.getElementById('cameraPlaceholder'),
+        cameraErrorBox: document.getElementById('cameraErrorBox'),
+        btnHeroStart: document.getElementById('btnHeroStart'),
+        btnToggleCamera: document.getElementById('btnToggleCamera'),
+        btnSwitchFacing: document.getElementById('btnSwitchFacing'),
+        cameraSelect: document.getElementById('cameraSelect'),
+
+        fpsLabel: document.getElementById('fpsLabel'),
+        detectedChips: document.getElementById('detectedChips'),
+        wellnessBadge: document.getElementById('wellnessBadge'),
+        drowsyVal: document.getElementById('drowsyVal'),
+        drowsyBar: document.getElementById('drowsyBar'),
+        stressVal: document.getElementById('stressVal'),
+        stressBar: document.getElementById('stressBar'),
+
+        btnCheckInNow: document.getElementById('btnCheckInNow'),
+        waterDesc: document.getElementById('waterDesc'),
+        btnWaterToggle: document.getElementById('btnWaterToggle'),
+        homeworkDesc: document.getElementById('homeworkDesc'),
+        btnHomeworkToggle: document.getElementById('btnHomeworkToggle'),
+        activityDesc: document.getElementById('activityDesc'),
+        activityBadge: document.getElementById('activityBadge'),
+
+        chatLog: document.getElementById('chatLog'),
+        voiceLiveBar: document.getElementById('voiceLiveBar'),
+        chatForm: document.getElementById('chatForm'),
+        chatInput: document.getElementById('chatInput'),
+        btnMic: document.getElementById('btnMic'),
+        micBtnLabel: document.getElementById('micBtnLabel'),
+        cropCanvas: document.getElementById('cropCanvas')
+      };
+
+      const hudCtx = el.hudCanvas.getContext('2d');
+      const cropCtx = el.cropCanvas.getContext('2d');
+
+      // ==========================================
+      // 5. SUBTLE WEB AUDIO SOUND EFFECTS
+      // ==========================================
+      let audioCtx = null;
+      function playHudTone(type) {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          if (type === 'boot') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+            gain.gain.setValueAtTime(0.06, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.26);
+          } else if (type === 'alert') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(440, now + 0.14);
+            osc.frequency.setValueAtTime(587.33, now + 0.28);
+            gain.gain.setValueAtTime(0.09, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+            osc.start(now);
+            osc.stop(now + 0.5);
+          }
+        } catch (_) {
+          // Ignore audio context errors silently
+        }
+      }
+
+      // ==========================================
+      // 6. LOAD AI VISION MODELS (COCO-SSD + MOBILENET + MEDIAPIPE FACEMESH)
+      // ==========================================
+      async function initVisionModels() {
+        try {
+          el.modelStatusText.textContent = 'กำลังโหลดระบบตรวจจับวัตถุ...';
+          const [coco, mobilenetModel] = await Promise.all([
+            window.cocoSsd ? window.cocoSsd.load({ base: 'lite_mobilenet_v2' }) : Promise.resolve(null),
+            window.mobilenet ? window.mobilenet.load({ version: 2, alpha: 0.5 }) : Promise.resolve(null)
+          ]);
+          state.cocoModel = coco;
+          state.mobilenetModel = mobilenetModel;
+
+          el.modelStatusText.textContent = 'กำลังโหลดระบบวิเคราะห์สีหน้า...';
+          try {
+            if (window.FaceMesh) {
+              const fm = new window.FaceMesh({
+                locateFile: (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/' + file
+              });
+              fm.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+              });
+              fm.onResults((results) => {
+                evaluateFaceLandmarks(results, Date.now());
+              });
+              state.faceMesh = fm;
+            }
+          } catch (faceErr) {
+            console.warn('FaceMesh fallback notice:', faceErr);
+          }
+
+          state.modelsReady = Boolean(state.cocoModel);
+          el.modelStatusDot.classList.add('ready');
+          el.modelStatusText.textContent = state.faceMesh
+            ? 'AI พร้อมทำงาน (วัตถุ + ใบหน้า)'
+            : 'AI พร้อมทำงาน (ตรวจจับวัตถุ)';
+        } catch (err) {
+          console.error('Model load error:', err);
+          el.modelStatusText.textContent = 'โหมดสนทนาพร้อมใช้งาน (โหลดโมเดลภาพไม่สำเร็จ)';
+        }
+      }
+
+      // ==========================================
+      // 7. SPEECH SYNTHESIS (THAI NATURAL VOICE)
+      // ==========================================
+      let availableVoices = [];
+      function refreshVoices() {
+        if (!('speechSynthesis' in window)) return;
+        availableVoices = window.speechSynthesis.getVoices() || [];
+      }
+      if ('speechSynthesis' in window) {
+        refreshVoices();
+        window.speechSynthesis.onvoiceschanged = refreshVoices;
+      }
+
+      function speakThai(text) {
+        if (!state.ttsEnabled || !('speechSynthesis' in window) || !text) return;
+
+        try {
+          window.speechSynthesis.cancel();
+          const p = PERSONAS[state.persona];
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'th-TH';
+          utter.pitch = p.pitch;
+          utter.rate = p.rate;
+
+          const thaiVoices = availableVoices.filter(v => v.lang && v.lang.toLowerCase().includes('th'));
+          if (thaiVoices.length > 0) {
+            if (p.preferFemale) {
+              const fem = thaiVoices.find(v => /premwadee|kanya|female|narisa/i.test(v.name));
+              utter.voice = fem || thaiVoices[0];
+            } else {
+              const male = thaiVoices.find(v => /niwat|male|pattara/i.test(v.name));
+              utter.voice = male || thaiVoices[0];
+            }
+          }
+
+          utter.onstart = () => {
+            state.isSpeaking = true;
+            el.aiOrb.classList.add('speaking');
+            if (state.micActive && state.recognition) {
+              state.resumeMicAfterSpeak = true;
+              try { state.recognition.stop(); } catch (_) {}
+            }
+          };
+
+          const finishSpeak = () => {
+            state.isSpeaking = false;
+            el.aiOrb.classList.remove('speaking');
+            if (state.resumeMicAfterSpeak && state.micActive && state.recognition) {
+              state.resumeMicAfterSpeak = false;
+              setTimeout(() => {
+                if (state.micActive && !state.isSpeaking) {
+                  try { state.recognition.start(); } catch (_) {}
+                }
+              }, 320);
+            }
+          };
+
+          utter.onend = finishSpeak;
+          utter.onerror = finishSpeak;
+
+          window.speechSynthesis.speak(utter);
+        } catch (e) {
+          console.warn('TTS error:', e);
+        }
+      }
+
+      // ==========================================
+      // 8. SPEECH RECOGNITION (THAI VOICE CONVERSATION)
+      // ==========================================
+      function initSpeechRecognition() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+          el.btnMic.disabled = true;
+          el.micBtnLabel.textContent = 'ไม่รองรับไมค์';
+          return;
+        }
+
+        const rec = new SR();
+        rec.lang = 'th-TH';
+        rec.continuous = true;
+        rec.interimResults = true;
+
+        rec.onstart = () => {
+          el.aiOrb.classList.add('listening');
+          el.voiceLiveBar.textContent = 'กำลังฟังเสียงของคุณ... พูดคุยได้เลย';
+        };
+
+        rec.onresult = (event) => {
+          let interim = '';
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interim += transcript;
+            }
+          }
+          if (interim) {
+            el.voiceLiveBar.textContent = 'กำลังได้ยิน: "' + interim.trim() + '"';
+          }
+          if (finalTranscript.trim()) {
+            el.voiceLiveBar.textContent = '';
+            handleUserMessage(finalTranscript.trim());
+          }
+        };
+
+        rec.onerror = (ev) => {
+          if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+            state.micActive = false;
+            updateMicUi();
+            el.voiceLiveBar.textContent = 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน (สามารถพิมพ์แชทแทนได้)';
+          }
+        };
+
+        rec.onend = () => {
+          el.aiOrb.classList.remove('listening');
+          if (state.micActive && !state.isSpeaking) {
+            setTimeout(() => {
+              if (state.micActive && !state.isSpeaking) {
+                try { rec.start(); } catch (_) {}
+              }
+            }, 300);
+          } else if (!state.micActive) {
+            el.voiceLiveBar.textContent = '';
+          }
+        };
+
+        state.recognition = rec;
+      }
+
+      function toggleMic() {
+        if (!state.recognition) return;
+        state.micActive = !state.micActive;
+        updateMicUi();
+
+        if (state.micActive) {
+          ensureInitialGreeting();
+          try {
+            state.recognition.start();
+          } catch (_) {}
+        } else {
+          state.resumeMicAfterSpeak = false;
+          try {
+            state.recognition.stop();
+          } catch (_) {}
+          el.voiceLiveBar.textContent = '';
+        }
+      }
+
+      function updateMicUi() {
+        if (state.micActive) {
+          el.btnMic.classList.add('active');
+          el.micBtnLabel.textContent = 'กำลังฟัง...';
+        } else {
+          el.btnMic.classList.remove('active');
+          el.micBtnLabel.textContent = 'พูดคุย';
+        }
+      }
+
+      // ==========================================
+      // 9. CHAT UI & HUMAN-LIKE THAI CONVERSATIONAL AI
+      // ==========================================
+      function appendMessage(role, text, isAlert) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + role + (isAlert ? ' alert-msg' : '');
+
+        const sender = document.createElement('span');
+        sender.className = 'msg-sender';
+        sender.textContent = role === 'ai' ? PERSONAS[state.persona].name : 'คุณ (USER)';
+
+        const body = document.createElement('div');
+        body.textContent = text;
+
+        div.appendChild(sender);
+        div.appendChild(body);
+        el.chatLog.appendChild(div);
+        el.chatLog.scrollTop = el.chatLog.scrollHeight;
+      }
+
+      function aiSay(text, isAlert) {
+        appendMessage('ai', text, Boolean(isAlert));
+        speakThai(text);
+      }
+
+      function getTimeGreetingThai() {
+        const hr = new Date().getHours();
+        if (hr >= 5 && hr < 12) return 'สวัสดีตอนเช้า';
+        if (hr >= 12 && hr < 16) return 'สวัสดีตอนบ่าย';
+        if (hr >= 16 && hr < 20) return 'สวัสดีตอนเย็น';
+        return 'สวัสดีตอนค่ำ';
+      }
+
+      function ensureInitialGreeting() {
+        if (state.hasGreeted) return;
+        state.hasGreeted = true;
+        state.awaitingActivityReply = true;
+        playHudTone('boot');
+
+        const p = PERSONAS[state.persona];
+        const greet = `${getTimeGreetingThai()}${p.polite}${p.userTitle} ระบบ${p.thaiName}ออนไลน์พร้อมดูแลแล้ว${p.polite} วันนี้ไปทำอะไรมาบ้าง เล่าให้${p.selfPronoun}ฟังหน่อยสิ${p.polite} แล้วดื่มน้ำหรือยัง อย่าลืมเช็กการบ้านของวันนี้ด้วยนะ${p.polite}`;
+        aiSay(greet, false);
+      }
+
+      function updateCareUi() {
+        if (state.care.waterDone) {
+          el.btnWaterToggle.textContent = 'ดื่มน้ำแล้ว ✓';
+          el.btnWaterToggle.classList.add('done');
+          el.waterDesc.textContent = 'เยี่ยมมาก! ร่างกายได้รับน้ำเรียบร้อยแล้ว';
+        } else {
+          el.btnWaterToggle.textContent = 'ยังไม่ได้ดื่ม';
+          el.btnWaterToggle.classList.remove('done');
+          el.waterDesc.textContent = 'ยังไม่ได้ยืนยัน — อย่าลืมจิบน้ำให้สดชื่น';
+        }
+
+        if (state.care.homeworkDone) {
+          el.btnHomeworkToggle.textContent = 'ทำเสร็จแล้ว ✓';
+          el.btnHomeworkToggle.classList.add('done');
+          el.homeworkDesc.textContent = 'รับทราบ! การบ้านวันนี้เคลียร์เรียบร้อย';
+        } else {
+          el.btnHomeworkToggle.textContent = 'ยังไม่เสร็จ';
+          el.btnHomeworkToggle.classList.remove('done');
+          el.homeworkDesc.textContent = 'ยังมีคิวการบ้านที่ต้องเคลียร์ อย่าลืมทำนะ';
+        }
+
+        if (state.care.todayActivity) {
+          el.activityDesc.textContent = state.care.todayActivity;
+          el.activityBadge.textContent = 'บันทึกแล้ว';
+          el.activityBadge.className = 'wellness-state-badge ok';
+        } else {
+          el.activityDesc.textContent = 'เล่าให้ผู้ช่วยฟังผ่านไมค์หรือพิมพ์บอกด้านล่างได้เลย';
+          el.activityBadge.textContent = 'รอพูดคุย';
+          el.activityBadge.className = 'wellness-state-badge';
+        }
+      }
+
+      function getVisibleObjectNames() {
+        const names = state.activeObjects.map(o => o.label);
+        if (state.fineObject && (Date.now() - state.fineObject.ts < 3200)) {
+          if (!names.includes(state.fineObject.label)) {
+            names.push(state.fineObject.label);
+          }
+        }
+        return Array.from(new Set(names));
+      }
+
+      function pick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function generateNaturalResponse(userText) {
+        const p = PERSONAS[state.persona];
+        const t = userText.trim();
+        const low = t.toLowerCase();
+
+        // Persona switch via voice/text
+        if (/เปลี่ยนเป็นฟรายเดย์|เรียกฟรายเดย์|friday/.test(low) && state.persona !== 'friday') {
+          setPersona('friday', false);
+          const pf = PERSONAS.friday;
+          return `สลับมาระบบ${pf.thaiName}เรียบร้อยแล้ว${pf.polite}${pf.userTitle} มีอะไรให้ช่วยดูแลต่อบอกได้เลยนะ${pf.polite}`;
+        }
+        if (/เปลี่ยนเป็นจาร์วิส|เปลี่ยนเป็นจาวิส|เรียกจาร์วิส|jarvis/.test(low) && state.persona !== 'jarvis') {
+          setPersona('jarvis', false);
+          const pj = PERSONAS.jarvis;
+          return `ระบบ${pj.thaiName}กลับมารับหน้าที่แล้ว${pj.polite}${pj.userTitle} พร้อมสแตนด์บายทุกคำสั่ง${pj.polite}`;
+        }
+
+        // Camera control via voice/text
+        if (/เปิดกล้อง/.test(t) && !state.cameraActive) {
+          startCamera();
+          return `กำลังเปิดระบบกล้องสแกนภาพให้เดี๋ยวนี้เลย${p.polite}${p.userTitle}`;
+        }
+        if (/ปิดกล้อง/.test(t) && state.cameraActive) {
+          stopCamera();
+          return `ปิดกล้องให้เรียบร้อยแล้ว${p.polite} ถ้าต้องการให้ช่วยดูอะไรอีกบอก${p.selfPronoun}ได้ตลอดเลยนะ${p.polite}`;
+        }
+        if (/สลับกล้อง|กล้องหลัง|กล้องหน้า/.test(t) && state.cameraActive) {
+          switchCameraFacing();
+          return `กำลังสลับมุมกล้องให้ตามคำสั่ง${p.polite}${p.userTitle}`;
+        }
+
+        // Asking what is in the camera right now
+        if (/เห็นอะไร|ในกล้อง|ถืออะไร|นี่คืออะไร|มองเห็นอะไร|มีอะไรอยู่/.test(t)) {
+          if (!state.cameraActive) {
+            return `ตอนนี้กล้องยังปิดอยู่เลย${p.polite}${p.userTitle} ลองกดปุ่มเปิดกล้องด้านซ้ายดูสิ${p.polite} เดี๋ยว${p.selfPronoun}สแกนให้ทันทีว่ามีอะไรอยู่บ้าง`;
+          }
+          const items = getVisibleObjectNames();
+          if (items.length === 0) {
+            return `ตอนนี้กล้องเปิดอยู่ แต่${p.selfPronoun}ยังไม่เห็นวัตถุที่ชัดเจนในระยะโฟกัสเลย${p.polite} ลองขยับสิ่งของเข้ามาใกล้กลางภาพอีกนิดนะ${p.polite}`;
+          }
+          return `จากภาพในกล้องตอนนี้ ${p.selfPronoun}ตรวจพบ ${items.join(', ')} ${p.polite}${p.userTitle}` +
+            (items.some(x => x.includes('ขวดน้ำ') || x.includes('น้ำ')) ? ` เห็นมีน้ำอยู่ใกล้ๆ ด้วย อย่าลืมจิบน้ำด้วยนะ${p.polite}` : '');
+        }
+
+        // Asking about user's face / stress / sleepiness
+        if (/หน้าฉัน|ดูเหนื่อยไหม|ดูเครียดไหม|ดูง่วงไหม|อาการฉัน|สภาพฉัน/.test(t)) {
+          if (!state.cameraActive || !state.faceDetected) {
+            return `ตอนนี้${p.selfPronoun}ยังไม่เห็นใบหน้าของ${p.userTitle}ในกล้องหน้าเลย${p.polite} ถ้าเปิดกล้องหน้าหันมาทางนี้ เดี๋ยว${p.selfPronoun}ช่วยเช็กความล้าและความเครียดให้${p.polite}`;
+          }
+          if (state.drowsyScore >= 58) {
+            return `พูดตรงๆ เลยนะ${p.polite}${p.userTitle} ตอนนี้ตาดูปรือเหมือนง่วงมากเลย (ความง่วงประมาณ ${Math.round(state.drowsyScore)}%) ลุกไปล้างหน้าหรือพักสายตาสัก 5 นาทีดีไหม${p.polite}`;
+          }
+          if (state.stressScore >= 58) {
+            return `สีหน้าของ${p.userTitle}ดูตึงเครียดพอสมควรเลยนะ${p.polite} (ความตึงเครียด ${Math.round(state.stressScore)}%) ผ่อนคลายหัวไหล่ สูดหายใจลึกๆ ก่อนนะ${p.polite}`;
+          }
+          return `เท่าที่สแกนจากใบหน้าตอนนี้ ${p.userTitle}ดูสดใสและปกติดีมากเลย${p.polite} พร้อมลุยงานต่อได้สบายๆ ${p.polite}`;
+        }
+
+        // Water / Hydration check
+        if (/กินน้ำแล้ว|ดื่มน้ำแล้ว|จิบน้ำแล้ว|กินแล้วน้ำ|ดื่มเรียบร้อย/.test(t)) {
+          state.care.waterDone = true;
+          updateCareUi();
+          const hwTail = !state.care.homeworkDone ? ` แล้วเรื่องการบ้านวันนี้ล่ะ${p.polite} ทำหรือยังเอ่ย?` : '';
+          return `เยี่ยมมากเลย${p.polite}${p.userTitle}! ดื่มน้ำให้เพียงพอสมองจะได้แล่นๆ ${p.selfPronoun}บันทึกให้แล้วนะ${p.polite}${hwTail}`;
+        }
+        if (/ยังไม่ได้กินน้ำ|ยังไม่ได้ดื่มน้ำ|ลืมกินน้ำ|หิวน้ำ/.test(t)) {
+          state.care.waterDone = false;
+          updateCareUi();
+          return `งั้นแวะหาน้ำดื่มสักแก้วตอนนี้เลยดีไหม${p.polite}${p.userTitle} พักจิบน้ำสักอึกจะได้สดชื่นขึ้นเยอะเลย${p.polite}`;
+        }
+
+        // Homework check
+        if (/ทำการบ้านเสร็จแล้ว|การบ้านเสร็จแล้ว|ทำเสร็จแล้ว|ไม่มีการบ้าน|เคลียร์การบ้านแล้ว/.test(t)) {
+          state.care.homeworkDone = true;
+          updateCareUi();
+          const waterTail = !state.care.waterDone ? ` แต่อย่าลืมดื่มน้ำด้วยนะ${p.polite} ${p.selfPronoun}ยังเห็นว่าวันนี้ยังไม่ได้ดื่มน้ำเลย` : '';
+          return `สุดยอดไปเลย${p.polite}${p.userTitle}! มีวินัยมากๆ แบบนี้ก็พักผ่อนได้สบายใจแล้ว${p.polite}${waterTail}`;
+        }
+        if (/ยังไม่ได้ทำการบ้าน|ลืมทำการบ้าน|การบ้านเยอะ|ขี้เกียจทำการบ้าน|ยังทำไม่เสร็จ/.test(t)) {
+          state.care.homeworkDone = false;
+          updateCareUi();
+          return `ไม่เป็นไร${p.polite}${p.userTitle} ค่อยๆ เริ่มจากข้อง่ายหรือวิชาที่ใช้เวลาน้อยสัก 15 นาทีก่อนก็ได้นะ${p.polite} เดี๋ยว${p.selfPronoun}อยู่เป็นเพื่อนตรงนี้เอง สู้ๆ ${p.polite}!`;
+        }
+
+        // Expressing stress, tiredness, or sleepiness directly in chat
+        if (/เครียด|ปวดหัว|กดดัน|ท้อ|ไม่ไหวแล้ว/.test(t)) {
+          if (!state.care.todayActivity && t.length > 10) {
+            state.care.todayActivity = t;
+            updateCareUi();
+          }
+          return `ฟังดูหนักเอาเรื่องเลยนะ${p.polite}${p.userTitle} วางมือจากหน้าจอแป๊บหนึ่ง หายใจเข้าลึกๆ ช้าๆ นะ${p.polite} ไม่ต้องกดดันตัวเองเกินไป ค่อยๆ แก้ทีละเปาะ มีอะไรระบายให้${p.selfPronoun}ฟังได้เสมอเลย${p.polite}`;
+        }
+        if (/ง่วง|เพลีย|เหนื่อย|หาว|อยากนอน/.test(t)) {
+          if (!state.care.todayActivity && t.length > 10) {
+            state.care.todayActivity = t;
+            updateCareUi();
+          }
+          return `วันนี้คงใช้พลังงานไปเยอะเลยใช่ไหม${p.polite}${p.userTitle} ถ้าง่วงมากลองลุกยืดเส้นยืดสาย จิบน้ำเย็นๆ หรือพักงีบสั้นๆ สัก 15 นาทีให้สมองรีเซ็ตก่อนนะ${p.polite}`;
+        }
+
+        // Telling what they did today ("วันนี้...") or replying right after initial greeting
+        if (/วันนี้|ไปเรียน|ไปทำ|เพิ่งกลับ|นั่งทำ|ซ้อม|อ่านหนังสือ|เล่นเกม|ทำงาน/.test(t) || (state.awaitingActivityReply && t.length > 6 && !/\?|ไหม|อะไร|กี่โมง/.test(t))) {
+          state.awaitingActivityReply = false;
+          state.care.todayActivity = t;
+          updateCareUi();
+          const reminders = [];
+          if (!state.care.waterDone) reminders.push('ดื่มน้ำสักแก้ว');
+          if (!state.care.homeworkDone) reminders.push('เช็กการบ้านของวันนี้');
+          const reminderText = reminders.length > 0
+            ? ` ยังไงอย่าลืม${reminders.join(' และ ')}ด้วยนะ${p.polite}`
+            : ` วันนี้ดูแลตัวเองและเคลียร์งานได้ดีมากเลย${p.polite}`;
+          return `รับทราบเลย${p.polite}${p.userTitle} ขอบคุณที่เล่าให้${p.selfPronoun}ฟังนะ${p.polite} เก่งมากเลยสำหรับวันนี้!${reminderText}`;
+        }
+
+        // Time & Date questions
+        if (/กี่โมง|เวลาเท่าไหร่/.test(t)) {
+          const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+          return `ตอนนี้เวลา ${nowStr} น. แล้ว${p.polite}${p.userTitle}`;
+        }
+        if (/วันที่เท่าไหร่|วันนี้วันอะไร/.test(t)) {
+          const dateStr = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          return `วันนี้คือ${dateStr}${p.polite}${p.userTitle}`;
+        }
+
+        // Simple math calculations
+        const mathMatch = t.replace(/คูณ/g, '*').replace(/หารด้วย|หาร/g, '/').replace(/บวก/g, '+').replace(/ลบ/g, '-')
+          .match(/(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)/);
+        if (mathMatch) {
+          const a = parseFloat(mathMatch[1]);
+          const op = mathMatch[2];
+          const b = parseFloat(mathMatch[3]);
+          let ans = null;
+          if (op === '+') ans = a + b;
+          if (op === '-') ans = a - b;
+          if (op === '*') ans = a * b;
+          if (op === '/' && b !== 0) ans = +(a / b).toFixed(4);
+          if (ans !== null) {
+            return `คำนวณให้เรียบร้อยแล้ว${p.polite} คำตอบคือ ${ans} ${p.polite}${p.userTitle}`;
+          }
+        }
+
+        // Who are you / capabilities
+        if (/คุณคือใคร|เธอคือใคร|ชื่ออะไร|ทำอะไรได้บ้าง/.test(t)) {
+          return `${p.selfPronoun}คือ ${p.name} (${p.thaiName}) ผู้ช่วย AI ประจำตัวของ${p.userTitle}${p.polite} สามารถมองผ่านกล้องหน้าและกล้องหลังเพื่อระบุสิ่งของรอบตัว คอยสังเกตว่า${p.userTitle}ดูเครียดหรือง่วงผิดปกติหรือเปล่า และช่วยเตือนเรื่องการบ้านกับการดื่มน้ำ พูดคุยกันได้เหมือนเพื่อนคู่คิดเลย${p.polite}`;
+        }
+
+        // Greetings
+        if (/^(สวัสดี|หวัดดี|ฮัลโหล|ดีจ้า|ทักทาย|hello|hi)/i.test(t)) {
+          state.awaitingActivityReply = !state.care.todayActivity;
+          return `${getTimeGreetingThai()}${p.polite}${p.userTitle}! ดีใจที่ได้คุยกันนะ${p.polite} ` +
+            (!state.care.todayActivity ? `วันนี้ไปทำอะไรมาบ้าง เล่าให้${p.selfPronoun}ฟังได้นะ${p.polite} ` : '') +
+            (!state.care.waterDone ? `แล้วดื่มน้ำหรือยังเอ่ย?` : `มีอะไรให้${p.selfPronoun}ช่วยดูผ่านกล้องหรือชวนคุยบอกได้เลย${p.polite}`);
+        }
+
+        // Thanks
+        if (/ขอบคุณ|ขอบใจ|แต้งกิ้ว/.test(t)) {
+          return pick([
+            `ยินดีเสมอเลย${p.polite}${p.userTitle} หน้าที่ของ${p.selfPronoun}คือคอยดูแล${p.userTitle}อยู่แล้ว${p.polite}`,
+            `ด้วยความยินดี${p.polite}${p.userTitle} มีอะไรเรียก${p.thaiName}ได้ตลอดเวลาเลยนะ${p.polite}`
+          ]);
+        }
+
+        // Context-aware conversational fallback
+        const contextualExtras = [];
+        const visible = getVisibleObjectNames();
+        if (visible.length > 0) {
+          contextualExtras.push(`ตอนนี้ในกล้อง${p.selfPronoun}ยังมองเห็น ${visible.slice(0, 3).join(', ')} อยู่ด้วยนะ${p.polite}`);
+        } else if (!state.care.waterDone) {
+          contextualExtras.push(`คุยเพลินๆ อย่าลืมจิบน้ำด้วยนะ${p.polite}`);
+        } else if (!state.care.homeworkDone) {
+          contextualExtras.push(`อ้อ แล้วอย่าลืมแวะเช็กการบ้านของวันนี้ด้วยนะ${p.polite}`);
+        }
+
+        const baseReplies = [
+          `เข้าใจเลย${p.polite}${p.userTitle} เล่าต่อได้เลยนะ${p.polite} ${p.selfPronoun}ฟังอยู่ตลอด`,
+          `น่าสนใจมากเลย${p.polite}${p.userTitle} แล้วรู้สึกยังไงกับเรื่องนี้บ้าง${p.polite}?`,
+          `รับทราบ${p.polite}${p.userTitle} มีจุดไหนอยากให้${p.selfPronoun}ช่วยวิเคราะห์หรือช่วยเตือนเพิ่มไหม${p.polite}?`
+        ];
+        const chosen = pick(baseReplies);
+        return contextualExtras.length > 0 ? `${chosen} (${contextualExtras[0]})` : chosen;
+      }
+
+      function handleUserMessage(text) {
+        if (!text) return;
+        state.hasGreeted = true;
+        appendMessage('user', text, false);
+        const reply = generateNaturalResponse(text);
+        setTimeout(() => {
+          aiSay(reply, false);
+        }, 220);
+      }
+
+      function runProactiveCheckIn() {
+        ensureInitialGreeting();
+        const p = PERSONAS[state.persona];
+        const missing = [];
+        if (!state.care.waterDone) missing.push('ยังไม่ได้ดื่มน้ำ');
+        if (!state.care.homeworkDone) missing.push('การบ้านวันนี้ยังไม่เสร็จ');
+        if (!state.care.todayActivity) missing.push('ยังไม่ได้เล่าเลยว่าวันนี้ไปทำอะไรมา');
+
+        if (missing.length === 0) {
+          aiSay(`เช็กสถานะประจำวันแล้ว ยอดเยี่ยมมาก${p.polite}${p.userTitle}! วันนี้ทั้งดื่มน้ำ ทำการบ้าน และอัปเดตกิจกรรมครบถ้วนเลย พักผ่อนได้เต็มที่นะ${p.polite}`, false);
+        } else {
+          aiSay(`ขออนุญาตเช็กอินนะ${p.polite}${p.userTitle} ตอนนี้พบว่า ${missing.join(' แถม')} ${p.polite} ดูแลตัวเองด้วยนะ${p.polite} ลืมทำการบ้านหรือเปล่าเอ่ย?`, false);
+        }
+      }
+
+      // ==========================================
+      // 10. CAMERA MANAGEMENT (FRONT & REAR SUPPORT)
+      // ==========================================
+      async function populateCameraDevices() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(d => d.kind === 'videoinput');
+          if (videoInputs.length > 1) {
+            el.cameraSelect.innerHTML = '';
+            videoInputs.forEach((dev, idx) => {
+              const opt = document.createElement('option');
+              opt.value = dev.deviceId;
+              opt.textContent = dev.label || `กล้องตัวที่ ${idx + 1}`;
+              if (dev.deviceId === state.selectedDeviceId) opt.selected = true;
+              el.cameraSelect.appendChild(opt);
+            });
+            el.cameraSelect.style.display = 'inline-block';
+          } else {
+            el.cameraSelect.style.display = 'none';
+          }
+        } catch (_) {}
+      }
+
+      async function startCamera(useSpecificDeviceId) {
+        el.cameraErrorBox.style.display = 'none';
+        ensureInitialGreeting();
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showCameraError('เบราว์เซอร์หรือสภาพแวดล้อมนี้ไม่รองรับการเปิดใช้งานกล้อง (หากเปิดในโหมดพรีวิว แนะนำให้กด Download ไฟล์ index.html ไปรันบนเบราว์เซอร์หรืออัปขึ้น GitHub Pages เพื่อใช้งานกล้องและไมค์เต็มรูปแบบ)');
+          return;
+        }
+
+        stopStreamTracks();
+
+        const videoConstraints = useSpecificDeviceId
+          ? { deviceId: { exact: useSpecificDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { facingMode: { ideal: state.facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } };
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: videoConstraints,
+            audio: false
+          });
+
+          state.stream = stream;
+          el.cameraVideo.srcObject = stream;
+          await el.cameraVideo.play();
+
+          // Determine if mirrored (front camera)
+          const track = stream.getVideoTracks()[0];
+          const settings = track && track.getSettings ? track.getSettings() : {};
+          if (settings.deviceId) state.selectedDeviceId = settings.deviceId;
+          const isRear = settings.facingMode === 'environment' || (!useSpecificDeviceId && state.facingMode === 'environment');
+          el.cameraVideo.classList.toggle('mirrored', !isRear);
+
+          state.cameraActive = true;
+          el.cameraPlaceholder.classList.add('hidden');
+          el.btnToggleCamera.textContent = 'ปิดกล้อง';
+          el.btnToggleCamera.classList.add('btn-danger');
+          el.btnToggleCamera.classList.remove('btn-primary');
+          el.btnSwitchFacing.disabled = false;
+          el.cameraFacingBadge.textContent = isRear ? 'กล้องหลัง (Environment)' : 'กล้องหน้า (User)';
+          el.cameraFacingBadge.className = 'wellness-state-badge ok';
+
+          await populateCameraDevices();
+
+          if (state.rafId) cancelAnimationFrame(state.rafId);
+          state.rafId = requestAnimationFrame(visionLoop);
+        } catch (err) {
+          console.error('Camera access error:', err);
+          showCameraError('ไม่สามารถเข้าถึงกล้องได้ (' + (err.name || 'Permission Denied') + ') — กรุณาอนุญาตสิทธิ์การใช้กล้อง หรือหากเปิดอยู่ในกรอบพรีวิวจำกัดสิทธิ์ สามารถดาวน์โหลดไฟล์ .html ไปเปิดในเบราว์เซอร์หรือโฮสต์บน GitHub Pages เพื่อใช้กล้องหน้า/หลังได้ทันที');
+        }
+      }
+
+      function stopStreamTracks() {
+        if (state.stream) {
+          state.stream.getTracks().forEach(t => t.stop());
+          state.stream = null;
+        }
+      }
+
+      function stopCamera() {
+        if (state.rafId) {
+          cancelAnimationFrame(state.rafId);
+          state.rafId = null;
+        }
+        stopStreamTracks();
+        el.cameraVideo.srcObject = null;
+        state.cameraActive = false;
+        state.activeObjects = [];
+        state.fineObject = null;
+        state.faceDetected = false;
+        state.drowsyScore = 0;
+        state.stressScore = 0;
+
+        hudCtx.clearRect(0, 0, el.hudCanvas.width, el.hudCanvas.height);
+        el.cameraPlaceholder.classList.remove('hidden');
+        el.hudAlertBanner.className = 'hud-alert-banner';
+        el.hudAlertBanner.textContent = '';
+
+        el.btnToggleCamera.textContent = 'เปิดกล้อง';
+        el.btnToggleCamera.classList.remove('btn-danger');
+        el.btnToggleCamera.classList.add('btn-primary');
+        el.btnSwitchFacing.disabled = true;
+        el.cameraFacingBadge.textContent = 'กล้อง: ปิดอยู่';
+        el.cameraFacingBadge.className = 'wellness-state-badge';
+        el.fpsLabel.textContent = 'STANDBY';
+        renderDetectedObjects();
+        renderBiometricsUi('รอตรวจจับใบหน้า', '');
+      }
+
+      function switchCameraFacing() {
+        state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
+        state.selectedDeviceId = '';
+        if (state.cameraActive) {
+          startCamera();
+        }
+      }
+
+      function showCameraError(msg) {
+        el.cameraErrorBox.textContent = msg;
+        el.cameraErrorBox.style.display = 'block';
+      }
+
+      // ==========================================
+      // 11. REAL-TIME VISION & BIOMETRIC ANALYSIS LOOP
+      // ==========================================
+      function mapMobileNetPredictions(preds) {
+        if (!Array.isArray(preds)) return null;
+        for (const item of preds) {
+          const cls = (item.className || '').toLowerCase();
+          const prob = item.probability || 0;
+          for (const rule of MOBILENET_RULES) {
+            if (prob >= rule.minProb && rule.keywords.some(k => cls.includes(k))) {
+              return { label: rule.thai, score: prob, ts: Date.now() };
+            }
+          }
+        }
+        return null;
+      }
+
+      function ptDist(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function evaluateFaceLandmarks(results, now) {
+        if (!results || !results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+          state.faceDetected = false;
+          state.drowsyScore = state.drowsyScore * 0.85;
+          state.stressScore = state.stressScore * 0.85;
+          state.drowsySustainedSince = 0;
+          state.stressSustainedSince = 0;
+          el.hudAlertBanner.className = 'hud-alert-banner';
+          renderBiometricsUi('ไม่พบใบหน้าในมุมกล้อง', '');
+          return;
+        }
+
+        state.faceDetected = true;
+        const lm = results.multiFaceLandmarks[0];
+
+        // 1) Drowsiness calculation via Eye Aspect Ratio (EAR) + Yawning (MAR) + Head Pitch Droop
+        const leftEAR = (ptDist(lm[159], lm[145]) + ptDist(lm[158], lm[153])) / (2 * Math.max(0.001, ptDist(lm[33], lm[133])));
+        const rightEAR = (ptDist(lm[386], lm[374]) + ptDist(lm[385], lm[380])) / (2 * Math.max(0.001, ptDist(lm[362], lm[263])));
+        const avgEAR = (leftEAR + rightEAR) / 2;
+
+        // Mouth Aspect Ratio for yawning
+        const mar = ptDist(lm[13], lm[14]) / Math.max(0.001, ptDist(lm[78], lm[308]));
+
+        // Head pitch droop (nose tip #1 vs eye line & chin #152)
+        const eyeMidY = (lm[33].y + lm[263].y) / 2;
+        const faceH = Math.max(0.06, lm[152].y - eyeMidY);
+        const noseRatio = (lm[1].y - eyeMidY) / faceH;
+        const headDroopBonus = noseRatio > 0.47 ? 22 : 0;
+
+        let rawDrowsy = 0;
+        // Normal open EAR ~ 0.27 - 0.34; sleepy/droopy < 0.22; closed < 0.16
+        if (avgEAR < 0.235) {
+          rawDrowsy += Math.min(85, ((0.24 - avgEAR) / 0.10) * 85);
+        }
+        if (mar > 0.48) {
+          rawDrowsy += 48; // Yawning wide
+        }
+        rawDrowsy = Math.min(100, Math.max(0, rawDrowsy + headDroopBonus));
+
+        const drowsyAlpha = rawDrowsy > state.drowsyScore ? 0.28 : 0.14;
+        state.drowsyScore = state.drowsyScore * (1 - drowsyAlpha) + rawDrowsy * drowsyAlpha;
+
+        // 2) Facial Stress / Tension calculation via Brow Furrow + Brow Lowering + Lip Compression / Frown
+        const interOcular = Math.max(0.04, ptDist(lm[33], lm[263]));
+        const browGapRatio = ptDist(lm[107], lm[336]) / interOcular;
+        const browToEyeRatio = ((lm[159].y - lm[105].y) + (lm[386].y - lm[334].y)) / (2 * faceH);
+
+        // Adaptive neutral baseline calibration during calm initial frames
+        if (state.calibSamples < 20 && avgEAR >= 0.22 && mar < 0.25) {
+          state.calibSamples += 1;
+          state.baselineBrowGap = state.baselineBrowGap === null
+            ? browGapRatio
+            : (state.baselineBrowGap * 0.85 + browGapRatio * 0.15);
+          state.baselineBrowEye = state.baselineBrowEye === null
+            ? browToEyeRatio
+            : (state.baselineBrowEye * 0.85 + browToEyeRatio * 0.15);
+        }
+
+        const refBrowGap = state.baselineBrowGap || 0.26;
+        const refBrowEye = state.baselineBrowEye || 0.17;
+
+        const browPinch = Math.max(0, (refBrowGap - browGapRatio) / Math.max(0.05, refBrowGap));
+        const browLower = Math.max(0, (refBrowEye - browToEyeRatio) / Math.max(0.04, refBrowEye));
+
+        // Mouth corner downturn / tight lip press vs smile
+        const mouthCenterY = (lm[13].y + lm[14].y) / 2;
+        const mouthCornerY = (lm[61].y + lm[291].y) / 2;
+        const frownRatio = (mouthCornerY - mouthCenterY) / faceH; // positive when corners droop down
+        const smileRelief = frownRatio < -0.02 ? Math.min(40, Math.abs(frownRatio) * 650) : 0;
+        const frownTension = frownRatio > 0.012 ? Math.min(42, frownRatio * 900) : 0;
+        const lipTight = mar < 0.03 ? 16 : 0;
+
+        let rawStress = (browPinch * 175) + (browLower * 165) + frownTension + lipTight - smileRelief;
+        rawStress = Math.min(100, Math.max(0, rawStress));
+
+        const stressAlpha = rawStress > state.stressScore ? 0.25 : 0.14;
+        state.stressScore = state.stressScore * (1 - stressAlpha) + rawStress * stressAlpha;
+
+        // Check sustained abnormal states & trigger spoken wake-up / calming alert
+        const p = PERSONAS[state.persona];
+
+        if (state.drowsyScore >= 58) {
+          if (!state.drowsySustainedSince) state.drowsySustainedSince = now;
+          const elapsed = now - state.drowsySustainedSince;
+          el.hudAlertBanner.className = 'hud-alert-banner warn';
+          el.hudAlertBanner.textContent = '⚠️ ตรวจพบอาการง่วงหรือตาปรือผิดปกติ — พักล้างหน้าหรือยืดเส้นยืดสายก่อนนะ!';
+          renderBiometricsUi('ดูง่วงผิดปกติ!', 'warn');
+
+          if (elapsed > 2100 && (now - state.lastDrowsyAlertAt > 24000)) {
+            state.lastDrowsyAlertAt = now;
+            playHudTone('alert');
+            aiSay(`${p.userTitle}${p.polite}! ตั้งสติก่อนนะ${p.polite} ${p.selfPronoun}สังเกตว่าตาเริ่มปรือและดูง่วงผิดปกติแล้ว ลุกขึ้นขยับตัว จิบน้ำเย็นๆ หรือไปล้างหน้าสักหน่อยดีไหม${p.polite}?`, true);
+          }
+        } else if (state.stressScore >= 58) {
+          state.drowsySustainedSince = 0;
+          if (!state.stressSustainedSince) state.stressSustainedSince = now;
+          const elapsed = now - state.stressSustainedSince;
+          el.hudAlertBanner.className = 'hud-alert-banner danger';
+          el.hudAlertBanner.textContent = '🚨 ตรวจพบสีหน้าตึงเครียดจัดผิดปกติ — ผ่อนคลายและสูดหายใจลึกๆ ก่อนนะ';
+          renderBiometricsUi('ดูเครียดจัดผิดปกติ!', 'danger');
+
+          if (elapsed > 2400 && (now - state.lastStressAlertAt > 26000)) {
+            state.lastStressAlertAt = now;
+            playHudTone('alert');
+            aiSay(`${p.userTitle}${p.polite} ตอนนี้สีหน้าดูเครียดจัดผิดปกติเลยนะ${p.polite} คิ้วขมวดตึงเชียว พักวางมือสักครู่ หายใจเข้าลึกๆ ช้าๆ ดื่มน้ำสักอึก แล้วมีอะไรไม่สบายใจเล่าให้${p.selfPronoun}ฟังได้นะ${p.polite}`, true);
+          }
+        } else {
+          state.drowsySustainedSince = 0;
+          state.stressSustainedSince = 0;
+          el.hudAlertBanner.className = 'hud-alert-banner';
+          renderBiometricsUi('สภาวะปกติ สดชื่นดี', 'ok');
+        }
+      }
+
+      function renderBiometricsUi(statusLabel, badgeClass) {
+        const dPct = Math.round(state.drowsyScore);
+        const sPct = Math.round(state.stressScore);
+
+        el.drowsyVal.textContent = dPct + '%';
+        el.drowsyBar.style.width = dPct + '%';
+        el.drowsyBar.style.backgroundColor = dPct >= 58 ? 'var(--warn)' : (dPct >= 35 ? '#38bdf8' : 'var(--ok)');
+
+        el.stressVal.textContent = sPct + '%';
+        el.stressBar.style.width = sPct + '%';
+        el.stressBar.style.backgroundColor = sPct >= 58 ? 'var(--danger)' : (sPct >= 35 ? 'var(--warn)' : 'var(--ok)');
+
+        el.wellnessBadge.textContent = statusLabel;
+        el.wellnessBadge.className = 'wellness-state-badge' + (badgeClass ? ' ' + badgeClass : '');
+      }
+
+      function renderDetectedObjects() {
+        const items = [];
+        const seen = new Set();
+
+        for (const obj of state.activeObjects) {
+          if (!seen.has(obj.label)) {
+            seen.add(obj.label);
+            items.push({ label: obj.label, score: obj.score });
+          }
+        }
+        if (state.fineObject && (Date.now() - state.fineObject.ts < 2800) && !seen.has(state.fineObject.label)) {
+          items.push({ label: state.fineObject.label, score: state.fineObject.score });
+        }
+
+        if (items.length === 0) {
+          el.detectedChips.innerHTML = '<span class="empty-inline">' +
+            (state.cameraActive ? 'กำลังสแกนหาสิ่งของในมุมกล้อง...' : 'ยังไม่มีรายการตรวจจับ — เปิดกล้องเพื่อสแกนสิ่งของรอบตัว') +
+            '</span>';
+          return;
+        }
+
+        el.detectedChips.innerHTML = '';
+        items.forEach(item => {
+          const span = document.createElement('span');
+          span.className = 'obj-chip';
+          span.textContent = item.label + ' ';
+          const sm = document.createElement('small');
+          sm.textContent = Math.round(item.score * 100) + '%';
+          span.appendChild(sm);
+          el.detectedChips.appendChild(span);
+        });
+      }
+
+      function checkContextualObjectReactions(now) {
+        const names = getVisibleObjectNames();
+        const p = PERSONAS[state.persona];
+
+        // If camera sees a water bottle / cup and user hasn't confirmed drinking water yet
+        if (!state.care.waterDone && names.some(n => n.includes('ขวดน้ำ') || n.includes('แก้วน้ำ')) && (now - state.lastWaterCameraPraiseAt > 45000)) {
+          state.lastWaterCameraPraiseAt = now;
+          aiSay(`เห็นขวดน้ำในกล้องแล้ว ดีเลย${p.polite}${p.userTitle} จิบน้ำสักอึกให้สดชื่น แล้วบอก${p.selfPronoun}ได้นะ${p.polite}`, false);
+        }
+
+        // If camera sees book / pen and homework isn't done yet
+        if (!state.care.homeworkDone && names.some(n => n.includes('หนังสือ') || n.includes('สมุด') || n.includes('ปากกา')) && (now - state.lastHomeworkBookPraiseAt > 55000)) {
+          state.lastHomeworkBookPraiseAt = now;
+          aiSay(`เห็นอุปกรณ์การเรียนอยู่ตรงหน้าแล้ว กำลังลุยการบ้านอยู่ใช่ไหม${p.polite}${p.userTitle}? สู้ๆ นะ${p.polite} ทำเสร็จแล้วบอก${p.selfPronoun}ได้เลย!`, false);
+        }
+      }
+
+      function drawHudOverlay() {
+        const vw = el.cameraVideo.videoWidth;
+        const vh = el.cameraVideo.videoHeight;
+        if (!vw || !vh) return;
+
+        if (el.hudCanvas.width !== vw || el.hudCanvas.height !== vh) {
+          el.hudCanvas.width = vw;
+          el.hudCanvas.height = vh;
+        }
+
+        hudCtx.clearRect(0, 0, vw, vh);
+        const isMirrored = el.cameraVideo.classList.contains('mirrored');
+        const accent = state.persona === 'friday' ? '#f97316' : '#38bdf8';
+
+        // Subtle tactical corner brackets on viewport
+        hudCtx.strokeStyle = accent;
+        hudCtx.lineWidth = 2;
+        const pad = 18;
+        const len = 26;
+        // Top-left
+        hudCtx.beginPath();
+        hudCtx.moveTo(pad, pad + len); hudCtx.lineTo(pad, pad); hudCtx.lineTo(pad + len, pad);
+        // Top-right
+        hudCtx.moveTo(vw - pad - len, pad); hudCtx.lineTo(vw - pad, pad); hudCtx.lineTo(vw - pad, pad + len);
+        // Bottom-left
+        hudCtx.moveTo(pad, vh - pad - len); hudCtx.lineTo(pad, vh - pad); hudCtx.lineTo(pad + len, vh - pad);
+        // Bottom-right
+        hudCtx.moveTo(vw - pad - len, vh - pad); hudCtx.lineTo(vw - pad, vh - pad); hudCtx.lineTo(vw - pad, vh - pad - len);
+        hudCtx.stroke();
+
+        // Bounding boxes for COCO-SSD objects
+        hudCtx.font = '600 16px Prompt, sans-serif';
+        state.activeObjects.forEach(obj => {
+          let [x, y, w, h] = obj.bbox;
+          if (isMirrored) {
+            x = vw - x - w;
+          }
+
+          hudCtx.strokeStyle = accent;
+          hudCtx.lineWidth = 2.5;
+          hudCtx.strokeRect(x, y, w, h);
+
+          const tag = `${obj.label} ${Math.round(obj.score * 100)}%`;
+          const textW = hudCtx.measureText(tag).width + 16;
+          const tagY = y > 30 ? y - 28 : y + 4;
+
+          hudCtx.fillStyle = 'rgba(6, 11, 20, 0.82)';
+          hudCtx.fillRect(x, tagY, textW, 26);
+          hudCtx.strokeRect(x, tagY, textW, 26);
+
+          hudCtx.fillStyle = '#ffffff';
+          hudCtx.fillText(tag, x + 8, tagY + 18);
+        });
+
+        // If fine-grained MobileNet item detected (e.g. ยาดม / ปากกา) not already boxed, show center reticle tag
+        if (state.fineObject && (Date.now() - state.fineObject.ts < 2500)) {
+          const alreadyBoxed = state.activeObjects.some(o => o.label === state.fineObject.label);
+          if (!alreadyBoxed) {
+            const tag = `ตรวจพบระยะใกล้: ${state.fineObject.label} (${Math.round(state.fineObject.score * 100)}%)`;
+            const tw = hudCtx.measureText(tag).width + 24;
+            const rx = (vw - tw) / 2;
+            const ry = vh - 56;
+            hudCtx.fillStyle = 'rgba(6, 11, 20, 0.85)';
+            hudCtx.fillRect(rx, ry, tw, 32);
+            hudCtx.strokeStyle = accent;
+            hudCtx.lineWidth = 1.8;
+            hudCtx.strokeRect(rx, ry, tw, 32);
+            hudCtx.fillStyle = accent;
+            hudCtx.fillText(tag, rx + 12, ry + 21);
+          }
+        }
+      }
+
+      async function visionLoop(ts) {
+        if (!state.cameraActive) return;
+
+        const video = el.cameraVideo;
+        if (video.readyState >= 2) {
+          const now = Date.now();
+
+          // 1. Object Detection via COCO-SSD (~5 FPS)
+          if (state.cocoModel && (ts - state.lastDetectTs > 210)) {
+            const dt = ts - state.lastDetectTs;
+            state.lastDetectTs = ts;
+            el.fpsLabel.textContent = 'LIVE • ' + Math.min(60, Math.round(1000 / Math.max(16, dt))) + ' SCAN/S';
+
+            try {
+              const preds = await state.cocoModel.detect(video, 8, 0.42);
+              state.activeObjects = preds.map(p => ({
+                raw: p.class,
+                label: COCO_THAI_MAP[p.class] || p.class,
+                score: p.score,
+                bbox: p.bbox
+              }));
+              renderDetectedObjects();
+              checkContextualObjectReactions(now);
+            } catch (_) {}
+          }
+
+          // 2. Fine-grained item recognition via MobileNet on center region (~1 FPS) for ปากกา / ยาดม / ขวดน้ำ / ต้นไม้
+          if (state.mobilenetModel && (ts - state.lastMobileNetTs > 950)) {
+            state.lastMobileNetTs = ts;
+            try {
+              const vw = video.videoWidth;
+              const vh = video.videoHeight;
+              const side = Math.min(vw, vh) * 0.62;
+              const sx = (vw - side) / 2;
+              const sy = (vh - side) / 2;
+              cropCtx.drawImage(video, sx, sy, side, side, 0, 0, 224, 224);
+              const finePreds = await state.mobilenetModel.classify(el.cropCanvas, 3);
+              const mapped = mapMobileNetPredictions(finePreds);
+              if (mapped) {
+                state.fineObject = mapped;
+                renderDetectedObjects();
+              }
+            } catch (_) {}
+          }
+
+          // 3. Facial Drowsiness & Stress Analysis via MediaPipe FaceMesh (~7 FPS)
+          if (state.faceMesh && !state.faceBusy && (ts - state.lastFaceTs > 140)) {
+            state.lastFaceTs = ts;
+            state.faceBusy = true;
+            state.faceMesh.send({ image: video })
+              .catch(() => {})
+              .finally(() => { state.faceBusy = false; });
+          }
+
+          drawHudOverlay();
+        }
+
+        state.rafId = requestAnimationFrame(visionLoop);
+      }
+
+      // ==========================================
+      // 12. PERIODIC CARE REMINDER TIMER
+      // ==========================================
+      setInterval(() => {
+        if (!state.hasGreeted || state.isSpeaking) return;
+        const now = Date.now();
+        // Gentle reminder every 3 minutes if water or homework is still undone
+        if (now - state.lastProactiveCareAt > 180000) {
+          state.lastProactiveCareAt = now;
+          const p = PERSONAS[state.persona];
+          if (!state.care.waterDone) {
+            aiSay(`${p.userTitle}${p.polite} นั่งหน้าจอมาสักพักแล้ว อย่าลืมแวะดื่มน้ำให้สดชื่นด้วยนะ${p.polite}`, false);
+          } else if (!state.care.homeworkDone) {
+            aiSay(`ขออนุญาตเตือนความจำเบาๆ นะ${p.polite}${p.userTitle} อย่าลืมทำการบ้านของวันนี้ให้เรียบร้อยด้วยนะ${p.polite}`, false);
+          }
+        }
+      }, 30000);
+
+      // ==========================================
+      // 13. UI EVENT LISTENERS & INITIALIZATION
+      // ==========================================
+      function setPersona(personaKey, announce) {
+        state.persona = personaKey;
+        document.body.setAttribute('data-persona', personaKey);
+        const p = PERSONAS[personaKey];
+        el.personaTitle.textContent = p.name;
+        el.btnPersonaJarvis.classList.toggle('active', personaKey === 'jarvis');
+        el.btnPersonaFriday.classList.toggle('active', personaKey === 'friday');
+
+        if (announce) {
+          state.hasGreeted = true;
+          playHudTone('boot');
+          aiSay(`สวัสดี${p.polite}${p.userTitle} ระบบ${p.thaiName}พร้อมรับช่วงดูแลต่อแล้ว${p.polite} วันนี้ดื่มน้ำและทำการบ้านเรียบร้อยหรือยัง${p.polite}?`, false);
+        }
+      }
+
+      el.btnPersonaJarvis.addEventListener('click', () => {
+        if (state.persona !== 'jarvis') setPersona('jarvis', true);
+      });
+
+      el.btnPersonaFriday.addEventListener('click', () => {
+        if (state.persona !== 'friday') setPersona('friday', true);
+      });
+
+      el.btnToggleTts.addEventListener('click', () => {
+        state.ttsEnabled = !state.ttsEnabled;
+        if (!state.ttsEnabled && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        el.ttsIcon.textContent = state.ttsEnabled ? '🔊' : '🔇';
+        el.ttsLabel.textContent = state.ttsEnabled ? 'เสียงพูด: เปิด' : 'เสียงพูด: ปิด';
+      });
+
+      el.btnHeroStart.addEventListener('click', () => {
+        startCamera();
+      });
+
+      el.btnToggleCamera.addEventListener('click', () => {
+        if (state.cameraActive) {
+          stopCamera();
+        } else {
+          startCamera();
+        }
+      });
+
+      el.btnSwitchFacing.addEventListener('click', () => {
+        switchCameraFacing();
+      });
+
+      el.cameraSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+          state.selectedDeviceId = e.target.value;
+          startCamera(e.target.value);
+        }
+      });
+
+      el.btnWaterToggle.addEventListener('click', () => {
+        ensureInitialGreeting();
+        state.care.waterDone = !state.care.waterDone;
+        updateCareUi();
+        const p = PERSONAS[state.persona];
+        if (state.care.waterDone) {
+          aiSay(`เยี่ยมมาก${p.polite}${p.userTitle} บันทึกว่าดื่มน้ำเรียบร้อยแล้ว${p.polite}`, false);
+        }
+      });
+
+      el.btnHomeworkToggle.addEventListener('click', () => {
+        ensureInitialGreeting();
+        state.care.homeworkDone = !state.care.homeworkDone;
+        updateCareUi();
+        const p = PERSONAS[state.persona];
+        if (state.care.homeworkDone) {
+          aiSay(`เก่งมากเลย${p.polite}${p.userTitle} เคลียร์การบ้านวันนี้เสร็จเรียบร้อย!`, false);
+        }
+      });
+
+      el.btnCheckInNow.addEventListener('click', () => {
+        runProactiveCheckIn();
+      });
+
+      el.btnMic.addEventListener('click', () => {
+        toggleMic();
+      });
+
+      el.chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = el.chatInput.value.trim();
+        if (!val) return;
+        el.chatInput.value = '';
+        handleUserMessage(val);
+      });
+
+      document.querySelectorAll('.prompt-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const msg = btn.getAttribute('data-msg');
+          if (msg) handleUserMessage(msg);
+        });
+      });
+
+      // Initial welcome message in chat transcript (audio plays as soon as user interacts due to browser autoplay policy)
+      appendMessage(
+        'ai',
+        'สวัสดีครับเจ้านาย ระบบ J.A.R.V.I.S. สแตนด์บายพร้อมทำงานแล้วครับ กดปุ่ม "เริ่มต้นระบบและเปิดกล้อง" หรือกดพูดคุย/ทักทายด้านล่างเพื่อให้ผมเริ่มทักทายด้วยเสียง สแกนวัตถุรอบตัว และช่วยดูแลความง่วง ความเครียด การดื่มน้ำ และการบ้านของวันนี้ได้เลยครับ',
+        false
+      );
+
+      updateCareUi();
+      initSpeechRecognition();
+      initVisionModels();
+    })();
+  </script>
+</body>
+</html>
