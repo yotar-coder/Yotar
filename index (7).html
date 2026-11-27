@@ -1,0 +1,3083 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ระบบควบคุมหุ่นยนต์พ่นยาอัตโนมัติอัจฉริยะด้วย Arduino (3D Digital Twin & MQTT Dashboard)</title>
+  <!-- Three.js for 3D Simulation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Google Fonts: Prompt & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: #131a26;
+      --surface-elevated: #1b2434;
+      --border: #28354a;
+      --border-light: #354660;
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --brand: #00979d; /* Arduino Teal */
+      --brand-light: #2dd4bf;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+
+    /* Top Header */
+    .topbar {
+      background: rgba(19, 26, 38, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      padding: 0 12px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00979d 0%, #006468 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      box-shadow: 0 4px 12px rgba(0, 151, 157, 0.4);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: #fff;
+    }
+
+    .brand-title h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-sim {
+      background: rgba(0, 151, 157, 0.2);
+      color: var(--brand-light);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    .brand-title p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .board-select {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: var(--surface-elevated);
+      color: var(--brand-light);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      cursor: pointer;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* Main Grid Layout */
+    .workspace {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 16px;
+    }
+
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .left-column, .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      background: rgba(27, 36, 52, 0.65);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+
+    /* 3D Monitor Area */
+    .monitor-container {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      background: #06090e;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    @media (max-width: 680px) {
+      .monitor-container {
+        height: 380px;
+      }
+    }
+
+    #main3dCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Camera OSD (On-Screen Display) */
+    .osd-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: var(--mono);
+    }
+
+    .osd-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .osd-badge-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(9, 13, 22, 0.76);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      padding: 8px 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+      font-size: 12px;
+    }
+
+    .rec-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    .rec-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* 3D Minimap PiP inside Monitor */
+    .minimap-pip {
+      pointer-events: auto;
+      width: 185px;
+      height: 185px;
+      background: rgba(11, 15, 23, 0.85);
+      border: 2px solid var(--brand);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+
+    @media (max-width: 680px) {
+      .minimap-pip {
+        width: 125px;
+        height: 125px;
+      }
+    }
+
+    #minimap3dCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .minimap-label {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      background: rgba(11, 15, 23, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--brand-light);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      pointer-events: none;
+    }
+
+    .minimap-compass {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-size: 10px;
+      color: var(--ink);
+      background: rgba(11, 15, 23, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* Crosshair / Reticle for 1st Person FPV */
+    .fpv-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 80px;
+      border: 1px dashed rgba(45, 212, 191, 0.5);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fpv-reticle::before, .fpv-reticle::after {
+      content: '';
+      position: absolute;
+      background: rgba(16, 185, 129, 0.75);
+    }
+    .fpv-reticle::before { width: 16px; height: 2px; }
+    .fpv-reticle::after { width: 2px; height: 16px; }
+
+    .osd-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .lidar-hud {
+      background: rgba(9, 13, 22, 0.78);
+      border: 1px solid var(--border-light);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Camera & Driving Controls Toolbar */
+    .control-bar {
+      padding: 14px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      background: var(--surface-elevated);
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #263349;
+      border-color: #475d7c;
+    }
+
+    .btn.active, .btn-primary {
+      background: var(--brand);
+      border-color: var(--brand-light);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent);
+      color: #34d399;
+    }
+    .btn-success.active {
+      background: var(--accent);
+      color: #06281e;
+      font-weight: 700;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--danger);
+      color: #f87171;
+    }
+    .btn-danger.active {
+      background: var(--danger);
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.55);
+    }
+
+    /* D-Pad & GIS Map Grid */
+    .manual-Mapping-grid {
+      display: grid;
+      grid-template-columns: 0.92fr 1.28fr;
+      gap: 16px;
+    }
+    @media (max-width: 960px) {
+      .manual-Mapping-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dpad-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(11, 15, 23, 0.5);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .dpad-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dpad-btn {
+      width: 56px;
+      height: 50px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-light);
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: transform 0.08s ease, background 0.12s;
+    }
+    .dpad-btn span {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: var(--brand);
+      border-color: var(--brand-light);
+      color: #fff;
+      transform: scale(0.95);
+    }
+    .dpad-btn:active span, .dpad-btn.pressed span {
+      color: #e0f2fe;
+    }
+
+    /* Interactive Self-Contained Satellite/GIS Map Canvas & Route Planner */
+    .map-planner-toolbar {
+      padding: 10px 14px;
+      background: rgba(19, 26, 38, 0.9);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .planner-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .map-select {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 7px;
+      background: var(--surface-elevated);
+      color: var(--ink);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      flex: 1 1 200px;
+    }
+    .map-select:focus-visible {
+      outline: 2px solid var(--brand-light);
+      outline-offset: 1px;
+    }
+
+    .btn-xs {
+      padding: 5px 9px;
+      font-size: 11.5px;
+      border-radius: 6px;
+    }
+
+    .gis-canvas-wrap {
+      position: relative;
+      width: 100%;
+      height: 330px;
+      background: #0d1b16;
+      overflow: hidden;
+    }
+    #realMapCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .wp-strip {
+      padding: 8px 14px;
+      background: #0e1420;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      min-height: 40px;
+    }
+
+    .wp-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-light);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .wp-chip:hover {
+      border-color: var(--brand-light);
+    }
+    .wp-chip.current {
+      background: rgba(0, 151, 157, 0.25);
+      border-color: var(--brand-light);
+      color: #5eead4;
+      font-weight: 700;
+    }
+    .wp-chip-del {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0 2px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .wp-chip-del:hover {
+      color: var(--danger);
+    }
+    .wp-empty {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .map-footer {
+      padding: 10px 14px;
+      background: var(--surface-elevated);
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Right Column: MQTT Realtime Dashboard */
+    .mqtt-phone-frame {
+      background: #0d131d;
+      border: 2px solid #2b3950;
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .mqtt-header {
+      text-align: center;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mqtt-header h2 {
+      margin: 0;
+      font-size: 15px;
+      color: var(--brand-light);
+      font-weight: 600;
+    }
+    .mqtt-header span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .mqtt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mqtt-tile {
+      background: #161f2e;
+      border: 1px solid #263449;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 82px;
+    }
+
+    .mqtt-tile.full-width {
+      grid-column: span 2;
+      min-height: auto;
+    }
+
+    .tile-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tile-value {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+
+    .tile-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #0b0f17;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.25s ease;
+    }
+
+    /* 7-Step Autonomous Operation Flow */
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      padding: 14px;
+    }
+    @media (max-width: 1024px) {
+      .flow-steps {
+        grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      }
+    }
+
+    .flow-step {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      font-size: 12px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .flow-step.active {
+      border-color: var(--brand-light);
+      background: rgba(0, 151, 157, 0.16);
+      box-shadow: 0 0 12px rgba(0, 151, 157, 0.28);
+    }
+    .flow-step.fault {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.16);
+    }
+    .step-num {
+      font-weight: 700;
+      color: var(--brand-light);
+      font-size: 11px;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .step-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+      padding-left: 14px;
+    }
+
+    /* Hardware BOM & Architecture Grid */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .arch-box {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .arch-box h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: var(--brand-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .arch-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .arch-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed rgba(255,255,255,0.06);
+    }
+
+    .led-group {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .led-bulb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      opacity: 0.25;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .led-bulb.on { opacity: 1; }
+    .led-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .led-yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    .led-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-icon">∞ ARDUINO</div>
+      <div class="brand-title">
+        <h1>
+          หุ่นยนต์พ่นยาอัตโนมัติอัจฉริยะด้วย Arduino
+          <span class="badge-sim" id="topBoardBadge">Arduino Mega 2560 + 4G/LTE SIM</span>
+        </h1>
+        <p>ตรวจตำแหน่ง ปริมาณการฉีด แบตเตอรี่ และสถานะการทำงานแบบออนไลน์ (3D Digital Twin &amp; Secure MQTT Cloud)</p>
+      </div>
+    </div>
+
+    <div class="status-strip">
+      <select id="arduinoBoardSelect" class="board-select" onchange="changeArduinoBoard(this.value)" title="เลือกรุ่นบอร์ดควบคุม Arduino">
+        <option value="Arduino Mega 2560 (ATmega2560)">บอร์ด: Arduino Mega 2560 + 4G SIM</option>
+        <option value="Arduino UNO R4 WiFi (RA4M1)">บอร์ด: Arduino UNO R4 WiFi + 4G SIM</option>
+        <option value="Arduino Giga R1 WiFi (STM32H7)">บอร์ด: Arduino Giga R1 WiFi</option>
+      </select>
+
+      <div class="pill" title="สถานะไฟสัญญาณเตือน Status LEDs (แดง/เหลือง/เขียว)">
+        <span>Status LEDs:</span>
+        <div class="led-group">
+          <span id="ledRed" class="led-bulb led-red" title="Fault / E-Stop"></span>
+          <span id="ledYellow" class="led-bulb led-yellow" title="Spraying / Navigating"></span>
+          <span id="ledGreen" class="led-bulb led-green on" title="System Normal"></span>
+        </div>
+      </div>
+
+      <div class="pill">
+        <span class="dot" id="mqttDot"></span>
+        <span id="mqttStatusText">MQTT TLS/SSL: Connected</span>
+      </div>
+
+      <button id="btnEstopTop" class="btn btn-danger" onclick="toggleEmergencyStop()">
+        🛑 Emergency Stop (หยุดฉุกเฉิน)
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="workspace">
+    <!-- LEFT COLUMN: 3D MONITOR, CONTROLS, GIS MAP, 7-STEP FLOW -->
+    <div class="left-column">
+
+      <!-- 1. REALTIME CAMERA & 3D SIMULATION MONITOR -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            📹 จอมอนิเตอร์ภาพจากกล้องหุ่นยนต์แบบเรียลไทม์ &amp; จำลอง 3 มิติ (1st / 3rd Person + 3D Minimap)
+          </h2>
+          <div class="btn-group">
+            <button id="btnCamFPV" class="btn" onclick="setCameraMode('fpv')">
+              👁️ มุมมองบุคคลที่ 1 (FPV กล้องหน้ารถ)
+            </button>
+            <button id="btnCamTPS" class="btn active" onclick="setCameraMode('tps')">
+              🚜 มุมมองบุคคลที่ 3 (Follow Cam)
+            </button>
+            <button id="btnCamFree" class="btn" onclick="setCameraMode('orbit')">
+              🔄 มุมมองอิสระรอบคัน (Inspect)
+            </button>
+          </div>
+        </div>
+
+        <div class="monitor-container">
+          <canvas id="main3dCanvas"></canvas>
+
+          <!-- On-Screen Display (HUD) -->
+          <div class="osd-overlay">
+            <div class="osd-top">
+              <div class="osd-badge-group">
+                <div class="rec-indicator">
+                  <span class="rec-dot"></span> <span id="osdStreamTitle">LIVE CAM • ARDUINO FPV STREAM (30 FPS)</span>
+                </div>
+                <div id="osdViewLabel">MODE: 3RD PERSON FOLLOW VIEW</div>
+                <div id="osdHeading">IMU YAW: 0.0° | PITCH: 0.2° | ROLL: -0.1°</div>
+                <div id="osdWheelEncoders">WHEEL ENCODERS (4x Interrupt): FL 42 RPM | FR 42 RPM</div>
+              </div>
+
+              <!-- 3D Minimap Picture-in-Picture -->
+              <div class="minimap-pip" title="แผนที่จำลองแบบ 3 มิติขนาดย่อ (3D Overhead Radar)">
+                <canvas id="minimap3dCanvas"></canvas>
+                <div class="minimap-label">🗺️ 3D MINIMAP</div>
+                <div class="minimap-compass" id="minimapStats">Sprayed: 0%</div>
+              </div>
+            </div>
+
+            <!-- Reticle shown in FPV mode -->
+            <div id="fpvReticle" class="fpv-reticle" style="display:none;"></div>
+
+            <div class="osd-bottom">
+              <div class="lidar-hud">
+                <span>📡 <strong>LiDAR / ToF / Ultrasonic:</strong> <span id="hudObstacleDist" style="color:#4ade80;">Clear (4.85 m)</span></span>
+                <span>|</span>
+                <span>💦 <strong>หัวฉีดทองเหลือง + พัดลมคู่:</strong> <span id="hudSprayState" style="color:#2dd4bf;">ON (ฉีดพ่นปกติ)</span></span>
+              </div>
+              <div class="lidar-hud">
+                <span>💾 <strong>MicroSD SPI Logger:</strong> <span id="hudSdLogger">LOGGING (10 Hz)</span></span>
+                <span>|</span>
+                <span>🔔 <strong>Buzzer (Pin D8):</strong> <span id="hudBuzzer">SILENT</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar for Operation Mode & Spray System -->
+        <div class="control-bar">
+          <div>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">โหมดการขับเคลื่อน (Arduino Navigation &amp; Control Mode)</div>
+            <div class="btn-group">
+              <button id="btnModeManual" class="btn" onclick="setDriveMode('manual')">
+                🕹️ บังคับเอง (Manual RC)
+              </button>
+              <button id="btnModeAuto" class="btn active" onclick="setDriveMode('auto')">
+                🤖 อัตโนมัติตามแปลง (Autonomous GPS)
+              </button>
+              <button class="btn" onclick="resetSimulation()">
+                ♻️ รีเซ็ตตำแหน่ง &amp; เติมน้ำยา
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">ระบบปั๊ม 12V + โซลินอยด์วาล์ว + พัดลม DIY (MOSFET / Relay Pin)</div>
+            <div class="btn-group">
+              <button id="btnSprayToggle" class="btn btn-success active" onclick="toggleSprayer()">
+                💦 ปั๊มน้ำยา + โซลินอยด์วาล์ว: เปิด (ON)
+              </button>
+              <button id="btnFanToggle" class="btn active" onclick="toggleFans()">
+                🌀 พัดลมคู่ DIY: เปิด (ON)
+              </button>
+            </div>
+          </div>
+
+          <div class="slider-row">
+            <div style="display:flex; justify-content:space-between;">
+              <span>เป้าหมายอัตราการไหล (Target Flow Rate):</span>
+              <strong id="targetFlowLabel" style="color:var(--brand-light);">1.82 L/min (2.35 bar)</strong>
+            </div>
+            <input type="range" id="flowSlider" min="0.8" max="3.0" step="0.02" value="1.82" oninput="updateTargetFlow(this.value)" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. MANUAL CONTROL & REAL GIS SATELLITE MAP -->
+      <div class="manual-Mapping-grid">
+        <!-- Manual D-Pad & Hardware Actuators -->
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">🕹️ แผงบังคับหุ่นยนต์ &amp; จำลองสถานการณ์หน้างาน</h3>
+            <span style="font-size:11px; color:var(--muted);">กดปุ่มบนหน้าจอ หรือปุ่ม W A S D / ลูกศร</span>
+          </div>
+          <div style="padding:14px; display:grid; grid-template-columns: auto 1fr; gap:16px; align-items:center;">
+            <div class="dpad-wrapper">
+              <div class="dpad-row">
+                <button class="dpad-btn" id="keyW"
+                  onmousedown="startKey('w')" onmouseup="stopKey('w')" onmouseleave="stopKey('w')"
+                  ontouchstart="startKey('w'); event.preventDefault();" ontouchend="stopKey('w')">
+                  ▲<span>เดินหน้า (W)</span>
+                </button>
+              </div>
+              <div class="dpad-row">
+                <button class="dpad-btn" id="keyA"
+                  onmousedown="startKey('a')" onmouseup="stopKey('a')" onmouseleave="stopKey('a')"
+                  ontouchstart="startKey('a'); event.preventDefault();" ontouchend="stopKey('a')">
+                  ◀<span>เลี้ยวซ้าย (A)</span>
+                </button>
+                <button class="dpad-btn" id="keyS"
+                  onmousedown="startKey('s')" onmouseup="stopKey('s')" onmouseleave="stopKey('s')"
+                  ontouchstart="startKey('s'); event.preventDefault();" ontouchend="stopKey('s')">
+                  ▼<span>ถอยหลัง (S)</span>
+                </button>
+                <button class="dpad-btn" id="keyD"
+                  onmousedown="startKey('d')" onmouseup="stopKey('d')" onmouseleave="stopKey('d')"
+                  ontouchstart="startKey('d'); event.preventDefault();" ontouchend="stopKey('d')">
+                  ▶<span>เลี้ยวขวา (D)</span>
+                </button>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="slider-row">
+                <div style="display:flex; justify-content:space-between;">
+                  <span>ความเร็วเป้าหมาย (Dual Motor Driver PWM):</span>
+                  <strong id="targetSpeedLabel" style="color:#4ade80;">3.6 km/h</strong>
+                </div>
+                <input type="range" id="speedSlider" min="1.2" max="6.0" step="0.2" value="3.6" oninput="updateTargetSpeed(this.value)" />
+              </div>
+
+              <div style="border-top:1px solid var(--border); padding-top:10px;">
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">ทดสอบเซนเซอร์ความปลอดภัย (Safety &amp; Fault Simulation):</div>
+                <div class="btn-group">
+                  <button class="btn" onclick="spawnTestObstacle()">
+                    🚧 วางสิ่งกีดขวางหน้าหุ่น (ทดสอบ LiDAR/ToF)
+                  </button>
+                  <button class="btn" onclick="refillTank()">
+                    🚰 เติมน้ำยาเต็มถัง (10.0 L)
+                  </button>
+                  <button class="btn" onclick="rechargeBattery()">
+                    🔋 ชาร์จแบต 12V Li-ion (100%)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Real-World Coordinate GIS Map & Multi-Map Route Planner -->
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">🌍 แผนที่พิกัดจริง GPS/GNSS &amp; วางแผนจุด-ทางเดิน (Multi-Map &amp; Route Planner)</h3>
+          </div>
+
+          <div class="map-planner-toolbar">
+            <!-- Row 1: Select Farm Plot Map & Select GIS Map Style -->
+            <div class="planner-row">
+              <select id="farmMapSelect" class="map-select" onchange="changeFarmMap(this.value)" aria-label="เลือกแผนที่แปลงเกษตร">
+                <option value="orchard_bkk">🗺️ แผนที่ 1: สวนไม้ผลมาตรฐาน 4 แถว (กทม. 13.7569, 100.5018)</option>
+                <option value="field_npt">🌾 แผนที่ 2: แปลงพืชไร่ร่องถี่ 6 แถว (นครปฐม 13.8199, 100.0621)</option>
+                <option value="durian_cti">🌳 แผนที่ 3: สวนทุเรียนผังตารางห่าง (จันทบุรี 12.6114, 102.1039)</option>
+                <option value="open_pti">📐 แผนที่ 4: แปลงโล่งฝึกวางแผนเส้นทางอิสระ (ปทุมธานี 14.0208, 100.5250)</option>
+              </select>
+
+              <select id="gisStyleSelect" class="map-select" onchange="changeGisStyle(this.value)" aria-label="เลือกรูปแบบมุมมองแผนที่">
+                <option value="satellite">🛰️ มุมมองดาวเทียม (Satellite RTK)</option>
+                <option value="topo">🏔️ แผนที่เส้นชั้นความสูง (Topographic)</option>
+                <option value="ndvi">🌿 แผนที่ดัชนีพืชพรรณ (NDVI / Moisture)</option>
+                <option value="blueprint">🧭 แผนที่โครงข่ายพิกัด (Tactical Grid)</option>
+              </select>
+            </div>
+
+            <!-- Row 2: Route Pattern & Interactive Waypoint Planning Controls -->
+            <div class="planner-row">
+              <div class="btn-group">
+                <button id="btnPatZigzag" class="btn btn-xs active" onclick="applyRoutePattern('zigzag')" title="สร้างทางเดินซิกแซกตามร่องแปลงอัตโนมัติ">
+                  🔀 ทางเดินซิกแซก
+                </button>
+                <button id="btnPatPerimeter" class="btn btn-xs" onclick="applyRoutePattern('perimeter')" title="สร้างทางเดินวนรอบขอบแปลง">
+                  🔲 วนกรอบแปลง
+                </button>
+                <button id="btnPatCustom" class="btn btn-xs" onclick="applyRoutePattern('custom')" title="ล้างเส้นทางเดิมเพื่อคลิกกำหนดจุดเดินเองทีละจุด">
+                  ✏️ กำหนดทางเดินเอง
+                </button>
+              </div>
+
+              <div class="btn-group">
+                <button id="btnPlanPause" class="btn btn-xs btn-success active" onclick="toggleRouteExecution()">
+                  ▶️ กำลังเดินตามแผน
+                </button>
+                <button id="btnLoopRoute" class="btn btn-xs active" onclick="toggleRouteLoop()" title="เมื่อถึงจุดสุดท้ายให้วนกลับไปจุด WP1">
+                  🔁 วนลูป: เปิด
+                </button>
+                <button class="btn btn-xs" onclick="undoLastWaypoint()" title="ลบจุด Waypoint ล่าสุดออก 1 จุด">
+                  ↩️ ลบจุดท้าย
+                </button>
+                <button class="btn btn-xs" onclick="clearCustomWaypoints()" title="ล้างจุดทั้งหมดบนแผนที่">
+                  🗑️ ล้างจุด
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="gis-canvas-wrap">
+            <canvas id="realMapCanvas"></canvas>
+          </div>
+
+          <div class="wp-strip" id="wpSequenceStrip" aria-label="ลำดับจุดทางเดิน Waypoints"></div>
+
+          <div class="map-footer">
+            <span>📍 <strong>พิกัดแปลงเกษตร:</strong> <span id="mapCoordText">Lat: 13.756900, Lon: 100.501800 (Fix: 3D RTK)</span></span>
+            <span style="color:var(--brand-light);">คลิกแผนที่ = เพิ่มจุดทางเดิน • ลากหมุด = ย้ายจุด • คลิกขวาที่หมุด = ลบจุด</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- 3. 7-STEP AUTONOMOUS OPERATION FLOW -->
+      <section class="card">
+        <div class="card-header">
+          <h3 class="card-title">🔄 ขั้นตอนการทำงานอัตโนมัติ 7 ขั้นตอน (Autonomous Operation Flow)</h3>
+          <span id="currentStepBadge" class="badge-sim">สถานะปัจจุบัน: ขั้นตอนที่ 4 ฉีดพ่นตามเป้าหมาย</span>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step" id="step1">
+            <span class="step-num">1. วางแผนงาน (Plan)</span>
+            <ul class="step-desc">
+              <li>อัปโหลดแผนที่แปลง</li>
+              <li>ตั้งค่าเป้าหมาย</li>
+              <li>Geofence กรอบแปลง</li>
+            </ul>
+          </div>
+          <div class="flow-step" id="step2">
+            <span class="step-num">2. นำทาง (Navigate)</span>
+            <ul class="step-desc">
+              <li>ระบุตำแหน่ง GPS</li>
+              <li>IMU + Wheel Encoders</li>
+              <li>หลีกเลี่ยงสิ่งกีดขวาง</li>
+            </ul>
+          </div>
+          <div class="flow-step" id="step3">
+            <span class="step-num">3. ตรวจสอบความปลอดภัย</span>
+            <ul class="step-desc">
+              <li>ตรวจ E-Stop</li>
+              <li>ระดับน้ำยา / แบตเตอรี่</li>
+              <li>สัญญาณและเซนเซอร์</li>
+            </ul>
+          </div>
+          <div class="flow-step active" id="step4">
+            <span class="step-num">4. ฉีดพ่นตามเป้าหมาย</span>
+            <ul class="step-desc">
+              <li>เปิดปั๊มและวาล์ว</li>
+              <li>ควบคุมอัตราการไหลตามเป้าหมาย</li>
+            </ul>
+          </div>
+          <div class="flow-step" id="step5">
+            <span class="step-num">5. ตรวจสอบการไหล</span>
+            <ul class="step-desc">
+              <li>ตรวจ Flow &amp; Pressure</li>
+              <li>ปรับอัตโนมัติถ้าเบี่ยงเบน</li>
+            </ul>
+          </div>
+          <div class="flow-step" id="step6">
+            <span class="step-num">6. บันทึกข้อมูล (Log)</span>
+            <ul class="step-desc">
+              <li>บันทึกลง microSD</li>
+              <li>ส่งขึ้น Cloud (MQTT)</li>
+            </ul>
+          </div>
+          <div class="flow-step" id="step7">
+            <span class="step-num">7. กรณีผิดปกติ (Fault)</span>
+            <ul class="step-desc">
+              <li>หยุดพ่นอัตโนมัติ</li>
+              <li>แจ้งเตือน Buzzer/LED</li>
+              <li>หยุด/ย้อนกลับ</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. HARDWARE ARCHITECTURE & SYSTEM COMPONENTS (Updated for Arduino) -->
+      <section class="card">
+        <div class="card-header">
+          <h3 class="card-title">🛠️ ส่วนประกอบและสถาปัตยกรรมระบบ Arduino (System Components &amp; Pin Mapping)</h3>
+          <span style="font-size:12px; color:var(--muted);">จำลองการทำงานครบทุกโมดูลในหุ่นยนต์ 3 มิติ</span>
+        </div>
+        <div class="arch-grid">
+          <div class="arch-box">
+            <h4>โครงสร้างและการฉีดพ่น (Mechanical &amp; Sprayer)</h4>
+            <ul class="arch-list">
+              <li><span>โครงฐานท่อเหล็กแดง + ล้อยาง 4 ล้อ</span> <strong style="color:#4ade80;">OK</strong></li>
+              <li><span>ถังน้ำยา DIY + ขายึด (10 ลิตร)</span> <strong id="hwTankText">6.30 L</strong></li>
+              <li><span>ปั๊มน้ำ 12V Diaphragm + โซลินอยด์วาล์ว</span> <strong id="hwPumpText" style="color:#4ade80;">ON</strong></li>
+              <li><span>พัดลมคู่ DIY + หัวฉีดทองเหลือง</span> <strong id="hwFanText" style="color:#4ade80;">ACTIVE</strong></li>
+            </ul>
+          </div>
+
+          <div class="arch-box">
+            <h4>เซนเซอร์นำทางและวัดค่า (Arduino Sensors Input)</h4>
+            <ul class="arch-list">
+              <li><span>GPS/GNSS (UART1) + IMU (I2C SDA/SCL)</span> <strong style="color:#2dd4bf;">3D Fix</strong></li>
+              <li><span>LiDAR / ToF / Ultrasonic กันชน</span> <strong id="hwLidarText" style="color:#4ade80;">Clear</strong></li>
+              <li><span>Wheel Encoders (EXT INT D2,D3,D18,D19)</span> <strong id="hwEncoderText">42 RPM</strong></li>
+              <li><span>Water Flow (D20) + Pressure (A0)</span> <strong id="hwFlowPressText">1.82L/m | 2.35bar</strong></li>
+            </ul>
+          </div>
+
+          <div class="arch-box">
+            <h4>ระบบไฟและพลังงาน (Power &amp; Electrical)</h4>
+            <ul class="arch-list">
+              <li><span>Battery Pack 12V Li-ion + BMS</span> <strong id="hwBattVolt">12.4 V (76%)</strong></li>
+              <li><span>Main Fuse + Contactor Switch</span> <strong id="hwContactor" style="color:#4ade80;">CLOSED</strong></li>
+              <li><span>INA219 / INA226 (I2C 0x40)</span> <strong id="hwCurrent">4.8 A</strong></li>
+              <li><span>DC-DC Buck (12V→5V) + MOSFET Driver</span> <strong style="color:#4ade80;">5.00 V</strong></li>
+            </ul>
+          </div>
+
+          <div class="arch-box">
+            <h4>สมองกลและการสื่อสาร (Arduino Controller &amp; Comms)</h4>
+            <ul class="arch-list">
+              <li><span id="hwBoardName">Arduino Mega 2560 (ATmega2560)</span> <strong style="color:#4ade80;">RUNNING</strong></li>
+              <li><span>4G/LTE Modem (UART2 AT+MQTT) + SIM</span> <strong style="color:#4ade80;">RSSI -63dBm</strong></li>
+              <li><span>MicroSD Logger (SPI D50-D53) + IP65+</span> <strong id="hwSdCount">1,420 rows</strong></li>
+              <li><span>ปุ่มหยุดฉุกเฉิน (Emergency Stop INT)</span> <strong id="hwEstopState" style="color:#4ade80;">NORMAL</strong></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT COLUMN: MQTT REALTIME MONITORING DASHBOARD -->
+    <aside class="right-column">
+      <div class="mqtt-phone-frame">
+        <div class="mqtt-header">
+          <h2>MQTT Dashboard (Realtime Monitoring)</h2>
+          <span id="mqttSubHeader">Arduino + 4G/LTE Secure MQTT Broker • TLS/SSL</span>
+        </div>
+
+        <div class="mqtt-grid">
+          <!-- GPS Position -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>GPS Position</span>
+              <span style="color:var(--brand-light);">🛰️ GNSS</span>
+            </div>
+            <div class="tile-sub" id="mqttLat">Lat: 13.7569</div>
+            <div class="tile-sub" id="mqttLon">Lon: 100.5018</div>
+            <div class="tile-sub" style="color:#4ade80;">Fix: 3D</div>
+          </div>
+
+          <!-- Battery -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Battery (12V Li-ion)</span>
+              <span style="color:#4ade80;">🔋 BMS</span>
+            </div>
+            <div class="tile-value" id="mqttBattPct">76%</div>
+            <div class="tile-sub" id="mqttBattAmp">4.8 A (INA226)</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="mqttBattBar" style="width:76%;"></div>
+            </div>
+          </div>
+
+          <!-- Tank Level -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Tank Level</span>
+              <span style="color:var(--brand-light);">💧 เซนเซอร์ระดับน้ำยา</span>
+            </div>
+            <div class="tile-value" id="mqttTankPct">63%</div>
+            <div class="tile-sub" id="mqttTankLiters">(6.30 L / 10.0 L)</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="mqttTankBar" style="width:63%; background:#00979d;"></div>
+            </div>
+          </div>
+
+          <!-- Flow Rate -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Flow Rate</span>
+              <span>🌊 มาตรวัดการไหล</span>
+            </div>
+            <div class="tile-value" id="mqttFlowRate">1.82</div>
+            <div class="tile-sub">L/min</div>
+          </div>
+
+          <!-- Total Volume -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Total Volume</span>
+              <span>📊 ปริมาณฉีดสะสม</span>
+            </div>
+            <div class="tile-value" id="mqttTotalVol">12.45 L</div>
+            <div class="tile-sub">Session Sprayed</div>
+          </div>
+
+          <!-- Pressure -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Pressure</span>
+              <span>🧭 เซนเซอร์วัดแรงดัน</span>
+            </div>
+            <div class="tile-value" id="mqttPressure">2.35 bar</div>
+            <div class="tile-sub" id="mqttValveText">Solenoid: OPEN</div>
+          </div>
+
+          <!-- Speed -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Speed</span>
+              <span>⚙️ Wheel Encoders</span>
+            </div>
+            <div class="tile-value" id="mqttSpeed">3.6 km/h</div>
+            <div class="tile-sub" id="mqttDistance">Dist: 142.5 m</div>
+          </div>
+
+          <!-- Pump Status -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Pump Status</span>
+              <span>🔌 MOSFET Driver</span>
+            </div>
+            <div class="tile-value" id="mqttPumpStatus" style="color:#4ade80;">● ON</div>
+            <div class="tile-sub" id="mqttFanStatus">DIY Fans: ON</div>
+          </div>
+
+          <!-- Motor Status -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Motor Status</span>
+              <span>Dual Driver PWM</span>
+            </div>
+            <div class="tile-value" style="font-size:15px; margin-top:8px;">
+              L: <span id="mqttMotorL" style="color:#4ade80;">OK</span> &nbsp; R: <span id="mqttMotorR" style="color:#4ade80;">OK</span>
+            </div>
+            <div class="tile-sub" id="mqttPwmText">PWM D5/D6: 200/255</div>
+          </div>
+
+          <!-- Connection -->
+          <div class="mqtt-tile">
+            <div class="tile-label">
+              <span>Connection</span>
+              <span>📶 SIM</span>
+            </div>
+            <div class="tile-value" style="color:var(--brand-light); font-size:16px;">4G ▂▄▆█</div>
+            <div class="tile-sub" id="mqttHeartbeat">Heartbeat: 1s</div>
+          </div>
+
+          <!-- Alarms / Faults -->
+          <div class="mqtt-tile full-width" id="mqttAlarmTile" style="border-color:#10b981;">
+            <div class="tile-label">
+              <span>Alarms / Faults (ระบบแจ้งเตือนความปลอดภัย)</span>
+              <span>🔒 TLS/SSL Verified</span>
+            </div>
+            <div class="tile-value" id="mqttAlarmText" style="font-size:15px; color:#4ade80; margin-top:6px;">
+              ✔ No Fault (ระบบทำงานปกติ)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Realtime Telemetry Log (MQTT Payload Stream) -->
+      <section class="card">
+        <div class="card-header">
+          <h3 class="card-title">📡 Arduino MQTT Telemetry &amp; MicroSD Logger</h3>
+          <span style="font-size:11px; color:var(--muted);">arduino/sprayer/telemetry</span>
+        </div>
+        <div style="padding:12px;">
+          <pre id="mqttJsonPreview" style="margin:0; padding:10px; background:#080c12; border:1px solid var(--border); border-radius:8px; font-family:var(--mono); font-size:11px; color:var(--brand-light); overflow-x:auto; line-height:1.4;"></pre>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    /********************************************************************
+     * 1. ROBOT STATE, MULTI-MAP PRESETS & ARDUINO TELEMETRY MODEL
+     ********************************************************************/
+    const METER_TO_DEG = 0.000009;
+
+    const FARM_MAPS = {
+      orchard_bkk: {
+        name: 'สวนไม้ผลมาตรฐาน 4 แถว',
+        region: 'กรุงเทพฯ',
+        baseLat: 13.756900,
+        baseLon: 100.501800,
+        groundColor: 0x1b2e1e,
+        startX: -12,
+        startZ: 14,
+        cropType: 'orchard4',
+        zigzag: [
+          { x: -12, z: -14 }, { x: -6, z: -14 }, { x: -6, z: 14 },
+          { x: 0, z: 14 }, { x: 0, z: -14 }, { x: 6, z: -14 },
+          { x: 6, z: 14 }, { x: 12, z: 14 }, { x: 12, z: -14 },
+          { x: -12, z: 14 }
+        ],
+        perimeter: [
+          { x: -13.5, z: 14 }, { x: -13.5, z: -14 },
+          { x: 13.5, z: -14 }, { x: 13.5, z: 14 }
+        ]
+      },
+      field_npt: {
+        name: 'แปลงพืชไร่ร่องถี่ 6 แถว',
+        region: 'นครปฐม',
+        baseLat: 13.819900,
+        baseLon: 100.062100,
+        groundColor: 0x23331c,
+        startX: -13.5,
+        startZ: 14,
+        cropType: 'field6',
+        zigzag: [
+          { x: -13.5, z: -14 }, { x: -9.0, z: -14 }, { x: -9.0, z: 14 },
+          { x: -4.5, z: 14 }, { x: -4.5, z: -14 }, { x: 0.0, z: -14 },
+          { x: 0.0, z: 14 }, { x: 4.5, z: 14 }, { x: 4.5, z: -14 },
+          { x: 9.0, z: -14 }, { x: 9.0, z: 14 }, { x: 13.5, z: 14 },
+          { x: 13.5, z: -14 }
+        ],
+        perimeter: [
+          { x: -14, z: 14 }, { x: -14, z: -14 },
+          { x: 14, z: -14 }, { x: 14, z: 14 }
+        ]
+      },
+      durian_cti: {
+        name: 'สวนทุเรียนผังตารางห่าง',
+        region: 'จันทบุรี',
+        baseLat: 12.611400,
+        baseLon: 102.103900,
+        groundColor: 0x1d2b1a,
+        startX: -12.5,
+        startZ: 14,
+        cropType: 'durianGrid',
+        zigzag: [
+          { x: -12.5, z: -13.5 }, { x: -6.2, z: -13.5 }, { x: -6.2, z: 13.5 },
+          { x: 0, z: 13.5 }, { x: 0, z: -13.5 }, { x: 6.2, z: -13.5 },
+          { x: 6.2, z: 13.5 }, { x: 12.5, z: 13.5 }, { x: 12.5, z: -13.5 }
+        ],
+        perimeter: [
+          { x: -13.5, z: 13.5 }, { x: -13.5, z: -13.5 },
+          { x: 13.5, z: -13.5 }, { x: 13.5, z: 13.5 }
+        ]
+      },
+      open_pti: {
+        name: 'แปลงโล่งฝึกวางแผนเส้นทาง',
+        region: 'ปทุมธานี',
+        baseLat: 14.020800,
+        baseLon: 100.525000,
+        groundColor: 0x162624,
+        startX: -12,
+        startZ: 12,
+        cropType: 'openArena',
+        zigzag: [
+          { x: -12, z: -12 }, { x: -4, z: -12 }, { x: -4, z: 12 },
+          { x: 4, z: 12 }, { x: 4, z: -12 }, { x: 12, z: -12 },
+          { x: 12, z: 12 }
+        ],
+        perimeter: [
+          { x: -13, z: 13 }, { x: -13, z: -13 },
+          { x: 13, z: -13 }, { x: 13, z: 13 }
+        ]
+      }
+    };
+
+    const state = {
+      boardModel: 'Arduino Mega 2560 (ATmega2560)',
+      currentMapId: 'orchard_bkk',
+      baseLat: FARM_MAPS.orchard_bkk.baseLat,
+      baseLon: FARM_MAPS.orchard_bkk.baseLon,
+      gisStyle: 'satellite',  // 'satellite', 'topo', 'ndvi', 'blueprint'
+      routePattern: 'zigzag', // 'zigzag', 'perimeter', 'custom'
+      routeExecuting: true,
+      routeLoop: true,
+
+      cameraMode: 'tps',      // 'fpv' (1st person), 'tps' (3rd person), 'orbit' (free)
+      driveMode: 'auto',      // 'auto' or 'manual'
+      eStop: false,
+      sprayerOn: true,
+      fansOn: true,
+
+      // Position & Kinematics in 3D space (meters)
+      x: -12,
+      z: 14,
+      heading: 0,
+      speedKmh: 3.6,
+      targetSpeedKmh: 3.6,
+      currentSpeedKmh: 3.6,
+      distanceTraveled: 142.5,
+      wheelRotation: 0,
+
+      // Sprayer & Tank Metrics (matches poster numbers: 63% / 6.3L, 1.82 L/min, 2.35 bar, 12.45L total, 76% batt, 4.8A)
+      tankCapacityL: 10.0,
+      tankLevelL: 6.30,
+      targetFlowLmin: 1.82,
+      actualFlowLmin: 1.82,
+      pressureBar: 2.35,
+      totalVolumeL: 12.45,
+
+      // Electrical (12V Li-ion, BMS, INA219/INA226)
+      batteryPct: 76.0,
+      currentAmp: 4.8,
+      voltageV: 12.4,
+
+      // Obstacle Detection (LiDAR / ToF / Ultrasonic)
+      obstacleDistM: 4.85,
+      obstacleDetected: false,
+
+      // Autonomous Waypoints (Editable sequence)
+      waypoints: FARM_MAPS.orchard_bkk.zigzag.map(pt => ({ ...pt })),
+      currentWpIndex: 0,
+      sdLogRows: 1420
+    };
+
+    const keysPressed = { w: false, a: false, s: false, d: false };
+
+    function changeArduinoBoard(boardVal) {
+      state.boardModel = boardVal;
+      const shortName = boardVal.split(' (')[0];
+      document.getElementById('topBoardBadge').textContent = shortName + ' + 4G/LTE SIM';
+      document.getElementById('hwBoardName').textContent = boardVal;
+      document.getElementById('osdStreamTitle').textContent = `LIVE CAM • ${shortName.toUpperCase()} STREAM (30 FPS)`;
+    }
+
+    /********************************************************************
+     * 2. THREE.JS 3D SIMULATION (ARDUINO ROBOT, SPRAY PARTICLES, MINIMAP)
+     ********************************************************************/
+    const mainCanvas = document.getElementById('main3dCanvas');
+    const miniCanvas = document.getElementById('minimap3dCanvas');
+
+    const renderer = new THREE.WebGLRenderer({ canvas: mainCanvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+
+    const miniRenderer = new THREE.WebGLRenderer({ canvas: miniCanvas, antialias: true });
+    miniRenderer.setPixelRatio(1);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0c1624);
+    scene.fog = new THREE.FogExp2(0x0c1624, 0.014);
+
+    const mainCamera = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 200);
+    const miniCamera = new THREE.PerspectiveCamera(50, 1, 1, 120);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+    dirLight.position.set(25, 40, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add(dirLight);
+
+    // Ground / Agricultural Field
+    const groundGeo = new THREE.PlaneGeometry(90, 90, 32, 32);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2e1e,
+      roughness: 0.9,
+      metalness: 0.05
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Field Grid & Geofence Boundary
+    const gridHelper = new THREE.GridHelper(40, 20, 0x00979d, 0x2a4330);
+    gridHelper.position.y = 0.02;
+    scene.add(gridHelper);
+
+    const fenceGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(32, 0.6, 34));
+    const fenceMat = new THREE.LineBasicMaterial({ color: 0x2dd4bf });
+    const fenceMesh = new THREE.LineSegments(fenceGeo, fenceMat);
+    fenceMesh.position.y = 0.3;
+    scene.add(fenceMesh);
+
+    // Dynamic Orchard / Farm Plot Crops & 3D Planned Route Visuals
+    const trees = [];
+    const cropGroup = new THREE.Group();
+    scene.add(cropGroup);
+
+    const route3dGroup = new THREE.Group();
+    scene.add(route3dGroup);
+
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+
+    function rebuild3dFarmPlot(mapId) {
+      const cfg = FARM_MAPS[mapId] || FARM_MAPS.orchard_bkk;
+      groundMat.color.setHex(cfg.groundColor);
+
+      while (cropGroup.children.length > 0) {
+        cropGroup.remove(cropGroup.children[0]);
+      }
+      trees.length = 0;
+
+      if (cfg.cropType === 'orchard4') {
+        [-9, -3, 3, 9].forEach(rx => {
+          for (let rz = -13; rz <= 13; rz += 3.25) {
+            const treeGroup = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.1, 8), trunkMat);
+            trunk.position.y = 0.55;
+            treeGroup.add(trunk);
+
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x22543d, roughness: 0.7 });
+            const foliage = new THREE.Mesh(new THREE.SphereGeometry(0.95, 10, 10), foliageMat);
+            foliage.position.y = 1.65;
+            foliage.castShadow = true;
+            treeGroup.add(foliage);
+
+            treeGroup.position.set(rx, 0, rz);
+            cropGroup.add(treeGroup);
+            trees.push({ group: treeGroup, foliageMat, sprayed: false, x: rx, z: rz, radius: 4.2 });
+          }
+        });
+      } else if (cfg.cropType === 'field6') {
+        [-11.25, -6.75, -2.25, 2.25, 6.75, 11.25].forEach(rx => {
+          for (let rz = -13; rz <= 13; rz += 2.6) {
+            const bushGroup = new THREE.Group();
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2f5e38, roughness: 0.8 });
+            const bush = new THREE.Mesh(new THREE.SphereGeometry(0.65, 8, 8), foliageMat);
+            bush.scale.set(1.0, 0.78, 1.15);
+            bush.position.y = 0.48;
+            bush.castShadow = true;
+            bushGroup.add(bush);
+
+            bushGroup.position.set(rx, 0, rz);
+            cropGroup.add(bushGroup);
+            trees.push({ group: bushGroup, foliageMat, sprayed: false, x: rx, z: rz, radius: 3.3 });
+          }
+        });
+      } else if (cfg.cropType === 'durianGrid') {
+        [-9.3, -3.1, 3.1, 9.3].forEach(rx => {
+          [-10.5, -3.5, 3.5, 10.5].forEach(rz => {
+            const treeGroup = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.30, 1.5, 8), trunkMat);
+            trunk.position.y = 0.75;
+            treeGroup.add(trunk);
+
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1e4d35, roughness: 0.75 });
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(1.35, 2.4, 10), foliageMat);
+            cone.position.y = 2.45;
+            cone.castShadow = true;
+            treeGroup.add(cone);
+
+            treeGroup.position.set(rx, 0, rz);
+            cropGroup.add(treeGroup);
+            trees.push({ group: treeGroup, foliageMat, sprayed: false, x: rx, z: rz, radius: 5.5 });
+          });
+        });
+      } else {
+        // openArena: border shrubs around perimeter leaving open interior for custom route design
+        const borderCoords = [];
+        for (let b = -12; b <= 12; b += 6) {
+          borderCoords.push([b, -14.8], [b, 14.8]);
+        }
+        borderCoords.forEach(([bx, bz]) => {
+          const bushGroup = new THREE.Group();
+          const foliageMat = new THREE.MeshStandardMaterial({ color: 0x245346, roughness: 0.8 });
+          const bush = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7), foliageMat);
+          bush.position.y = 0.55;
+          bushGroup.add(bush);
+
+          bushGroup.position.set(bx, 0, bz);
+          cropGroup.add(bushGroup);
+          trees.push({ group: bushGroup, foliageMat, sprayed: false, x: bx, z: bz, radius: 3.5 });
+        });
+      }
+    }
+
+    function rebuild3dPlannedRoute() {
+      while (route3dGroup.children.length > 0) {
+        route3dGroup.remove(route3dGroup.children[0]);
+      }
+      if (state.waypoints.length === 0) return;
+
+      // 3D Line connecting planned waypoints
+      if (state.waypoints.length >= 2) {
+        const linePts = state.waypoints.map(wp => new THREE.Vector3(wp.x, 0.08, wp.z));
+        if (state.routeLoop && state.waypoints.length > 2) {
+          linePts.push(new THREE.Vector3(state.waypoints[0].x, 0.08, state.waypoints[0].z));
+        }
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x2dd4bf });
+        const routeLine = new THREE.Line(lineGeo, lineMat);
+        route3dGroup.add(routeLine);
+      }
+
+      // 3D Waypoint Beacons
+      state.waypoints.forEach((wp, idx) => {
+        const isTarget = (idx === state.currentWpIndex);
+        const markerColor = isTarget ? 0xfacc15 : 0x00979d;
+
+        const ringGeo = new THREE.RingGeometry(isTarget ? 0.35 : 0.24, isTarget ? 0.55 : 0.38, 18);
+        const ringMat = new THREE.MeshBasicMaterial({ color: markerColor, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(wp.x, 0.06, wp.z);
+        route3dGroup.add(ring);
+
+        const poleGeo = new THREE.CylinderGeometry(0.035, 0.035, isTarget ? 1.15 : 0.75, 8);
+        const poleMat = new THREE.MeshBasicMaterial({ color: markerColor });
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        pole.position.set(wp.x, isTarget ? 0.57 : 0.37, wp.z);
+        route3dGroup.add(pole);
+      });
+    }
+
+    rebuild3dFarmPlot('orchard_bkk');
+    rebuild3dPlannedRoute();
+
+    /********************************************************************
+     * BUILD THE 3D ARDUINO SPRAYER ROBOT
+     * - Red tubular metal chassis frame (ท่อเหล็กแดง)
+     * - 4 black rugged tires with Wheel Encoders (ล้อยาง 4 ล้อ)
+     * - White 10L translucent chemical tank + dynamic blue-green liquid
+     * - Twin vertical silver DIY fan towers at rear + brass nozzles
+     * - Transparent IP65 enclosure revealing the Teal Arduino Board inside!
+     ********************************************************************/
+    const robotGroup = new THREE.Group();
+    scene.add(robotGroup);
+
+    const redTubeMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.45, roughness: 0.35 });
+    const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.4 });
+    const arduinoTealMat = new THREE.MeshStandardMaterial({ color: 0x00979d, metalness: 0.3, roughness: 0.4 });
+
+    const chassisBase = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.12, 1.9), darkMetalMat);
+    chassisBase.position.y = 0.42;
+    chassisBase.castShadow = true;
+    robotGroup.add(chassisBase);
+
+    function makeTube(w, h, d, x, y, z) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), redTubeMat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      robotGroup.add(m);
+    }
+    makeTube(0.07, 0.07, 1.98, -0.68, 0.48, 0);
+    makeTube(0.07, 0.07, 1.98,  0.68, 0.48, 0);
+    makeTube(0.07, 0.07, 1.85, -0.68, 0.85, 0);
+    makeTube(0.07, 0.07, 1.85,  0.68, 0.85, 0);
+    makeTube(1.42, 0.07, 0.07, 0, 0.48, -0.96);
+    makeTube(1.42, 0.07, 0.07, 0, 0.48,  0.96);
+    makeTube(1.42, 0.07, 0.07, 0, 0.85, -0.90);
+    makeTube(1.42, 0.07, 0.07, 0, 0.85,  0.90);
+    makeTube(0.07, 0.38, 0.07, -0.68, 0.66, -0.90);
+    makeTube(0.07, 0.38, 0.07,  0.68, 0.66, -0.90);
+    makeTube(0.07, 0.38, 0.07, -0.68, 0.66,  0.90);
+    makeTube(0.07, 0.38, 0.07,  0.68, 0.66,  0.90);
+
+    // 4 Rugged Tires
+    const wheelMeshes = [];
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85 });
+    const hubMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.3 });
+    const wheelPositions = [
+      [-0.78, 0.36, -0.68],
+      [ 0.78, 0.36, -0.68],
+      [-0.78, 0.36,  0.68],
+      [ 0.78, 0.36,  0.68]
+    ];
+    wheelPositions.forEach(([wx, wy, wz]) => {
+      const wGroup = new THREE.Group();
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.26, 20), tireMat);
+      tire.rotation.z = Math.PI / 2;
+      tire.castShadow = true;
+      wGroup.add(tire);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.28, 12), hubMat);
+      hub.rotation.z = Math.PI / 2;
+      wGroup.add(hub);
+
+      wGroup.position.set(wx, wy, wz);
+      robotGroup.add(wGroup);
+      wheelMeshes.push(wGroup);
+    });
+
+    // White 10L Chemical Tank + Dynamic Liquid
+    const tankShellMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      transparent: true,
+      opacity: 0.82,
+      roughness: 0.25
+    });
+    const tankMesh = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.56, 1.05), tankShellMat);
+    tankMesh.position.set(0, 0.78, -0.05);
+    robotGroup.add(tankMesh);
+
+    const liquidMat = new THREE.MeshStandardMaterial({ color: 0x00979d, roughness: 0.2 });
+    const liquidMesh = new THREE.Mesh(new THREE.BoxGeometry(0.89, 0.48, 0.99), liquidMat);
+    liquidMesh.position.set(0, 0.74, -0.05);
+    robotGroup.add(liquidMesh);
+
+    const tankCap = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 16), tireMat);
+    tankCap.position.set(0, 1.09, -0.15);
+    robotGroup.add(tankCap);
+
+    // Emergency Stop Mushroom Button
+    const eStopBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 12),
+      new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
+    eStopBase.position.set(0.35, 1.08, -0.42);
+    robotGroup.add(eStopBase);
+
+    const eStopButton = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.06, 16),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x450a0a }));
+    eStopButton.position.set(0.35, 1.13, -0.42);
+    robotGroup.add(eStopButton);
+
+    // Twin DIY Fan Sprayer Ducts + Brass Nozzles at Rear
+    const silverMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.75, roughness: 0.25 });
+    const brassMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85, roughness: 0.2 });
+    const fanBlades = [];
+
+    [-0.36, 0.36].forEach(fx => {
+      const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.62, 16), silverMat);
+      duct.position.set(fx, 1.12, 0.68);
+      duct.castShadow = true;
+      robotGroup.add(duct);
+
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.03, 0.08), darkMetalMat);
+      blade.position.set(fx, 1.38, 0.68);
+      robotGroup.add(blade);
+      fanBlades.push(blade);
+
+      const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.18, 10), brassMat);
+      nozzle.rotation.z = Math.PI / 2;
+      nozzle.position.set(fx + (fx < 0 ? -0.22 : 0.22), 1.25, 0.68);
+      robotGroup.add(nozzle);
+    });
+
+    // Waterproof IP65 Controller Box with visible Teal Arduino Board inside
+    const ip65Box = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.38),
+      new THREE.MeshStandardMaterial({ color: 0x334155, transparent: true, opacity: 0.65, roughness: 0.3 }));
+    ip65Box.position.set(0, 0.62, -0.72);
+    robotGroup.add(ip65Box);
+
+    // Arduino Teal PCB inside the IP65 box
+    const arduinoPcb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.26), arduinoTealMat);
+    arduinoPcb.position.set(0, 0.58, -0.72);
+    robotGroup.add(arduinoPcb);
+
+    // FPV Antenna
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.55, 8), tireMat);
+    antenna.position.set(-0.22, 0.98, -0.72);
+    robotGroup.add(antenna);
+
+    // Front LiDAR / ToF / Ultrasonic Sensor + FPV Camera lens
+    const sensorHead = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.14, 0.14), arduinoTealMat);
+    sensorHead.position.set(0, 0.92, -0.92);
+    robotGroup.add(sensorHead);
+
+    // LiDAR Scanning Cone
+    const lidarGeo = new THREE.ConeGeometry(1.4, 3.8, 16, 1, true);
+    const lidarMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.14,
+      side: THREE.DoubleSide
+    });
+    const lidarCone = new THREE.Mesh(lidarGeo, lidarMat);
+    lidarCone.rotation.x = -Math.PI / 2;
+    lidarCone.position.set(0, 0.65, -2.85);
+    robotGroup.add(lidarCone);
+
+    /********************************************************************
+     * 3. CHEMICAL SPRAY PARTICLE SYSTEM & GROUND TRAIL
+     ********************************************************************/
+    const PARTICLE_COUNT = 260;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const particleVelocities = [];
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particlePositions[i * 3] = 0;
+      particlePositions[i * 3 + 1] = -10;
+      particlePositions[i * 3 + 2] = 0;
+      particleVelocities.push({ vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+      color: 0x5eead4,
+      size: 0.24,
+      transparent: true,
+      opacity: 0.75
+    });
+    const sprayParticles = new THREE.Points(particleGeo, particleMat);
+    scene.add(sprayParticles);
+
+    const trailGroup = new THREE.Group();
+    scene.add(trailGroup);
+    const trailMat = new THREE.MeshBasicMaterial({
+      color: 0x00979d,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide
+    });
+    let lastTrailPos = { x: -999, z: -999 };
+    const gpsTrailPoints = [];
+
+    let obstacleMesh = null;
+    function spawnTestObstacle() {
+      if (obstacleMesh) scene.remove(obstacleMesh);
+      const obsGeo = new THREE.BoxGeometry(1.4, 1.3, 1.4);
+      const obsMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 });
+      obstacleMesh = new THREE.Mesh(obsGeo, obsMat);
+      const dist = 4.2;
+      const ox = state.x - Math.sin(state.heading) * dist;
+      const oz = state.z - Math.cos(state.heading) * dist;
+      obstacleMesh.position.set(ox, 0.65, oz);
+      obstacleMesh.castShadow = true;
+      scene.add(obstacleMesh);
+    }
+
+    /********************************************************************
+     * 4. MULTI-MAP GIS CANVAS & INTERACTIVE WAYPOINT / PATH PLANNER
+     ********************************************************************/
+    const gisCanvas = document.getElementById('realMapCanvas');
+    const gisCtx = gisCanvas.getContext('2d');
+    let dragWpIndex = -1;
+    let pointerDownPos = null;
+    let didDragWaypoint = false;
+    let hoveredWpIndex = -1;
+
+    function resizeGisCanvas() {
+      const rect = gisCanvas.parentElement.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        gisCanvas.width = rect.width * window.devicePixelRatio;
+        gisCanvas.height = rect.height * window.devicePixelRatio;
+        gisCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      }
+    }
+
+    function worldToGisPixel(wx, wz, width, height) {
+      const scale = Math.min(width, height) / 36;
+      const cx = width / 2 + wx * scale;
+      const cy = height / 2 + wz * scale;
+      return { x: cx, y: cy, scale };
+    }
+
+    function gisPixelToWorld(px, py, width, height) {
+      const scale = Math.min(width, height) / 36;
+      const wx = (px - width / 2) / scale;
+      const wz = (py - height / 2) / scale;
+      return {
+        x: parseFloat(Math.max(-15, Math.min(15, wx)).toFixed(2)),
+        z: parseFloat(Math.max(-15, Math.min(15, wz)).toFixed(2))
+      };
+    }
+
+    function findWaypointAtPixel(px, py, width, height) {
+      for (let i = state.waypoints.length - 1; i >= 0; i--) {
+        const p = worldToGisPixel(state.waypoints[i].x, state.waypoints[i].z, width, height);
+        if (Math.hypot(px - p.x, py - p.y) <= 11) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    function getCanvasLocalCoords(e) {
+      const rect = gisCanvas.getBoundingClientRect();
+      const clientX = e.touches && e.touches.length ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches && e.touches.length ? e.touches[0].clientY : e.clientY;
+      return {
+        px: clientX - rect.left,
+        py: clientY - rect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    gisCanvas.addEventListener('mousedown', (e) => {
+      if (e.button === 2) return; // handled in contextmenu
+      const { px, py, width, height } = getCanvasLocalCoords(e);
+      pointerDownPos = { px, py };
+      didDragWaypoint = false;
+      const hitIdx = findWaypointAtPixel(px, py, width, height);
+      if (hitIdx !== -1) {
+        dragWpIndex = hitIdx;
+        gisCanvas.style.cursor = 'grabbing';
+      }
+    });
+
+    gisCanvas.addEventListener('mousemove', (e) => {
+      const { px, py, width, height } = getCanvasLocalCoords(e);
+      if (dragWpIndex !== -1) {
+        if (!pointerDownPos || Math.hypot(px - pointerDownPos.px, py - pointerDownPos.py) > 3) {
+          didDragWaypoint = true;
+        }
+        const worldPt = gisPixelToWorld(px, py, width, height);
+        state.waypoints[dragWpIndex] = worldPt;
+        setPatternButtonsUI('custom');
+        rebuild3dPlannedRoute();
+        renderWaypointStrip();
+      } else {
+        hoveredWpIndex = findWaypointAtPixel(px, py, width, height);
+        gisCanvas.style.cursor = hoveredWpIndex !== -1 ? 'grab' : 'crosshair';
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (dragWpIndex !== -1) {
+        dragWpIndex = -1;
+        gisCanvas.style.cursor = hoveredWpIndex !== -1 ? 'grab' : 'crosshair';
+      }
+    });
+
+    gisCanvas.addEventListener('click', (e) => {
+      if (didDragWaypoint) {
+        didDragWaypoint = false;
+        return;
+      }
+      const { px, py, width, height } = getCanvasLocalCoords(e);
+      const hitIdx = findWaypointAtPixel(px, py, width, height);
+      if (hitIdx !== -1) {
+        // Clicking an existing pin sets it as the immediate target waypoint
+        selectWaypointTarget(hitIdx);
+        return;
+      }
+      // Clicking empty space appends a new waypoint to the planned path
+      const worldPt = gisPixelToWorld(px, py, width, height);
+      state.waypoints.push(worldPt);
+      if (state.waypoints.length === 1) {
+        state.currentWpIndex = 0;
+      }
+      setPatternButtonsUI('custom');
+      if (state.driveMode !== 'auto') setDriveMode('auto');
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    });
+
+    gisCanvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const { px, py, width, height } = getCanvasLocalCoords(e);
+      const hitIdx = findWaypointAtPixel(px, py, width, height);
+      if (hitIdx !== -1) {
+        removeWaypointAt(hitIdx);
+      }
+    });
+
+    // Touch support for dragging/tapping pins on mobile/tablet
+    gisCanvas.addEventListener('touchstart', (e) => {
+      const { px, py, width, height } = getCanvasLocalCoords(e);
+      pointerDownPos = { px, py };
+      didDragWaypoint = false;
+      const hitIdx = findWaypointAtPixel(px, py, width, height);
+      if (hitIdx !== -1) {
+        dragWpIndex = hitIdx;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    gisCanvas.addEventListener('touchmove', (e) => {
+      if (dragWpIndex !== -1) {
+        e.preventDefault();
+        const { px, py, width, height } = getCanvasLocalCoords(e);
+        didDragWaypoint = true;
+        state.waypoints[dragWpIndex] = gisPixelToWorld(px, py, width, height);
+        setPatternButtonsUI('custom');
+        rebuild3dPlannedRoute();
+        renderWaypointStrip();
+      }
+    }, { passive: false });
+
+    gisCanvas.addEventListener('touchend', () => {
+      dragWpIndex = -1;
+    });
+
+    function setPatternButtonsUI(pat) {
+      state.routePattern = pat;
+      document.getElementById('btnPatZigzag').classList.toggle('active', pat === 'zigzag');
+      document.getElementById('btnPatPerimeter').classList.toggle('active', pat === 'perimeter');
+      document.getElementById('btnPatCustom').classList.toggle('active', pat === 'custom');
+    }
+
+    function updateRouteExecButtonUI() {
+      const btn = document.getElementById('btnPlanPause');
+      btn.classList.toggle('active', state.routeExecuting);
+      btn.textContent = state.routeExecuting ? '▶️ กำลังเดินตามแผน' : '⏸️ หยุดรถเพื่อวางแผน';
+    }
+
+    function changeFarmMap(mapId) {
+      const cfg = FARM_MAPS[mapId];
+      if (!cfg) return;
+      state.currentMapId = mapId;
+      state.baseLat = cfg.baseLat;
+      state.baseLon = cfg.baseLon;
+      state.x = cfg.startX;
+      state.z = cfg.startZ;
+      state.heading = 0;
+
+      // Clear previous spray trail
+      gpsTrailPoints.length = 0;
+      lastTrailPos = { x: -999, z: -999 };
+      while (trailGroup.children.length > 0) {
+        trailGroup.remove(trailGroup.children[0]);
+      }
+      if (obstacleMesh) {
+        scene.remove(obstacleMesh);
+        obstacleMesh = null;
+      }
+
+      rebuild3dFarmPlot(mapId);
+
+      // Apply current pattern (or zigzag if switching to structured plot)
+      if (state.routePattern === 'perimeter') {
+        state.waypoints = cfg.perimeter.map(pt => ({ ...pt }));
+      } else {
+        setPatternButtonsUI('zigzag');
+        state.waypoints = cfg.zigzag.map(pt => ({ ...pt }));
+      }
+      state.currentWpIndex = 0;
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    }
+
+    function changeGisStyle(styleVal) {
+      state.gisStyle = styleVal;
+    }
+
+    function applyRoutePattern(pat) {
+      const cfg = FARM_MAPS[state.currentMapId] || FARM_MAPS.orchard_bkk;
+      setPatternButtonsUI(pat);
+      if (pat === 'zigzag') {
+        state.waypoints = cfg.zigzag.map(pt => ({ ...pt }));
+        state.currentWpIndex = 0;
+        state.routeExecuting = true;
+        setDriveMode('auto');
+      } else if (pat === 'perimeter') {
+        state.waypoints = cfg.perimeter.map(pt => ({ ...pt }));
+        state.currentWpIndex = 0;
+        state.routeExecuting = true;
+        setDriveMode('auto');
+      } else {
+        // Custom path mode: clear preset points and pause so user can calmly plot WP1, WP2, WP3...
+        state.waypoints = [];
+        state.currentWpIndex = 0;
+        state.routeExecuting = false;
+        setDriveMode('auto');
+      }
+      updateRouteExecButtonUI();
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    }
+
+    function toggleRouteExecution() {
+      state.routeExecuting = !state.routeExecuting;
+      if (state.routeExecuting && state.driveMode !== 'auto') {
+        setDriveMode('auto');
+      }
+      updateRouteExecButtonUI();
+    }
+
+    function toggleRouteLoop() {
+      state.routeLoop = !state.routeLoop;
+      const btn = document.getElementById('btnLoopRoute');
+      btn.classList.toggle('active', state.routeLoop);
+      btn.textContent = state.routeLoop ? '🔁 วนลูป: เปิด' : '➡️ วนลูป: ปิด';
+      rebuild3dPlannedRoute();
+    }
+
+    function selectWaypointTarget(idx) {
+      if (idx < 0 || idx >= state.waypoints.length) return;
+      state.currentWpIndex = idx;
+      if (state.driveMode !== 'auto') setDriveMode('auto');
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    }
+
+    function removeWaypointAt(idx) {
+      if (idx < 0 || idx >= state.waypoints.length) return;
+      state.waypoints.splice(idx, 1);
+      if (state.currentWpIndex >= state.waypoints.length) {
+        state.currentWpIndex = Math.max(0, state.waypoints.length - 1);
+      }
+      setPatternButtonsUI('custom');
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    }
+
+    function undoLastWaypoint() {
+      if (state.waypoints.length === 0) return;
+      removeWaypointAt(state.waypoints.length - 1);
+    }
+
+    function clearCustomWaypoints() {
+      state.waypoints = [];
+      state.currentWpIndex = 0;
+      setPatternButtonsUI('custom');
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+    }
+
+    function renderWaypointStrip() {
+      const strip = document.getElementById('wpSequenceStrip');
+      if (!strip) return;
+      strip.innerHTML = '';
+
+      if (state.waypoints.length === 0) {
+        const emptySpan = document.createElement('span');
+        emptySpan.className = 'wp-empty';
+        emptySpan.textContent = 'ยังไม่มีจุดทางเดิน — คลิกบนแผนที่เพื่อกำหนดจุด WP1, WP2, WP3 ตามลำดับ แล้วกด "กำลังเดินตามแผน"';
+        strip.appendChild(emptySpan);
+        return;
+      }
+
+      // Calculate total planned path length in meters
+      let totalPathM = 0;
+      for (let i = 1; i < state.waypoints.length; i++) {
+        totalPathM += Math.hypot(
+          state.waypoints[i].x - state.waypoints[i - 1].x,
+          state.waypoints[i].z - state.waypoints[i - 1].z
+        );
+      }
+      if (state.routeLoop && state.waypoints.length > 2) {
+        totalPathM += Math.hypot(
+          state.waypoints[0].x - state.waypoints[state.waypoints.length - 1].x,
+          state.waypoints[0].z - state.waypoints[state.waypoints.length - 1].z
+        );
+      }
+
+      const summaryBadge = document.createElement('span');
+      summaryBadge.style.cssText = 'font-size:11px; color:var(--brand-light); font-weight:600; white-space:nowrap; margin-right:4px;';
+      summaryBadge.textContent = `เส้นทาง (${state.waypoints.length} จุด • ${totalPathM.toFixed(1)} m):`;
+      strip.appendChild(summaryBadge);
+
+      state.waypoints.forEach((wp, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'wp-chip' + (idx === state.currentWpIndex ? ' current' : '');
+        chip.title = `คลิกเพื่อให้หุ่นยนต์มุ่งหน้าไป WP${idx + 1} (${wp.x.toFixed(1)}m, ${wp.z.toFixed(1)}m)`;
+        chip.onclick = () => selectWaypointTarget(idx);
+
+        const label = document.createElement('span');
+        label.textContent = `WP${idx + 1}`;
+        chip.appendChild(label);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'wp-chip-del';
+        delBtn.type = 'button';
+        delBtn.title = `ลบจุด WP${idx + 1}`;
+        delBtn.textContent = '×';
+        delBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          removeWaypointAt(idx);
+        };
+        chip.appendChild(delBtn);
+
+        strip.appendChild(chip);
+
+        if (idx < state.waypoints.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.style.cssText = 'color:var(--muted); font-size:10px;';
+          arrow.textContent = '➔';
+          strip.appendChild(arrow);
+        }
+      });
+    }
+
+    function drawSegmentArrow(ctx, x1, y1, x2, y2, color) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 22) return;
+      const mx = (x1 + x2) / 2;
+      const my = (y1 + y2) / 2;
+      const angle = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(5, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function renderGisMap() {
+      const rect = gisCanvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (w <= 0 || h <= 0) return;
+
+      const pTL = worldToGisPixel(-16, -16, w, h);
+      const pBR = worldToGisPixel(16, 16, w, h);
+
+      // 1. Background according to selected GIS Map Style
+      if (state.gisStyle === 'satellite') {
+        const grad = gisCtx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, Math.max(w, h) * 0.75);
+        grad.addColorStop(0, '#173824');
+        grad.addColorStop(0.6, '#10281a');
+        grad.addColorStop(1, '#08150e');
+        gisCtx.fillStyle = grad;
+        gisCtx.fillRect(0, 0, w, h);
+
+        gisCtx.fillStyle = 'rgba(38, 92, 62, 0.35)';
+        gisCtx.fillRect(pTL.x, pTL.y, pBR.x - pTL.x, pBR.y - pTL.y);
+      } else if (state.gisStyle === 'topo') {
+        gisCtx.fillStyle = '#141c24';
+        gisCtx.fillRect(0, 0, w, h);
+        // Topographic elevation contour rings
+        gisCtx.save();
+        gisCtx.strokeStyle = 'rgba(217, 119, 6, 0.28)';
+        gisCtx.lineWidth = 1.1;
+        for (let r = 28; r < Math.max(w, h) * 0.7; r += 26) {
+          gisCtx.beginPath();
+          gisCtx.ellipse(w * 0.48, h * 0.52, r * 1.18, r * 0.85, 0.2, 0, Math.PI * 2);
+          gisCtx.stroke();
+        }
+        gisCtx.restore();
+      } else if (state.gisStyle === 'ndvi') {
+        const ndviGrad = gisCtx.createLinearGradient(0, 0, w, h);
+        ndviGrad.addColorStop(0, '#0f291e');
+        ndviGrad.addColorStop(0.5, '#1e3a1e');
+        ndviGrad.addColorStop(1, '#2d2314');
+        gisCtx.fillStyle = ndviGrad;
+        gisCtx.fillRect(0, 0, w, h);
+
+        gisCtx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+        gisCtx.fillRect(pTL.x, pTL.y, pBR.x - pTL.x, pBR.y - pTL.y);
+      } else {
+        // 'blueprint' Tactical Coordinate Grid
+        gisCtx.fillStyle = '#091326';
+        gisCtx.fillRect(0, 0, w, h);
+      }
+
+      // 2. Lat/Lon Coordinate Grid Lines
+      gisCtx.strokeStyle = state.gisStyle === 'blueprint'
+        ? 'rgba(56, 189, 248, 0.22)'
+        : 'rgba(255, 255, 255, 0.08)';
+      gisCtx.lineWidth = 1;
+      for (let m = -15; m <= 15; m += 5) {
+        const vPt = worldToGisPixel(m, 0, w, h);
+        gisCtx.beginPath();
+        gisCtx.moveTo(vPt.x, 0);
+        gisCtx.lineTo(vPt.x, h);
+        gisCtx.stroke();
+
+        const hPt = worldToGisPixel(0, m, w, h);
+        gisCtx.beginPath();
+        gisCtx.moveTo(0, hPt.y);
+        gisCtx.lineTo(w, hPt.y);
+        gisCtx.stroke();
+      }
+
+      // 3. Geofence Dashed Polygon
+      const gfTL = worldToGisPixel(-15.5, -16.5, w, h);
+      const gfBR = worldToGisPixel(15.5, 16.5, w, h);
+      gisCtx.save();
+      gisCtx.strokeStyle = '#2dd4bf';
+      gisCtx.lineWidth = 1.8;
+      gisCtx.setLineDash([6, 4]);
+      gisCtx.strokeRect(gfTL.x, gfTL.y, gfBR.x - gfTL.x, gfBR.y - gfTL.y);
+      gisCtx.restore();
+
+      // 4. Sprayed Coverage Trail (Green RTK path)
+      if (gpsTrailPoints.length > 1) {
+        gisCtx.save();
+        gisCtx.strokeStyle = state.gisStyle === 'ndvi'
+          ? 'rgba(56, 189, 248, 0.72)'
+          : 'rgba(16, 185, 129, 0.62)';
+        gisCtx.lineWidth = 8;
+        gisCtx.lineCap = 'round';
+        gisCtx.lineJoin = 'round';
+        gisCtx.beginPath();
+        gpsTrailPoints.forEach((pt, idx) => {
+          const p = worldToGisPixel(pt.x, pt.z, w, h);
+          if (idx === 0) gisCtx.moveTo(p.x, p.y);
+          else gisCtx.lineTo(p.x, p.y);
+        });
+        gisCtx.stroke();
+        gisCtx.restore();
+      }
+
+      // 5. Orchard / Crop Plants on GIS Map
+      trees.forEach(t => {
+        const p = worldToGisPixel(t.x, t.z, w, h);
+        gisCtx.beginPath();
+        gisCtx.arc(p.x, p.y, t.radius || 4.2, 0, Math.PI * 2);
+        if (state.gisStyle === 'ndvi') {
+          gisCtx.fillStyle = t.sprayed ? '#22d3ee' : '#84cc16';
+          gisCtx.strokeStyle = t.sprayed ? '#a5f3fc' : '#4d7c0f';
+        } else {
+          gisCtx.fillStyle = t.sprayed ? '#10b981' : '#1e3a2f';
+          gisCtx.strokeStyle = t.sprayed ? '#6ee7b7' : '#2d5a47';
+        }
+        gisCtx.fill();
+        gisCtx.lineWidth = 1;
+        gisCtx.stroke();
+      });
+
+      // 6. Planned Waypoint Path & Directional Arrows
+      if (state.waypoints.length >= 2) {
+        gisCtx.save();
+        gisCtx.strokeStyle = 'rgba(45, 212, 191, 0.85)';
+        gisCtx.lineWidth = 2.2;
+        gisCtx.beginPath();
+        state.waypoints.forEach((wp, idx) => {
+          const p = worldToGisPixel(wp.x, wp.z, w, h);
+          if (idx === 0) gisCtx.moveTo(p.x, p.y);
+          else gisCtx.lineTo(p.x, p.y);
+        });
+        if (state.routeLoop && state.waypoints.length > 2) {
+          const p0 = worldToGisPixel(state.waypoints[0].x, state.waypoints[0].z, w, h);
+          gisCtx.lineTo(p0.x, p0.y);
+        }
+        gisCtx.stroke();
+        gisCtx.restore();
+
+        // Draw direction arrows on each path segment
+        for (let i = 0; i < state.waypoints.length - 1; i++) {
+          const pA = worldToGisPixel(state.waypoints[i].x, state.waypoints[i].z, w, h);
+          const pB = worldToGisPixel(state.waypoints[i + 1].x, state.waypoints[i + 1].z, w, h);
+          drawSegmentArrow(gisCtx, pA.x, pA.y, pB.x, pB.y, '#5eead4');
+        }
+        if (state.routeLoop && state.waypoints.length > 2) {
+          const pLast = worldToGisPixel(
+            state.waypoints[state.waypoints.length - 1].x,
+            state.waypoints[state.waypoints.length - 1].z,
+            w, h
+          );
+          const pFirst = worldToGisPixel(state.waypoints[0].x, state.waypoints[0].z, w, h);
+          drawSegmentArrow(gisCtx, pLast.x, pLast.y, pFirst.x, pFirst.y, 'rgba(94, 234, 212, 0.65)');
+        }
+      }
+
+      // Active target vector dashed line from Robot -> Current Target WP
+      if (state.driveMode === 'auto' && state.waypoints.length > 0) {
+        const targetWp = state.waypoints[state.currentWpIndex];
+        if (targetWp) {
+          const rpNow = worldToGisPixel(state.x, state.z, w, h);
+          const tpNow = worldToGisPixel(targetWp.x, targetWp.z, w, h);
+          gisCtx.save();
+          gisCtx.strokeStyle = '#facc15';
+          gisCtx.lineWidth = 1.6;
+          gisCtx.setLineDash([4, 4]);
+          gisCtx.beginPath();
+          gisCtx.moveTo(rpNow.x, rpNow.y);
+          gisCtx.lineTo(tpNow.x, tpNow.y);
+          gisCtx.stroke();
+          gisCtx.restore();
+        }
+      }
+
+      // 7. Obstacle Marker (if placed)
+      if (obstacleMesh) {
+        const op = worldToGisPixel(obstacleMesh.position.x, obstacleMesh.position.z, w, h);
+        gisCtx.fillStyle = '#f59e0b';
+        gisCtx.fillRect(op.x - 5, op.y - 5, 10, 10);
+      }
+
+      // 8. Interactive Numbered Waypoint Pins
+      state.waypoints.forEach((wp, idx) => {
+        const p = worldToGisPixel(wp.x, wp.z, w, h);
+        const isCurrent = (idx === state.currentWpIndex);
+        const isHovered = (idx === hoveredWpIndex || idx === dragWpIndex);
+
+        if (isCurrent) {
+          const pulse = 9 + Math.sin(performance.now() * 0.008) * 2.5;
+          gisCtx.beginPath();
+          gisCtx.arc(p.x, p.y, pulse, 0, Math.PI * 2);
+          gisCtx.strokeStyle = 'rgba(250, 204, 21, 0.7)';
+          gisCtx.lineWidth = 1.8;
+          gisCtx.stroke();
+        }
+
+        gisCtx.beginPath();
+        gisCtx.arc(p.x, p.y, isHovered ? 7.5 : 6.2, 0, Math.PI * 2);
+        gisCtx.fillStyle = isCurrent ? '#facc15' : '#00979d';
+        gisCtx.fill();
+        gisCtx.strokeStyle = '#ffffff';
+        gisCtx.lineWidth = 1.5;
+        gisCtx.stroke();
+
+        gisCtx.fillStyle = isCurrent ? '#0f172a' : '#ffffff';
+        gisCtx.font = 'bold 8.5px JetBrains Mono';
+        gisCtx.textAlign = 'center';
+        gisCtx.textBaseline = 'middle';
+        gisCtx.fillText(String(idx + 1), p.x, p.y + 0.5);
+      });
+      gisCtx.textAlign = 'start';
+      gisCtx.textBaseline = 'alphabetic';
+
+      // 9. Robot GPS Marker & Heading Cone
+      const rp = worldToGisPixel(state.x, state.z, w, h);
+      gisCtx.save();
+      gisCtx.translate(rp.x, rp.y);
+      gisCtx.rotate(-state.heading);
+
+      // LiDAR / FOV Cone on GIS map
+      gisCtx.beginPath();
+      gisCtx.moveTo(0, 0);
+      gisCtx.lineTo(-14, -28);
+      gisCtx.lineTo(14, -28);
+      gisCtx.closePath();
+      gisCtx.fillStyle = state.obstacleDetected
+        ? 'rgba(239, 68, 68, 0.35)'
+        : 'rgba(45, 212, 191, 0.24)';
+      gisCtx.fill();
+
+      // Robot body dot
+      gisCtx.beginPath();
+      gisCtx.arc(0, 0, 7, 0, Math.PI * 2);
+      gisCtx.fillStyle = '#ef4444';
+      gisCtx.fill();
+      gisCtx.lineWidth = 2;
+      gisCtx.strokeStyle = '#ffffff';
+      gisCtx.stroke();
+
+      // Heading arrow tip
+      gisCtx.beginPath();
+      gisCtx.moveTo(0, -10);
+      gisCtx.lineTo(-4, -3);
+      gisCtx.lineTo(4, -3);
+      gisCtx.closePath();
+      gisCtx.fillStyle = '#ffffff';
+      gisCtx.fill();
+      gisCtx.restore();
+
+      // 10. Map Info Badge Overlay
+      const cfg = FARM_MAPS[state.currentMapId] || FARM_MAPS.orchard_bkk;
+      const styleTitles = {
+        satellite: 'SATELLITE RTK GIS',
+        topo: 'TOPOGRAPHIC CONTOUR',
+        ndvi: 'NDVI CROP HEALTH',
+        blueprint: 'TACTICAL GRID GIS'
+      };
+      gisCtx.fillStyle = 'rgba(11, 15, 23, 0.82)';
+      gisCtx.fillRect(10, 10, 195, 40);
+      gisCtx.strokeStyle = 'rgba(45, 212, 191, 0.4)';
+      gisCtx.strokeRect(10, 10, 195, 40);
+      gisCtx.fillStyle = '#2dd4bf';
+      gisCtx.font = 'bold 10.5px JetBrains Mono';
+      gisCtx.fillText(styleTitles[state.gisStyle] || 'GIS MAP', 17, 25);
+      gisCtx.fillStyle = '#cbd5e1';
+      gisCtx.font = '10px Prompt, sans-serif';
+      gisCtx.fillText(`${cfg.name} (${cfg.region})`, 17, 41);
+    }
+
+    /********************************************************************
+     * 5. UI CONTROLS & INTERACTION HANDLERS
+     ********************************************************************/
+    function setCameraMode(mode) {
+      state.cameraMode = mode;
+      document.getElementById('btnCamFPV').classList.toggle('active', mode === 'fpv');
+      document.getElementById('btnCamTPS').classList.toggle('active', mode === 'tps');
+      document.getElementById('btnCamFree').classList.toggle('active', mode === 'orbit');
+      document.getElementById('fpvReticle').style.display = (mode === 'fpv') ? 'flex' : 'none';
+
+      const labels = {
+        fpv: 'MODE: 1ST PERSON FPV (กล้องหน้ารถหุ่นยนต์)',
+        tps: 'MODE: 3RD PERSON FOLLOW (มุมมองบุคคลที่ 3)',
+        orbit: 'MODE: 360° ORBIT INSPECT (มุมมองรอบคัน)'
+      };
+      document.getElementById('osdViewLabel').textContent = labels[mode];
+    }
+
+    function setDriveMode(mode) {
+      state.driveMode = mode;
+      document.getElementById('btnModeManual').classList.toggle('active', mode === 'manual');
+      document.getElementById('btnModeAuto').classList.toggle('active', mode === 'auto');
+    }
+
+    function toggleSprayer() {
+      if (state.eStop) return;
+      state.sprayerOn = !state.sprayerOn;
+      updateSprayerButtons();
+    }
+
+    function updateSprayerButtons() {
+      const btn = document.getElementById('btnSprayToggle');
+      btn.classList.toggle('active', state.sprayerOn);
+      btn.textContent = state.sprayerOn
+        ? '💦 ปั๊มน้ำยา + โซลินอยด์วาล์ว: เปิด (ON)'
+        : '💦 ปั๊มน้ำยา + โซลินอยด์วาล์ว: ปิด (OFF)';
+    }
+
+    function toggleFans() {
+      if (state.eStop) return;
+      state.fansOn = !state.fansOn;
+      const btn = document.getElementById('btnFanToggle');
+      btn.classList.toggle('active', state.fansOn);
+      btn.textContent = state.fansOn
+        ? '🌀 พัดลมคู่ DIY: เปิด (ON)'
+        : '🌀 พัดลมคู่ DIY: ปิด (OFF)';
+    }
+
+    function toggleEmergencyStop() {
+      state.eStop = !state.eStop;
+      const btn = document.getElementById('btnEstopTop');
+      btn.classList.toggle('active', state.eStop);
+      if (state.eStop) {
+        state.sprayerOn = false;
+        state.fansOn = false;
+        updateSprayerButtons();
+        document.getElementById('btnFanToggle').classList.remove('active');
+      } else {
+        state.sprayerOn = true;
+        state.fansOn = true;
+        updateSprayerButtons();
+        document.getElementById('btnFanToggle').classList.add('active');
+      }
+    }
+
+    function updateTargetFlow(val) {
+      state.targetFlowLmin = parseFloat(val);
+      const calcBar = (1.1 + state.targetFlowLmin * 0.68).toFixed(2);
+      document.getElementById('targetFlowLabel').textContent = `${state.targetFlowLmin.toFixed(2)} L/min (${calcBar} bar)`;
+    }
+
+    function updateTargetSpeed(val) {
+      state.targetSpeedKmh = parseFloat(val);
+      document.getElementById('targetSpeedLabel').textContent = `${state.targetSpeedKmh.toFixed(1)} km/h`;
+    }
+
+    function refillTank() {
+      state.tankLevelL = state.tankCapacityL;
+    }
+
+    function rechargeBattery() {
+      state.batteryPct = 100.0;
+      state.voltageV = 12.6;
+    }
+
+    function resetSimulation() {
+      const cfg = FARM_MAPS[state.currentMapId] || FARM_MAPS.orchard_bkk;
+      state.x = cfg.startX;
+      state.z = cfg.startZ;
+      state.heading = 0;
+      if (state.routePattern === 'perimeter') {
+        state.waypoints = cfg.perimeter.map(pt => ({ ...pt }));
+      } else {
+        setPatternButtonsUI('zigzag');
+        state.waypoints = cfg.zigzag.map(pt => ({ ...pt }));
+      }
+      state.currentWpIndex = 0;
+      state.routeExecuting = true;
+      updateRouteExecButtonUI();
+      state.tankLevelL = 6.30;
+      state.batteryPct = 76.0;
+      state.totalVolumeL = 12.45;
+      state.eStop = false;
+      state.sprayerOn = true;
+      state.fansOn = true;
+      gpsTrailPoints.length = 0;
+      lastTrailPos = { x: -999, z: -999 };
+      document.getElementById('btnEstopTop').classList.remove('active');
+      updateSprayerButtons();
+
+      while (trailGroup.children.length > 0) {
+        trailGroup.remove(trailGroup.children[0]);
+      }
+      rebuild3dFarmPlot(state.currentMapId);
+      rebuild3dPlannedRoute();
+      renderWaypointStrip();
+      if (obstacleMesh) {
+        scene.remove(obstacleMesh);
+        obstacleMesh = null;
+      }
+    }
+
+    function startKey(k) {
+      keysPressed[k] = true;
+      const el = document.getElementById('key' + k.toUpperCase());
+      if (el) el.classList.add('pressed');
+      if (state.driveMode !== 'manual') setDriveMode('manual');
+    }
+
+    function stopKey(k) {
+      keysPressed[k] = false;
+      const el = document.getElementById('key' + k.toUpperCase());
+      if (el) el.classList.remove('pressed');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(k)) startKey(k);
+      if (e.key === 'ArrowUp') startKey('w');
+      if (e.key === 'ArrowLeft') startKey('a');
+      if (e.key === 'ArrowDown') startKey('s');
+      if (e.key === 'ArrowRight') startKey('d');
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(k)) stopKey(k);
+      if (e.key === 'ArrowUp') stopKey('w');
+      if (e.key === 'ArrowLeft') stopKey('a');
+      if (e.key === 'ArrowDown') stopKey('s');
+      if (e.key === 'ArrowRight') stopKey('d');
+    });
+
+    /********************************************************************
+     * 6. MAIN SIMULATION LOOP (PHYSICS, SPRAYING, SENSORS, CAMERAS)
+     ********************************************************************/
+    let lastTime = performance.now();
+    let orbitAngle = 0;
+
+    function updateSimulation(dt) {
+      state.obstacleDistM = 4.85;
+      state.obstacleDetected = false;
+
+      if (obstacleMesh) {
+        const dx = obstacleMesh.position.x - state.x;
+        const dz = obstacleMesh.position.z - state.z;
+        const dist = Math.hypot(dx, dz);
+        const forwardX = -Math.sin(state.heading);
+        const forwardZ = -Math.cos(state.heading);
+        const dot = (dx * forwardX + dz * forwardZ) / (dist || 1);
+        if (dot > 0.55 && dist < 4.8) {
+          state.obstacleDistM = Math.max(0.4, dist - 0.6);
+          if (state.obstacleDistM < 2.3) {
+            state.obstacleDetected = true;
+          }
+        }
+      }
+
+      lidarMat.color.setHex(state.obstacleDetected ? 0xef4444 : 0x10b981);
+
+      let moveVelocity = 0;
+      let turnRate = 0;
+
+      if (state.eStop || state.batteryPct <= 0.5) {
+        state.currentSpeedKmh = 0;
+      } else if (state.obstacleDetected && state.driveMode === 'auto') {
+        state.currentSpeedKmh = 1.4;
+        moveVelocity = state.currentSpeedKmh / 3.6;
+        turnRate = 0.85;
+      } else if (state.driveMode === 'auto') {
+        if (!state.routeExecuting || state.waypoints.length === 0) {
+          state.currentSpeedKmh = 0;
+          moveVelocity = 0;
+        } else {
+          if (state.currentWpIndex >= state.waypoints.length) {
+            state.currentWpIndex = 0;
+          }
+          const wp = state.waypoints[state.currentWpIndex];
+          const dx = wp.x - state.x;
+          const dz = wp.z - state.z;
+          const distToWp = Math.hypot(dx, dz);
+
+          if (distToWp < 0.85) {
+            if (state.currentWpIndex + 1 < state.waypoints.length) {
+              state.currentWpIndex += 1;
+              rebuild3dPlannedRoute();
+              renderWaypointStrip();
+            } else if (state.routeLoop) {
+              state.currentWpIndex = 0;
+              rebuild3dPlannedRoute();
+              renderWaypointStrip();
+            } else {
+              state.routeExecuting = false;
+              state.currentSpeedKmh = 0;
+              moveVelocity = 0;
+              updateRouteExecButtonUI();
+            }
+          } else {
+            const desiredHeading = Math.atan2(-dx, -dz);
+            let angleDiff = desiredHeading - state.heading;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+            turnRate = Math.max(-1.6, Math.min(1.6, angleDiff * 2.5));
+            state.currentSpeedKmh = Math.abs(angleDiff) > 0.45
+              ? state.targetSpeedKmh * 0.55
+              : state.targetSpeedKmh;
+            moveVelocity = state.currentSpeedKmh / 3.6;
+          }
+        }
+      } else {
+        const maxV = state.targetSpeedKmh / 3.6;
+        if (keysPressed.w) moveVelocity = maxV;
+        else if (keysPressed.s) moveVelocity = -maxV * 0.7;
+
+        if (keysPressed.a) turnRate = 1.35;
+        if (keysPressed.d) turnRate = -1.35;
+
+        state.currentSpeedKmh = Math.abs(moveVelocity * 3.6);
+      }
+
+      state.heading += turnRate * dt;
+      state.x -= Math.sin(state.heading) * moveVelocity * dt;
+      state.z -= Math.cos(state.heading) * moveVelocity * dt;
+
+      state.x = Math.max(-16, Math.min(16, state.x));
+      state.z = Math.max(-16, Math.min(16, state.z));
+
+      state.distanceTraveled += Math.abs(moveVelocity * dt);
+
+      robotGroup.position.set(state.x, 0, state.z);
+      robotGroup.rotation.y = state.heading;
+
+      state.wheelRotation += moveVelocity * dt * 2.8;
+      wheelMeshes.forEach(w => { w.rotation.x = -state.wheelRotation; });
+
+      if (state.fansOn && !state.eStop) {
+        fanBlades.forEach(b => { b.rotation.y += dt * 28; });
+      }
+
+      const activelySpraying = state.sprayerOn && !state.eStop && state.tankLevelL > 0.01;
+      if (activelySpraying) {
+        const jitter = (Math.sin(performance.now() * 0.005) * 0.02);
+        state.actualFlowLmin = Math.max(0, state.targetFlowLmin + jitter);
+        state.pressureBar = 1.1 + state.actualFlowLmin * 0.68;
+
+        const litersUsed = (state.actualFlowLmin / 60) * dt;
+        state.tankLevelL = Math.max(0, state.tankLevelL - litersUsed);
+        state.totalVolumeL += litersUsed;
+
+        if (state.tankLevelL <= 0.01) {
+          state.sprayerOn = false;
+          updateSprayerButtons();
+        }
+
+        if (Math.hypot(state.x - lastTrailPos.x, state.z - lastTrailPos.z) > 0.65) {
+          const patch = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.75), trailMat);
+          patch.rotation.x = -Math.PI / 2;
+          patch.rotation.z = state.heading;
+          patch.position.set(state.x, 0.03, state.z);
+          trailGroup.add(patch);
+          lastTrailPos = { x: state.x, z: state.z };
+          gpsTrailPoints.push({ x: state.x, z: state.z });
+          if (gpsTrailPoints.length > 300) gpsTrailPoints.shift();
+        }
+
+        trees.forEach(t => {
+          if (!t.sprayed && Math.hypot(t.x - state.x, t.z - state.z) < 3.1) {
+            t.sprayed = true;
+            t.foliageMat.color.setHex(0x10b981);
+          }
+        });
+      } else {
+        state.actualFlowLmin = 0;
+        state.pressureBar = 0;
+      }
+
+      const tankRatio = Math.max(0.02, state.tankLevelL / state.tankCapacityL);
+      liquidMesh.scale.y = tankRatio;
+      liquidMesh.position.y = 0.50 + (0.48 * tankRatio) / 2;
+
+      const posArr = particleGeo.attributes.position.array;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const p = particleVelocities[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+          if (activelySpraying) {
+            const side = (i % 2 === 0) ? -1 : 1;
+            const localNozzle = new THREE.Vector3(side * 0.58, 1.25, 0.68);
+            localNozzle.applyAxisAngle(new THREE.Vector3(0, 1, 0), state.heading);
+            posArr[i * 3]     = state.x + localNozzle.x;
+            posArr[i * 3 + 1] = localNozzle.y;
+            posArr[i * 3 + 2] = state.z + localNozzle.z;
+
+            const outVec = new THREE.Vector3(
+              side * (2.4 + Math.random() * 1.4),
+              0.35 + (Math.random() - 0.3) * 0.8,
+              0.4 + Math.random() * 0.6
+            );
+            outVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), state.heading);
+            p.vx = outVec.x;
+            p.vy = outVec.y;
+            p.vz = outVec.z;
+            p.life = 0.25 + Math.random() * 0.45;
+          } else {
+            posArr[i * 3 + 1] = -10;
+          }
+        } else {
+          posArr[i * 3]     += p.vx * dt;
+          posArr[i * 3 + 1] += p.vy * dt;
+          posArr[i * 3 + 2] += p.vz * dt;
+          p.vy -= 1.8 * dt;
+        }
+      }
+      particleGeo.attributes.position.needsUpdate = true;
+
+      let ampDraw = 0.60;
+      if (state.currentSpeedKmh > 0.1) ampDraw += 2.30;
+      if (activelySpraying) ampDraw += 1.40;
+      if (state.fansOn && !state.eStop) ampDraw += 0.50;
+      state.currentAmp = ampDraw;
+      state.batteryPct = Math.max(0, state.batteryPct - dt * 0.012);
+      state.voltageV = 11.1 + (state.batteryPct / 100) * 1.5;
+
+      if (state.cameraMode === 'fpv') {
+        const camOffset = new THREE.Vector3(0, 1.08, -0.88);
+        camOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), state.heading);
+        mainCamera.position.set(state.x + camOffset.x, camOffset.y, state.z + camOffset.z);
+
+        const lookTarget = new THREE.Vector3(0, 0.92, -8.0);
+        lookTarget.applyAxisAngle(new THREE.Vector3(0, 1, 0), state.heading);
+        mainCamera.lookAt(state.x + lookTarget.x, lookTarget.y, state.z + lookTarget.z);
+      } else if (state.cameraMode === 'tps') {
+        const chaseOffset = new THREE.Vector3(0, 2.85, 4.3);
+        chaseOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), state.heading);
+        mainCamera.position.lerp(
+          new THREE.Vector3(state.x + chaseOffset.x, chaseOffset.y, state.z + chaseOffset.z),
+          0.12
+        );
+        mainCamera.lookAt(state.x, 0.85, state.z);
+      } else {
+        orbitAngle += dt * 0.45;
+        mainCamera.position.set(
+          state.x + Math.cos(orbitAngle) * 3.8,
+          2.2,
+          state.z + Math.sin(orbitAngle) * 3.8
+        );
+        mainCamera.lookAt(state.x, 0.75, state.z);
+      }
+
+      miniCamera.position.set(state.x, 22, state.z + 9);
+      miniCamera.lookAt(state.x, 0, state.z - 1);
+    }
+
+    function resizeCanvases() {
+      const rect = mainCanvas.parentElement.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        renderer.setSize(rect.width, rect.height, false);
+        mainCamera.aspect = rect.width / rect.height;
+        mainCamera.updateProjectionMatrix();
+      }
+      const miniRect = miniCanvas.parentElement.getBoundingClientRect();
+      if (miniRect.width > 0 && miniRect.height > 0) {
+        miniRenderer.setSize(miniRect.width, miniRect.height, false);
+        miniCamera.aspect = miniRect.width / miniRect.height;
+        miniCamera.updateProjectionMatrix();
+      }
+      resizeGisCanvas();
+    }
+    window.addEventListener('resize', resizeCanvases);
+
+    /********************************************************************
+     * 7. TELEMETRY UI & GIS MAP SYNCHRONIZATION
+     ********************************************************************/
+    let lastUiUpdate = 0;
+
+    function updateDashboardUI() {
+      const lat = (state.baseLat - state.z * METER_TO_DEG).toFixed(6);
+      const lon = (state.baseLon + state.x * METER_TO_DEG).toFixed(6);
+      const degHeading = (((-state.heading * 180 / Math.PI) % 360) + 360) % 360;
+      const wheelRpm = Math.round((state.currentSpeedKmh / 3.6) * 28);
+      const tankPct = Math.round((state.tankLevelL / state.tankCapacityL) * 100);
+      const battPct = Math.round(state.batteryPct);
+      const sprayedCount = trees.filter(t => t.sprayed).length;
+      const coveragePct = trees.length > 0 ? Math.round((sprayedCount / trees.length) * 100) : 0;
+
+      document.getElementById('osdHeading').textContent =
+        `IMU YAW: ${degHeading.toFixed(1)}° | PITCH: 0.2° | ROLL: -0.1°`;
+      document.getElementById('osdWheelEncoders').textContent =
+        `WHEEL ENCODERS (4x Interrupt): FL ${wheelRpm} RPM | FR ${wheelRpm} RPM`;
+      document.getElementById('minimapStats').textContent = `Sprayed: ${coveragePct}%`;
+
+      const obsEl = document.getElementById('hudObstacleDist');
+      if (state.obstacleDetected) {
+        obsEl.textContent = `⚠️ OBSTACLE (${state.obstacleDistM.toFixed(2)} m)`;
+        obsEl.style.color = '#ef4444';
+      } else {
+        obsEl.textContent = `Clear (${state.obstacleDistM.toFixed(2)} m)`;
+        obsEl.style.color = '#4ade80';
+      }
+
+      const activelySpraying = state.sprayerOn && !state.eStop && state.tankLevelL > 0.01;
+      const sprayEl = document.getElementById('hudSprayState');
+      sprayEl.textContent = activelySpraying ? 'ON (ฉีดพ่นปกติ)' : 'OFF (หยุดพ่น)';
+      sprayEl.style.color = activelySpraying ? '#2dd4bf' : '#f59e0b';
+
+      document.getElementById('mqttLat').textContent = `Lat: ${lat}`;
+      document.getElementById('mqttLon').textContent = `Lon: ${lon}`;
+      document.getElementById('mapCoordText').textContent = `Lat: ${lat}, Lon: ${lon} (Fix: 3D RTK)`;
+
+      document.getElementById('mqttBattPct').textContent = `${battPct}%`;
+      document.getElementById('mqttBattAmp').textContent = `${state.currentAmp.toFixed(1)} A (${state.voltageV.toFixed(1)}V)`;
+      document.getElementById('mqttBattBar').style.width = `${battPct}%`;
+
+      document.getElementById('mqttTankPct').textContent = `${tankPct}%`;
+      document.getElementById('mqttTankLiters').textContent = `(${state.tankLevelL.toFixed(2)} L / 10.0 L)`;
+      document.getElementById('mqttTankBar').style.width = `${tankPct}%`;
+
+      document.getElementById('mqttFlowRate').textContent = state.actualFlowLmin.toFixed(2);
+      document.getElementById('mqttTotalVol').textContent = `${state.totalVolumeL.toFixed(2)} L`;
+      document.getElementById('mqttPressure').textContent = `${state.pressureBar.toFixed(2)} bar`;
+      document.getElementById('mqttValveText').textContent = activelySpraying ? 'Solenoid: OPEN' : 'Solenoid: CLOSED';
+
+      document.getElementById('mqttSpeed').textContent = `${state.currentSpeedKmh.toFixed(1)} km/h`;
+      document.getElementById('mqttDistance').textContent = `Dist: ${state.distanceTraveled.toFixed(1)} m`;
+
+      const pwmVal = Math.round((state.currentSpeedKmh / 6.0) * 255);
+      document.getElementById('mqttPwmText').textContent = `PWM D5/D6: ${pwmVal}/255`;
+
+      const pumpEl = document.getElementById('mqttPumpStatus');
+      pumpEl.textContent = activelySpraying ? '● ON' : '○ OFF';
+      pumpEl.style.color = activelySpraying ? '#4ade80' : '#f87171';
+      document.getElementById('mqttFanStatus').textContent = `DIY Fans: ${state.fansOn && !state.eStop ? 'ON' : 'OFF'}`;
+
+      document.getElementById('hwTankText').textContent = `${state.tankLevelL.toFixed(2)} L`;
+      document.getElementById('hwPumpText').textContent = activelySpraying ? 'ON' : 'OFF';
+      document.getElementById('hwFanText').textContent = (state.fansOn && !state.eStop) ? 'ACTIVE' : 'STOPPED';
+      document.getElementById('hwLidarText').textContent = state.obstacleDetected ? 'ALERT!' : 'Clear';
+      document.getElementById('hwEncoderText').textContent = `${wheelRpm} RPM`;
+      document.getElementById('hwFlowPressText').textContent = `${state.actualFlowLmin.toFixed(2)}L/m | ${state.pressureBar.toFixed(2)}bar`;
+      document.getElementById('hwBattVolt').textContent = `${state.voltageV.toFixed(1)} V (${battPct}%)`;
+      document.getElementById('hwCurrent').textContent = `${state.currentAmp.toFixed(1)} A`;
+      state.sdLogRows += 1;
+      document.getElementById('hwSdCount').textContent = `${state.sdLogRows.toLocaleString()} rows`;
+      document.getElementById('hwEstopState').textContent = state.eStop ? 'TRIGGERED!' : 'NORMAL';
+      document.getElementById('hwEstopState').style.color = state.eStop ? '#ef4444' : '#4ade80';
+
+      const hasFault = state.eStop || state.obstacleDetected || state.tankLevelL <= 0.05;
+      document.getElementById('ledRed').classList.toggle('on', hasFault);
+      document.getElementById('ledYellow').classList.toggle('on', activelySpraying);
+      document.getElementById('ledGreen').classList.toggle('on', !state.eStop);
+
+      const alarmTile = document.getElementById('mqttAlarmTile');
+      const alarmText = document.getElementById('mqttAlarmText');
+      const buzzerHud = document.getElementById('hudBuzzer');
+
+      if (state.eStop) {
+        alarmTile.style.borderColor = '#ef4444';
+        alarmText.style.color = '#f87171';
+        alarmText.textContent = '🚨 EMERGENCY STOP ACTIVE (กดปุ่มหยุดฉุกเฉิน - Arduino ตัดสัญญาณ PWM/Relay ทันที)';
+        buzzerHud.textContent = 'BEEPING (ALARM)';
+        buzzerHud.style.color = '#ef4444';
+      } else if (state.obstacleDetected) {
+        alarmTile.style.borderColor = '#f59e0b';
+        alarmText.style.color = '#fbbf24';
+        alarmText.textContent = `⚠️ LiDAR/ToF ตรวจพบสิ่งกีดขวางที่ระยะ ${state.obstacleDistM.toFixed(2)} m (กำลังหลบหลีกอัตโนมัติ)`;
+        buzzerHud.textContent = 'BEEP WARNING';
+        buzzerHud.style.color = '#f59e0b';
+      } else if (state.tankLevelL <= 0.05) {
+        alarmTile.style.borderColor = '#f59e0b';
+        alarmText.style.color = '#fbbf24';
+        alarmText.textContent = '⚠️ น้ำยาในถังหมด (Tank Empty - ปิดปั๊มน้ำยาอัตโนมัติ)';
+        buzzerHud.textContent = 'LOW TANK BEEP';
+        buzzerHud.style.color = '#f59e0b';
+      } else {
+        alarmTile.style.borderColor = '#10b981';
+        alarmText.style.color = '#4ade80';
+        alarmText.textContent = '✔ No Fault (ระบบ Arduino ทำงานปกติ)';
+        buzzerHud.textContent = 'SILENT';
+        buzzerHud.style.color = '#94a3b8';
+      }
+
+      for (let i = 1; i <= 7; i++) {
+        const el = document.getElementById('step' + i);
+        el.classList.remove('active', 'fault');
+      }
+      if (hasFault) {
+        document.getElementById('step7').classList.add('fault');
+        document.getElementById('currentStepBadge').textContent = 'สถานะปัจจุบัน: ขั้นตอนที่ 7 กรณีผิดปกติ (Fault Handling)';
+      } else if (state.driveMode === 'auto' && (!state.routeExecuting || state.waypoints.length === 0)) {
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('currentStepBadge').textContent = 'สถานะปัจจุบัน: ขั้นตอนที่ 1 วางแผนงานและเส้นทาง (Route Planning)';
+      } else if (activelySpraying) {
+        document.getElementById('step4').classList.add('active');
+        document.getElementById('step5').classList.add('active');
+        document.getElementById('step6').classList.add('active');
+        document.getElementById('currentStepBadge').textContent = 'สถานะปัจจุบัน: ขั้นตอนที่ 4-6 นำทาง ฉีดพ่น และบันทึกข้อมูล MQTT';
+      } else {
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('step3').classList.add('active');
+        document.getElementById('currentStepBadge').textContent = 'สถานะปัจจุบัน: ขั้นตอนที่ 2-3 นำทางและตรวจสอบความปลอดภัย';
+      }
+
+      const payload = {
+        controller: state.boardModel,
+        modem: "4G/LTE SIM7600 (AT+CMQTT)",
+        mode: state.driveMode.toUpperCase(),
+        gps: { lat: parseFloat(lat), lon: parseFloat(lon), fix: "3D" },
+        imu_yaw_deg: parseFloat(degHeading.toFixed(1)),
+        battery: { pct: battPct, voltage_v: parseFloat(state.voltageV.toFixed(2)), current_a: parseFloat(state.currentAmp.toFixed(2)) },
+        sprayer: {
+          pump_on: activelySpraying,
+          fans_on: state.fansOn && !state.eStop,
+          tank_pct: tankPct,
+          tank_l: parseFloat(state.tankLevelL.toFixed(2)),
+          flow_lmin: parseFloat(state.actualFlowLmin.toFixed(2)),
+          pressure_bar: parseFloat(state.pressureBar.toFixed(2)),
+          total_vol_l: parseFloat(state.totalVolumeL.toFixed(2))
+        },
+        fault: hasFault ? "ACTIVE" : "NONE"
+      };
+      document.getElementById('mqttJsonPreview').textContent = JSON.stringify(payload, null, 2);
+    }
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      updateSimulation(dt);
+      renderer.render(scene, mainCamera);
+      miniRenderer.render(scene, miniCamera);
+      renderGisMap();
+
+      if (now - lastUiUpdate > 200) {
+        updateDashboardUI();
+        lastUiUpdate = now;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeCanvases();
+      renderWaypointStrip();
+      updateDashboardUI();
+      requestAnimationFrame(animate);
+    });
+  </script>
+</body>
+</html>
